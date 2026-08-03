@@ -1,0 +1,6 @@
+{
+  "name": "Vivaaha Connect",
+  "description": "Premium, modern matrimony service connecting brides and grooms across Tamil Nadu and India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

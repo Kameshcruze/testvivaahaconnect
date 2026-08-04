@@ -10,15 +10,15 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative bg-[#2D0A11] text-[#FAF3EB] pt-16 pb-12 border-t border-[#C89B63]/20 overflow-hidden">
+    <footer className="relative bg-[#2D0A11] text-[#FAF3EB] pt-10 sm:pt-12 pb-8 sm:pb-10 border-t border-[#C89B63]/20 overflow-hidden">
       {/* Background radial highlight */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-40 bg-[#C89B63]/10 blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-[#C89B63]/15">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 pb-12 border-b border-[#C89B63]/15">
           
           {/* Col 1: Brand Info */}
-          <div className="lg:col-span-4 space-y-4">
+          <div className="md:col-span-2 lg:col-span-4 space-y-4">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-[#6A1E2C] border border-[#C89B63]/40 flex items-center justify-center text-[#C89B63] shadow-md">
                 <Heart className="w-5 h-5 fill-[#C89B63]" />
@@ -42,80 +42,83 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Col 2: Quick Links */}
-          <div className="lg:col-span-3 space-y-3">
-            <h4 className="text-sm font-heading font-bold text-[#C89B63] uppercase tracking-wider">
-              Quick Links
-            </h4>
-            <ul className="space-y-2 text-xs font-medium text-[#FAF3EB]/80">
-              <li>
-                <a href="#home" className="hover:text-[#C89B63] transition">Home</a>
-              </li>
-              <li>
-                <a href="#about" className="hover:text-[#C89B63] transition">About Vivaaha Connect</a>
-              </li>
-              <li>
-                <a href="#services" className="hover:text-[#C89B63] transition">Matrimony Services</a>
-              </li>
-              <li>
-                <a href="#why-choose-us" className="hover:text-[#C89B63] transition">Why Choose Us</a>
-              </li>
-              <li>
-                <a href="#registration" className="hover:text-[#C89B63] transition">Registration Process</a>
-              </li>
-              <li>
-                <a href="#contact" className="hover:text-[#C89B63] transition">Contact & Helpline</a>
-              </li>
-            </ul>
-          </div>
+          {/* Col 2 & 3: Quick Links & Registration side-by-side on mobile & tablet */}
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 md:col-span-2 lg:col-span-5">
+            {/* Quick Links */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-heading font-bold text-[#C89B63] uppercase tracking-wider">
+                Quick Links
+              </h4>
+              <ul className="space-y-2 text-xs font-medium text-[#FAF3EB]/80">
+                <li>
+                  <a href="#home" className="hover:text-[#C89B63] transition">Home</a>
+                </li>
+                <li>
+                  <a href="#about" className="hover:text-[#C89B63] transition">About Us</a>
+                </li>
+                <li>
+                  <a href="#services" className="hover:text-[#C89B63] transition">Services</a>
+                </li>
+                <li>
+                  <a href="#why-choose-us" className="hover:text-[#C89B63] transition">Why Choose Us</a>
+                </li>
+                <li>
+                  <a href="#registration" className="hover:text-[#C89B63] transition">Process</a>
+                </li>
+                <li>
+                  <a href="#contact" className="hover:text-[#C89B63] transition">Contact</a>
+                </li>
+              </ul>
+            </div>
 
-          {/* Col 3: Registration & Legal */}
-          <div className="lg:col-span-2 space-y-3">
-            <h4 className="text-sm font-heading font-bold text-[#C89B63] uppercase tracking-wider">
-              Registration
-            </h4>
-            <ul className="space-y-2 text-xs font-medium text-[#FAF3EB]/80">
-              <li>
-                <a
-                  href={GOOGLE_FORM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 hover:text-[#C89B63] transition"
-                >
-                  Bride Registration <ExternalLink className="w-3 h-3" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href={GOOGLE_FORM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 hover:text-[#C89B63] transition"
-                >
-                  Groom Registration <ExternalLink className="w-3 h-3" />
-                </a>
-              </li>
-              <li className="pt-2 border-t border-[#C89B63]/15">
-                <button
-                  onClick={() => setModalOpen('privacy')}
-                  className="hover:text-[#C89B63] transition text-left"
-                >
-                  Privacy Policy
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setModalOpen('terms')}
-                  className="hover:text-[#C89B63] transition text-left"
-                >
-                  Terms & Conditions
-                </button>
-              </li>
-            </ul>
+            {/* Registration */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-heading font-bold text-[#C89B63] uppercase tracking-wider">
+                Registration
+              </h4>
+              <ul className="space-y-2 text-xs font-medium text-[#FAF3EB]/80">
+                <li>
+                  <a
+                    href={GOOGLE_FORM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 hover:text-[#C89B63] transition"
+                  >
+                    Bride Registration <ExternalLink className="w-3 h-3" />
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href={GOOGLE_FORM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 hover:text-[#C89B63] transition"
+                  >
+                    Groom Registration <ExternalLink className="w-3 h-3" />
+                  </a>
+                </li>
+                <li className="pt-2 border-t border-[#C89B63]/15">
+                  <button
+                    onClick={() => setModalOpen('privacy')}
+                    className="hover:text-[#C89B63] transition text-left"
+                  >
+                    Privacy Policy
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setModalOpen('terms')}
+                    className="hover:text-[#C89B63] transition text-left"
+                  >
+                    Terms & Conditions
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Col 4: Contact & Location */}
-          <div className="lg:col-span-3 space-y-3">
+          <div className="md:col-span-2 lg:col-span-3 space-y-3">
             <h4 className="text-sm font-heading font-bold text-[#C89B63] uppercase tracking-wider">
               Helpline Desk
             </h4>
@@ -173,7 +176,7 @@ export default function Footer() {
 
       {/* Policy Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm text-[#222222]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm text-[#222222]">
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8 space-y-4 shadow-2xl relative max-h-[80vh] overflow-y-auto">
             <h3 className="text-2xl font-heading font-bold text-[#6A1E2C]">
               {modalOpen === 'privacy' ? 'Privacy Policy' : 'Terms & Conditions'}

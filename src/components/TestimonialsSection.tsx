@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Star, ChevronLeft, ChevronRight, Quote, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Star, ChevronLeft, ChevronRight, Quote, Heart, CheckCircle2 } from 'lucide-react';
 import { TESTIMONIALS_DATA } from '../types';
 
 export default function TestimonialsSection() {
@@ -17,21 +17,21 @@ export default function TestimonialsSection() {
   const current = TESTIMONIALS_DATA[currentIndex];
 
   return (
-    <section className="relative py-20 lg:py-28 bg-[#FFF9F5] overflow-hidden">
+    <section className="relative py-8 sm:py-12 lg:py-14 bg-[#FFF9F5] overflow-hidden">
       {/* Background Decorative Lighting */}
       <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#C89B63]/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F8E8DA] border border-[#C89B63]/30 text-[#6A1E2C] text-xs font-semibold uppercase tracking-wider mb-4"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#C89B63]" /> Real Stories
+            <Heart className="w-3.5 h-3.5 text-[#C89B63] fill-[#C89B63]" /> Real Stories
           </motion.div>
 
           <motion.h2

@@ -3,14 +3,31 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Sparkles } from 'lucide-react';
 
 export default function Preloader() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem('vivaaha_preloaded');
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1600);
-    return () => clearTimeout(timer);
-  }, []);
+    if (loading) {
+      try {
+        sessionStorage.setItem('vivaaha_preloaded', 'true');
+      } catch {
+        // ignore quota/security errors
+      }
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
+  const handleDismiss = () => {
+    setLoading(false);
+  };
 
   return (
     <AnimatePresence>
@@ -19,8 +36,9 @@ export default function Preloader() {
           key="preloader"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#3B0E17] text-[#FFF9F5] overflow-hidden"
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          onClick={handleDismiss}
+          className="fixed inset-0 z-[120] flex flex-col items-center justify-center bg-[#3B0E17] text-[#FFF9F5] overflow-hidden cursor-pointer selection:bg-transparent"
         >
           {/* Animated Background Aura */}
           <div className="absolute w-96 h-96 bg-[#C89B63]/20 rounded-full blur-3xl animate-pulse-glow" />

@@ -8,11 +8,11 @@ interface ServicesSectionProps {
 
 export default function ServicesSection({ onOpenCallModal }: ServicesSectionProps) {
   return (
-    <section id="services" className="relative py-10 sm:py-16 lg:py-20 bg-gradient-to-b from-[#FFF9F5] via-[#F8E8DA]/30 to-[#FFF9F5]">
+    <section id="services" className="relative py-8 sm:py-12 lg:py-14 bg-gradient-to-b from-[#FFF9F5] via-[#F8E8DA]/30 to-[#FFF9F5]">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}

@@ -51,7 +51,7 @@ export default function StatisticsSection() {
   ];
 
   return (
-    <section ref={ref} className="relative py-16 sm:py-24 bg-gradient-to-r from-[#3B0E17] via-[#6A1E2C] to-[#3B0E17] text-[#FFF9F5] overflow-hidden shadow-2xl">
+    <section ref={ref} className="relative py-8 sm:py-12 lg:py-14 bg-gradient-to-r from-[#3B0E17] via-[#6A1E2C] to-[#3B0E17] text-[#FFF9F5] overflow-hidden shadow-2xl">
       {/* Background shimmer lines */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#C89B63]/20 via-transparent to-transparent pointer-events-none" />
 

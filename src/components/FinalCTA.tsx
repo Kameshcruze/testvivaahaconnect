@@ -8,7 +8,7 @@ interface FinalCTAProps {
 
 export default function FinalCTA({ onOpenCallModal }: FinalCTAProps) {
   return (
-    <section className="relative py-20 lg:py-28 overflow-hidden bg-[#2D0A11] text-[#FFF9F5]">
+    <section className="relative py-10 sm:py-14 lg:py-16 overflow-hidden bg-[#2D0A11] text-[#FFF9F5]">
       {/* Background Radial Glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(200,155,99,0.15)_0%,transparent_70%)] pointer-events-none" />
 

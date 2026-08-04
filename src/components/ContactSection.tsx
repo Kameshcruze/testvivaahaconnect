@@ -19,11 +19,11 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative py-20 lg:py-28 bg-[#FFF9F5] overflow-hidden">
+    <section id="contact" className="relative py-8 sm:py-12 lg:py-14 bg-[#FFF9F5] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F8E8DA] border border-[#C89B63]/30 text-[#6A1E2C] text-xs font-semibold uppercase tracking-wider mb-4">
             <Phone className="w-3.5 h-3.5 text-[#C89B63]" /> Get In Touch
           </div>
@@ -167,7 +167,7 @@ export default function ContactSection() {
                         <input
                           type="tel"
                           required
-                          placeholder="+91 98765 43210"
+                          placeholder=""
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5] text-sm focus:outline-none focus:border-[#6A1E2C] transition"

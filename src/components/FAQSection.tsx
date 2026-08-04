@@ -22,11 +22,11 @@ export default function FAQSection({ onOpenCallModal }: FAQSectionProps) {
   );
 
   return (
-    <section id="faq" className="relative py-20 lg:py-28 bg-gradient-to-b from-[#FFF9F5] via-[#F8E8DA]/20 to-[#FFF9F5] overflow-hidden">
+    <section id="faq" className="relative py-8 sm:py-12 lg:py-14 bg-gradient-to-b from-[#FFF9F5] via-[#F8E8DA]/20 to-[#FFF9F5] overflow-hidden">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}

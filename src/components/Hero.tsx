@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Phone, CheckCircle2, ArrowRight, ShieldCheck, Heart, ExternalLink, UserCheck } from 'lucide-react';
 import { GOOGLE_FORM_URL } from '../types';
+import heroImage from '../assets/images/hero-image.jpg';
 
 interface HeroProps {
   onOpenCallModal: () => void;
@@ -18,7 +19,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
   ];
 
   return (
-    <section id="home" className="relative pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 lg:pb-20 flex items-center justify-center overflow-hidden">
+    <section id="home" className="relative pt-28 sm:pt-32 lg:pt-36 pb-8 sm:pb-10 lg:pb-12 flex items-center justify-center overflow-hidden">
       {/* Background Radial Glow & Soft Ambient Lighting */}
       <div className="absolute top-1/4 left-1/6 w-[450px] h-[450px] sm:w-[550px] sm:h-[550px] bg-[#C89B63]/15 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
       <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-[#6A1E2C]/10 rounded-full blur-[140px] pointer-events-none" />
@@ -40,14 +41,14 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full lg:w-[45%] flex flex-col justify-center text-left"
+            className="w-full lg:w-[45%] flex flex-col justify-center items-center lg:items-start text-center lg:text-left"
           >
             {/* Small Label */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.4 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#C89B63]/30 shadow-sm backdrop-blur-md self-start mb-3"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#C89B63]/30 shadow-sm backdrop-blur-md self-center lg:self-start mb-3"
             >
               <span className="text-xs sm:text-sm font-semibold text-[#6A1E2C]">
                 Trusted Matrimony Across Tamil Nadu & India
@@ -55,7 +56,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
             </motion.div>
 
             {/* Sub Heading */}
-            <div className="mb-2 flex items-center flex-wrap gap-2 text-xs sm:text-sm">
+            <div className="mb-2 flex items-center justify-center lg:justify-start flex-wrap gap-2 text-xs sm:text-sm">
               <span className="font-bold text-[#C89B63] uppercase tracking-wider">
                 Vivaaha Connect
               </span>
@@ -71,18 +72,18 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
             </h1>
 
             {/* Description */}
-            <p className="text-sm sm:text-base lg:text-[18px] text-[#222222]/80 leading-relaxed mb-4 max-w-[520px]">
+            <p className="text-sm sm:text-base lg:text-[18px] text-[#222222]/80 leading-relaxed mb-4 max-w-[520px] mx-auto lg:mx-0">
               We help brides and grooms from all communities find genuine, verified life partners through a trusted and personalized matchmaking service.
             </p>
 
             {/* Elegant Open to All Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#F8E8DA]/80 border border-[#C89B63]/30 backdrop-blur-sm self-start mb-5 text-xs sm:text-sm font-semibold text-[#6A1E2C]">
+            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#F8E8DA]/80 border border-[#C89B63]/30 backdrop-blur-sm self-center lg:self-start mb-5 text-xs sm:text-sm font-semibold text-[#6A1E2C]">
               <UserCheck className="w-4 h-4 text-[#C89B63] shrink-0" />
               <span>Open to All Communities Across Tamil Nadu & India</span>
             </div>
 
             {/* Trust Card (4 points) */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-white/90 border border-[#C89B63]/25 shadow-sm backdrop-blur-md mb-6 max-w-[520px]">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white/90 border border-[#C89B63]/25 shadow-sm backdrop-blur-md mb-6 max-w-[520px] w-full text-left">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {trustPoints.map((point, idx) => (
                   <div key={idx} className="flex items-center gap-2">
@@ -94,7 +95,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
             </div>
 
             {/* Hero Main Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 w-full sm:w-auto">
               {/* Primary Register Profile */}
               <a
                 href={GOOGLE_FORM_URL}
@@ -127,10 +128,9 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
             {/* Visual Hero Image Container */}
             <div className="relative w-full rounded-3xl overflow-hidden border border-[#C89B63]/30 shadow-xl bg-[#6A1E2C]/5 aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/10]">
               <img
-                src="https://images.unsplash.com/photo-BDWH_GDKVCI?auto=format&fit=crop&q=80&w=1200"
+                src={heroImage}
                 alt="Traditional Indian Bride and Groom - Vivaaha Connect"
                 className="w-full h-full object-cover object-center"
-                referrerPolicy="no-referrer"
               />
               
               {/* Subtle Overlay Gradient */}

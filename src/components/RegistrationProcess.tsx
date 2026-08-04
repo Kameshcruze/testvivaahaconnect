@@ -37,11 +37,11 @@ export default function RegistrationProcess() {
   ];
 
   return (
-    <section id="registration" className="relative py-16 lg:py-24 bg-[#FFF9F5] overflow-hidden">
+    <section id="registration" className="relative py-8 sm:py-12 lg:py-14 bg-[#FFF9F5] overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#F8E8DA] border border-[#C89B63]/30 text-[#6A1E2C] text-xs font-semibold uppercase tracking-wider mb-3">
             <CheckCircle2 className="w-3.5 h-3.5 text-[#C89B63]" /> Simple Registration
           </div>

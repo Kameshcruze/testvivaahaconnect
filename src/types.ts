@@ -45,7 +45,7 @@ export const TESTIMONIALS_DATA: Testimonial[] = [
     location: "Coimbatore, Tamil Nadu",
     quote: "Vivaaha Connect provided a dignified, respectful, and transparent matchmaking process. We found our ideal life partner with absolute peace of mind for our families.",
     rating: 5,
-    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=400",
+    image: "/hero-image.jpg",
     matchType: "Verified Community Match"
   },
   {
@@ -55,7 +55,7 @@ export const TESTIMONIALS_DATA: Testimonial[] = [
     location: "Chennai, Tamil Nadu",
     quote: "The personalized phone assistance and genuine profile checks set Vivaaha Connect apart. They truly care about connecting compatible families.",
     rating: 5,
-    image: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&q=80&w=400",
+    image: "/hero-image.jpg",
     matchType: "Personalized Consultation Match"
   },
   {
@@ -65,7 +65,7 @@ export const TESTIMONIALS_DATA: Testimonial[] = [
     location: "Madurai & Bengaluru",
     quote: "Privacy was our biggest priority. Vivaaha Connect respected our confidentiality and shared matches only after mutual family consent.",
     rating: 5,
-    image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=400",
+    image: "/hero-image.jpg",
     matchType: "India-wide Connect"
   }
 ];

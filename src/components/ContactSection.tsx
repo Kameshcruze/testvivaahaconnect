@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { MapPin, Phone, Clock, Send, CheckCircle2, ShieldCheck } from 'lucide-react';
-import { PHONE_NUMBER, PHONE_RAW, LOCATION_ADDRESS } from '../types';
+import { PHONE_NUMBER, PHONE_RAW, HO_ADDRESS, BRANCH_ADDRESS } from '../types';
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
@@ -50,22 +50,34 @@ export default function ContactSection() {
                   Vivaaha Connect
                 </h3>
                 <p className="text-xs text-[#C89B63] font-bold uppercase tracking-wider mt-0.5">
-                  Matrimony Desk • Coimbatore
+                  Matrimony Desk • Tamil Nadu
                 </p>
               </div>
 
-              {/* Location */}
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-2xl bg-[#6A1E2C] text-[#FFF9F5] flex items-center justify-center shrink-0 shadow-md">
-                  <MapPin className="w-5 h-5 text-[#C89B63]" />
+              {/* Head Office Location */}
+              <div className="flex items-start gap-3.5">
+                <div className="w-9 h-9 rounded-xl bg-[#6A1E2C] text-[#FFF9F5] flex items-center justify-center shrink-0 shadow-md">
+                  <MapPin className="w-4 h-4 text-[#C89B63]" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-[#6A1E2C]">Headquarters Location</h4>
-                  <p className="text-sm text-[#222222]/80 font-medium">
-                    {LOCATION_ADDRESS}
+                  <h4 className="text-xs font-bold text-[#C89B63] uppercase tracking-wider">Head Office:</h4>
+                  <p className="text-sm text-[#222222]/85 font-semibold mt-0.5 leading-snug">
+                    {HO_ADDRESS.addressLine1}<br />
+                    {HO_ADDRESS.addressLine2}
                   </p>
-                  <p className="text-xs text-[#222222]/60 mt-0.5">
-                    Coimbatore City, Tamil Nadu
+                </div>
+              </div>
+
+              {/* Branch Location */}
+              <div className="flex items-start gap-3.5 pt-3 border-t border-[#C89B63]/15">
+                <div className="w-9 h-9 rounded-xl bg-[#6A1E2C] text-[#FFF9F5] flex items-center justify-center shrink-0 shadow-md">
+                  <MapPin className="w-4 h-4 text-[#C89B63]" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#C89B63] uppercase tracking-wider">Branch:</h4>
+                  <p className="text-sm text-[#222222]/85 font-semibold mt-0.5 leading-snug">
+                    {BRANCH_ADDRESS.addressLine1}<br />
+                    {BRANCH_ADDRESS.addressLine2}
                   </p>
                 </div>
               </div>
@@ -165,7 +177,7 @@ export default function ContactSection() {
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Any community / Hindu / Muslim / Christian"
+                        placeholder="e.g. Any community / Hindu "
                         value={formData.community}
                         onChange={(e) => setFormData({ ...formData, community: e.target.value })}
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5] text-sm focus:outline-none focus:border-[#6A1E2C] transition"

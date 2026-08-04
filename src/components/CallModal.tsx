@@ -105,7 +105,7 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
                   href={`tel:${PHONE_RAW}`}
                   className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-[#6A1E2C] via-[#8C283B] to-[#6A1E2C] text-white font-semibold shadow-xl shadow-[#6A1E2C]/25 hover:brightness-110 active:scale-[0.99] transition"
                 >
-                  <Phone className="w-4 h-4 animate-bounce" /> Call {PHONE_NUMBER} Now
+                  <Phone className="w-4 h-4 animate-bounce" /> Call {PHONE_NUMBER}
                 </a>
 
                 {/* Divider */}

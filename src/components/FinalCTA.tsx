@@ -64,13 +64,13 @@ export default function FinalCTA({ onOpenCallModal }: FinalCTAProps) {
             <ArrowRight className="w-5 h-5" />
           </a>
 
-          {/* Call Now */}
+          {/* Call Us */}
           <button
             onClick={onOpenCallModal}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-white/10 border border-white/30 text-white text-base font-bold hover:bg-white hover:text-[#2D0A11] transition-all duration-300"
           >
             <Phone className="w-5 h-5 text-[#C89B63]" />
-            <span>Call Now</span>
+            <span>Call Us</span>
           </button>
         </motion.div>
 

@@ -198,7 +198,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
               className="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-gradient-to-r from-[#C89B63] to-[#b0844d] text-white font-bold text-xs sm:text-sm shadow-md transition-all group"
             >
               <Phone className="w-4 h-4 text-white" />
-              <span>Call Now ({PHONE_NUMBER})</span>
+              <span>Call Now {PHONE_NUMBER}</span>
             </button>
           </motion.div>
 

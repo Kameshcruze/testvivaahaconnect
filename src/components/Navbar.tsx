@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion, useScroll, useSpring, AnimatePresence } from 'motion/react';
 import { Heart, Menu, X, ArrowRight, Phone } from 'lucide-react';
 import { GOOGLE_FORM_URL, PHONE_NUMBER } from '../types';
+import logoImg from '../assets/images/Logo1.PNG';
+import logoFullImg from '../assets/images/Logo1.1.PNG';
 
 interface NavbarProps {
   onOpenCallModal: () => void;
@@ -74,19 +76,13 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
               : 'bg-white/70 backdrop-blur-lg border-white/60 shadow-lg shadow-[#6A1E2C]/5'
           }`}
         >
-          {/* Left Side: Logo & Subtitle */}
-          <a href="#home" className="flex items-center gap-3 group shrink-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#6A1E2C] to-[#8C283B] flex items-center justify-center text-[#C89B63] shadow-md shadow-[#6A1E2C]/20 group-hover:scale-105 transition-transform duration-300">
-              <Heart className="w-5 h-5 sm:w-5 sm:h-5 fill-[#C89B63]" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-lg sm:text-2xl font-bold text-[#6A1E2C] tracking-tight leading-none">
-                Vivaaha <span className="text-[#C89B63]">Connect</span>
-              </span>
-              <span className="text-[9px] sm:text-[10px] text-[#222222]/60 font-medium tracking-wide uppercase mt-1">
-                Connecting Hearts • Building Families
-              </span>
-            </div>
+          {/* Left Side: Logo & Company Name Image */}
+          <a href="#home" className="flex items-center gap-2 group shrink-0 py-1">
+            <img
+              src={logoFullImg}
+              alt="Vivaaha Connect"
+              className="h-10 sm:h-12 w-auto max-h-[52px] object-contain group-hover:scale-[1.03] transition-transform duration-300"
+            />
           </a>
 
           {/* Center Navigation Links */}

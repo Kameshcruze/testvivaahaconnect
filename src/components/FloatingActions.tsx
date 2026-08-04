@@ -13,10 +13,10 @@ export default function FloatingActions({ onOpenCallModal }: FloatingActionsProp
         <button
           onClick={onOpenCallModal}
           className="group inline-flex items-center gap-2 px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-full bg-[#C89B63] text-white text-xs sm:text-sm font-extrabold shadow-xl shadow-[#C89B63]/40 border border-white/40 hover:scale-105 active:scale-95 transition-all duration-300"
-          aria-label="Call Now"
+          aria-label="Call"
         >
           <Phone className="w-3.5 h-3.5 text-white" />
-          <span>Call Now</span>
+          <span>Call Us</span>
         </button>
       </div>
 

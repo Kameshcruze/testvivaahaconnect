@@ -113,7 +113,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
                 className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white border border-[#C89B63]/40 text-[#6A1E2C] text-sm sm:text-base font-bold shadow-sm hover:bg-[#6A1E2C] hover:text-white hover:border-[#6A1E2C] transition-all duration-300 group"
               >
                 <Phone className="w-4 h-4 text-[#C89B63] group-hover:text-white transition-colors" />
-                <span>Call Now</span>
+                <span>Call Us</span>
               </button>
             </div>
           </motion.div>

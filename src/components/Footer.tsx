@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Heart, ExternalLink, Phone, MapPin, ArrowUp } from 'lucide-react';
-import { GOOGLE_FORM_URL, PHONE_NUMBER, LOCATION_ADDRESS } from '../types';
+import { GOOGLE_FORM_URL, PHONE_NUMBER, HO_ADDRESS, BRANCH_ADDRESS } from '../types';
+import logoImg from '../assets/images/Logo1.PNG';
+import logoFullImg from '../assets/images/Logo1.1.PNG';
 
 export default function Footer() {
   const [modalOpen, setModalOpen] = useState<'privacy' | 'terms' | null>(null);
@@ -20,17 +22,11 @@ export default function Footer() {
           {/* Col 1: Brand Info */}
           <div className="md:col-span-2 lg:col-span-4 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-[#6A1E2C] border border-[#C89B63]/40 flex items-center justify-center text-[#C89B63] shadow-md">
-                <Heart className="w-5 h-5 fill-[#C89B63]" />
-              </div>
-              <div>
-                <span className="text-2xl font-heading font-bold text-[#FFF9F5] tracking-tight">
-                  Vivaaha <span className="text-[#C89B63]">Connect</span>
-                </span>
-                <p className="text-[10px] text-[#C89B63] font-medium tracking-wider uppercase">
-                  Connecting Hearts • Building Families
-                </p>
-              </div>
+              <img
+                src={logoFullImg}
+                alt="Vivaaha Connect"
+                className="h-12 w-auto max-w-[200px] object-contain bg-white/95 px-3 py-1.5 rounded-xl border border-[#C89B63]/40 shadow-md"
+              />
             </div>
 
             <p className="text-xs text-[#FAF3EB]/70 leading-relaxed">
@@ -38,7 +34,7 @@ export default function Footer() {
             </p>
 
             <p className="text-xs font-tamil text-[#C89B63]">
-              தமிழ்நாடு முழுவதுமுள்ள அனைத்து சமுதாயத்தினருக்குமான திருமணச் சேவை
+              தமிழ்நாடு முழுவதுமுள்ள அனைத்து சமூகத்தினருக்குமான நம்பகமான திருமண சேவை
             </p>
           </div>
 
@@ -122,12 +118,19 @@ export default function Footer() {
             <h4 className="text-sm font-heading font-bold text-[#C89B63] uppercase tracking-wider">
               Helpline Desk
             </h4>
-            <div className="space-y-2 text-xs text-[#FAF3EB]/80">
-              <p className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#C89B63] shrink-0" />
-                <span>{LOCATION_ADDRESS}</span>
-              </p>
-              <p className="flex items-center gap-2">
+            <div className="space-y-2.5 text-xs text-[#FAF3EB]/80">
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-[#C89B63] shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p>
+                    <strong className="text-[#C89B63]">Head Office:</strong> {HO_ADDRESS.fullText}
+                  </p>
+                  <p>
+                    <strong className="text-[#C89B63]">Branch:</strong> {BRANCH_ADDRESS.fullText}
+                  </p>
+                </div>
+              </div>
+              <p className="flex items-center gap-2 pt-1 border-t border-[#C89B63]/15">
                 <Phone className="w-4 h-4 text-[#C89B63] shrink-0" />
                 <a href={`tel:${PHONE_NUMBER}`} className="hover:text-[#C89B63] transition font-bold">
                   {PHONE_NUMBER}

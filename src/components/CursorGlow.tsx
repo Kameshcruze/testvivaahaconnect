@@ -9,16 +9,22 @@ export default function CursorGlow() {
     const mediaQuery = window.matchMedia('(pointer: fine)');
     setIsDesktop(mediaQuery.matches);
 
+    let rafId: number | null = null;
     const handleMouseMove = (e: MouseEvent) => {
-      setPosition({ x: e.clientX, y: e.clientY });
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        setPosition({ x: e.clientX, y: e.clientY });
+        rafId = null;
+      });
     };
 
     if (mediaQuery.matches) {
-      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
     }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 

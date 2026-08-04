@@ -21,8 +21,8 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
   return (
     <section id="home" className="relative pt-24 sm:pt-26 lg:pt-26 pb-8 sm:pb-10 lg:pb-12 flex items-center justify-center overflow-hidden">
       {/* Background Radial Glow & Soft Ambient Lighting */}
-      <div className="absolute top-1/4 left-1/6 w-[450px] h-[450px] sm:w-[550px] sm:h-[550px] bg-[#C89B63]/15 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
-      <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-[#6A1E2C]/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="hidden sm:block absolute top-1/4 left-1/6 w-[550px] h-[550px] bg-[#C89B63]/15 rounded-full blur-[100px] pointer-events-none animate-pulse-glow" />
+      <div className="hidden sm:block absolute bottom-10 right-10 w-[500px] h-[500px] bg-[#6A1E2C]/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Floating Decorative Vector Icons */}
       <div className="absolute top-28 right-12 text-[#C89B63]/30 animate-float-slow pointer-events-none hidden sm:block">
@@ -130,6 +130,9 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               <img
                 src={heroImage}
                 alt="Traditional Bride and Groom - Vivaaha Connect"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-full object-cover object-center"
               />
               

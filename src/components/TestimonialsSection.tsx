@@ -19,7 +19,7 @@ export default function TestimonialsSection() {
   return (
     <section className="relative py-8 sm:py-12 lg:py-14 bg-[#FFF9F5] overflow-hidden">
       {/* Background Decorative Lighting */}
-      <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#C89B63]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="hidden sm:block absolute top-1/4 left-10 w-96 h-96 bg-[#C89B63]/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
@@ -75,6 +75,8 @@ export default function TestimonialsSection() {
                     <img
                       src={current.image}
                       alt={current.names}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                     />

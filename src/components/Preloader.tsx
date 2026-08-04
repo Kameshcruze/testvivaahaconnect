@@ -20,7 +20,7 @@ export default function Preloader() {
       }
       const timer = setTimeout(() => {
         setLoading(false);
-      }, 900);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [loading]);

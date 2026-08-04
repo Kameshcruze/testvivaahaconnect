@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Heart, ExternalLink, Phone, MapPin, ArrowUp } from 'lucide-react';
 import { GOOGLE_FORM_URL, PHONE_NUMBER, HO_ADDRESS, BRANCH_ADDRESS } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
-import logoFullImg from '../assets/images/Logo1.1.PNG';
 
 export default function Footer() {
   const [modalOpen, setModalOpen] = useState<'privacy' | 'terms' | null>(null);
@@ -14,7 +13,7 @@ export default function Footer() {
   return (
     <footer className="relative bg-[#2D0A11] text-[#FAF3EB] pt-10 sm:pt-12 pb-8 sm:pb-10 border-t border-[#C89B63]/20 overflow-hidden">
       {/* Background radial highlight */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-40 bg-[#C89B63]/10 blur-3xl pointer-events-none" />
+      <div className="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-40 bg-[#C89B63]/10 blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 pb-12 border-b border-[#C89B63]/15">
@@ -23,7 +22,7 @@ export default function Footer() {
           <div className="md:col-span-2 lg:col-span-4 space-y-4">
             <div className="flex items-center gap-2.5">
               <img
-                src={logoFullImg}
+                src={logoImg}
                 alt="Vivaaha Connect"
                 className="h-12 w-auto max-w-[200px] object-contain bg-white/95 px-3 py-1.5 rounded-xl border border-[#C89B63]/40 shadow-md"
               />

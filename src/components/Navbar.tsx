@@ -3,7 +3,6 @@ import { motion, useScroll, useSpring, AnimatePresence } from 'motion/react';
 import { Heart, Menu, X, ArrowRight, Phone } from 'lucide-react';
 import { GOOGLE_FORM_URL, PHONE_NUMBER } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
-import logoFullImg from '../assets/images/Logo1.1.PNG';
 
 interface NavbarProps {
   onOpenCallModal: () => void;
@@ -70,18 +69,18 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
       {/* Floating Centered Glassmorphism Container */}
       <div className="max-w-[1400px] mx-auto pointer-events-auto">
         <nav
-          className={`w-full rounded-2xl sm:rounded-3xl transition-all duration-500 border h-[72px] sm:h-[80px] px-4 sm:px-6 flex items-center justify-between ${
+          className={`w-full rounded-2xl sm:rounded-3xl transition-all duration-300 border h-[72px] sm:h-[80px] px-4 sm:px-6 flex items-center justify-between ${
             isScrolled
-              ? 'bg-white/85 backdrop-blur-xl border-[#C89B63]/30 shadow-xl shadow-[#6A1E2C]/10'
-              : 'bg-white/70 backdrop-blur-lg border-white/60 shadow-lg shadow-[#6A1E2C]/5'
+              ? 'bg-white/95 sm:bg-white/85 backdrop-blur-md border-[#C89B63]/30 shadow-xl shadow-[#6A1E2C]/10'
+              : 'bg-white/90 sm:bg-white/70 backdrop-blur-md border-white/60 shadow-lg shadow-[#6A1E2C]/5'
           }`}
         >
-          {/* Left Side: Logo & Company Name Image */}
-          <a href="#home" className="flex items-center gap-2 group shrink-0 py-1">
+          {/* Left Side: Logo Image */}
+          <a href="#home" className="flex items-center group shrink-0 py-1">
             <img
-              src={logoFullImg}
+              src={logoImg}
               alt="Vivaaha Connect"
-              className="h-10 sm:h-12 w-auto max-h-[52px] object-contain group-hover:scale-[1.03] transition-transform duration-300"
+              className="h-10 sm:h-12 w-auto max-h-[52px] object-contain group-hover:scale-105 transition-transform duration-300"
             />
           </a>
 
@@ -153,7 +152,7 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
               transition={{ duration: 0.2 }}
-              className="lg:hidden mt-2 p-5 rounded-3xl bg-white/95 backdrop-blur-2xl border border-[#C89B63]/30 shadow-2xl shadow-[#6A1E2C]/15 space-y-4"
+              className="lg:hidden mt-2 p-5 rounded-3xl bg-white/98 backdrop-blur-md border border-[#C89B63]/30 shadow-2xl shadow-[#6A1E2C]/15 space-y-4"
             >
               <div className="flex flex-col space-y-1">
                 {navLinks.map((link) => (

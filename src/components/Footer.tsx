@@ -19,8 +19,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 pb-12 border-b border-[#C89B63]/15">
           
           {/* Col 1: Brand Info */}
-          <div className="md:col-span-2 lg:col-span-4 space-y-4">
-            <div className="flex items-center gap-2.5">
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left md:col-span-2 lg:col-span-4 space-y-4">
+            <div className="flex items-center justify-center lg:justify-start gap-2.5">
               <img
                 src={logoImg}
                 alt="Vivaaha Connect"

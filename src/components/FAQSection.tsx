@@ -42,7 +42,7 @@ export default function FAQSection({ onOpenCallModal }: FAQSectionProps) {
             viewport={{ once: true }}
             className="text-3xl sm:text-4xl lg:text-5xl font-heading font-extrabold text-[#6A1E2C] tracking-tight"
           >
-            Frequently Asked <span className="gold-gradient-text italic">Questions</span>
+            Frequently Asked <span className="gold-gradient-text italic pr-2 inline-block">Questions</span>
           </motion.h2>
 
           <motion.p

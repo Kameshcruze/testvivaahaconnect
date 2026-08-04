@@ -29,7 +29,7 @@ export default function ContactSection() {
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-extrabold text-[#6A1E2C] tracking-tight">
-            Contact <span className="gold-gradient-text italic">Vivaaha Connect</span>
+            Contact <span className="gold-gradient-text italic pr-2 inline-block">Vivaaha Connect</span>
           </h2>
 
           <p className="mt-4 text-base sm:text-lg text-[#222222]/75">

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Phone, CheckCircle2, ArrowRight, ShieldCheck, Heart, ExternalLink, UserCheck } from 'lucide-react';
 import { GOOGLE_FORM_URL } from '../types';
-import heroImage from '../assets/images/hero-image.jpg';
+import heroImage from '../assets/images/hero image.webp';
 
 interface HeroProps {
   onOpenCallModal: () => void;
@@ -19,7 +19,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
   ];
 
   return (
-    <section id="home" className="relative pt-28 sm:pt-32 lg:pt-36 pb-8 sm:pb-10 lg:pb-12 flex items-center justify-center overflow-hidden">
+    <section id="home" className="relative pt-24 sm:pt-26 lg:pt-26 pb-8 sm:pb-10 lg:pb-12 flex items-center justify-center overflow-hidden">
       {/* Background Radial Glow & Soft Ambient Lighting */}
       <div className="absolute top-1/4 left-1/6 w-[450px] h-[450px] sm:w-[550px] sm:h-[550px] bg-[#C89B63]/15 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
       <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-[#6A1E2C]/10 rounded-full blur-[140px] pointer-events-none" />
@@ -34,7 +34,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
 
       {/* Main Container */}
       <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+        <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-12">
           
           {/* Left Column: Content (45% Width on Desktop) */}
           <motion.div
@@ -48,10 +48,10 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.4 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#C89B63]/30 shadow-sm backdrop-blur-md self-center lg:self-start mb-3"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#C89B63]/30 shadow-sm backdrop-blur-md self-center mb-3"
             >
               <span className="text-xs sm:text-sm font-semibold text-[#6A1E2C]">
-                Trusted Matrimony Across Tamil Nadu
+                Trusted Matrimony Service
               </span>
             </motion.div>
 

@@ -150,10 +150,10 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#FAF3EB]/60">
-          <div className="text-center sm:text-left">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-center relative gap-4 text-xs text-[#FAF3EB]/60 text-center">
+          <div className="text-center">
             <p>© {new Date().getFullYear()} Vivaaha Connect. All rights reserved.</p>
-            <p className="mt-1 text-[11px] text-[#FAF3EB]/50 text-center sm:text-left">
+            <p className="mt-1 text-[11px] text-[#FAF3EB]/50 text-center">
               Developed by{' '}
               <a
                 href="https://elitewebdevelopers.vercel.app/"
@@ -166,7 +166,7 @@ export default function Footer() {
             </p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="sm:absolute sm:right-0 flex items-center gap-4">
             <button
               onClick={scrollToTop}
               className="p-2 rounded-xl bg-white/10 hover:bg-[#C89B63] hover:text-[#2D0A11] transition text-[#FFF9F5]"

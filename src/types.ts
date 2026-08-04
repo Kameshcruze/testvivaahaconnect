@@ -1,6 +1,6 @@
-import couple1 from './assets/images/couple1.jpg';
-import couple2 from './assets/images/couple2.jpg';
-import couple3 from './assets/images/couple3.jpg';
+import couple1 from './assets/images/couple1.webp';
+import couple2 from './assets/images/couple2.webp';
+import couple3 from './assets/images/couple3.webp';
 
 export const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScHfyMu0hFHcybpp9jNI9-NEL-3P7K-Cck3HuyJ-qzH-D1YRA/viewform";
 export const PHONE_NUMBER = "+91 94869 55380";

@@ -52,7 +52,7 @@ export default function FeaturesSection() {
             viewport={{ once: true }}
             className="text-3xl sm:text-4xl lg:text-5xl font-heading font-extrabold text-[#6A1E2C] tracking-tight"
           >
-            Comprehensive Features for <span className="gold-gradient-text italic">Peace of Mind</span>
+            Comprehensive Features for <span className="gold-gradient-text italic pr-2 inline-block">Peace of Mind</span>
           </motion.h2>
 
           <motion.p

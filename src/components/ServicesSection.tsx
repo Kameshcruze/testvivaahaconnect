@@ -28,7 +28,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
             viewport={{ once: true }}
             className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#6A1E2C] tracking-tight"
           >
-            Dedicated Matrimony Solutions for <span className="text-[#C89B63] italic">Every Family</span>
+            Dedicated Matrimony Solutions for <span className="text-[#C89B63] italic pr-2 inline-block">Every Family</span>
           </motion.h2>
 
           <motion.p

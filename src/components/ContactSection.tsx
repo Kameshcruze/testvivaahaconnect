@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, ShieldCheck } from 'lucide-react';
-import { PHONE_NUMBER, PHONE_RAW, EMAIL_ADDRESS, LOCATION_ADDRESS } from '../types';
+import { MapPin, Phone, Clock, Send, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { PHONE_NUMBER, PHONE_RAW, LOCATION_ADDRESS } from '../types';
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
@@ -33,7 +33,7 @@ export default function ContactSection() {
           </h2>
 
           <p className="mt-4 text-base sm:text-lg text-[#222222]/75">
-            Our matrimony desk in Coimbatore is happy to assist families across Tamil Nadu and India.
+            Our matrimony desk in Coimbatore is happy to assist families across Tamil Nadu.
           </p>
         </div>
 
@@ -45,7 +45,7 @@ export default function ContactSection() {
             
             {/* Primary Headquarters Card */}
             <div className="glass-card rounded-3xl p-7 border border-[#C89B63]/30 shadow-xl space-y-6 bg-white/90">
-              <div className="border-b border-[#C89B63]/20 pb-4">
+              <div className="border-b border-[#C89B63]/20 pb-4 text-center">
                 <h3 className="text-2xl font-heading font-bold text-[#6A1E2C]">
                   Vivaaha Connect
                 </h3>
@@ -65,7 +65,7 @@ export default function ContactSection() {
                     {LOCATION_ADDRESS}
                   </p>
                   <p className="text-xs text-[#222222]/60 mt-0.5">
-                    Coimbatore City, Tamil Nadu, India
+                    Coimbatore City, Tamil Nadu
                   </p>
                 </div>
               </div>
@@ -86,22 +86,6 @@ export default function ContactSection() {
                   <p className="text-xs text-emerald-600 font-medium mt-0.5">
                     Available for call or WhatsApp enquiry
                   </p>
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-2xl bg-[#6A1E2C] text-[#FFF9F5] flex items-center justify-center shrink-0 shadow-md">
-                  <Mail className="w-5 h-5 text-[#C89B63]" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-[#6A1E2C]">Email Desk</h4>
-                  <a
-                    href={`mailto:${EMAIL_ADDRESS}`}
-                    className="text-sm font-semibold text-[#222222]/80 hover:text-[#6A1E2C] transition"
-                  >
-                    {EMAIL_ADDRESS}
-                  </a>
                 </div>
               </div>
 

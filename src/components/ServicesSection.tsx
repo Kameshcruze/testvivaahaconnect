@@ -70,7 +70,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
               </h3>
 
               <p className="text-xs sm:text-sm text-[#222222]/80 leading-relaxed mb-5">
-                Register bride profiles with complete confidentiality. Connect with educated, well-settled grooms across all communities in Tamil Nadu and India.
+                Register bride profiles with complete confidentiality. Connect with educated, well-settled grooms across all communities in Tamil Nadu.
               </p>
 
               <ul className="space-y-2 mb-6 text-xs font-medium text-[#222222]">
@@ -156,7 +156,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
             </a>
           </motion.div>
 
-          {/* Card 3: Family Consultation */}
+          {/* Card 3: Consultation */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -180,7 +180,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
               </div>
 
               <h3 className="text-xl font-bold text-[#6A1E2C] mb-2">
-                Family Consultation
+                Consultation
               </h3>
 
               <p className="text-xs sm:text-sm text-[#222222]/85 leading-relaxed mb-5 font-medium">

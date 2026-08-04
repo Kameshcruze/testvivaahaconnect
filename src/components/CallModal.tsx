@@ -71,7 +71,7 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
             {!callbackRequested ? (
               <div className="space-y-5">
                 <p className="text-sm text-[#222222]/80 leading-relaxed">
-                  Speak directly with our experienced matrimony consultants for profile guidance, family consultation, or registration help.
+                  Speak directly with our experienced matrimony consultants for profile guidance, consultation, or registration help.
                 </p>
 
                 {/* Number card */}

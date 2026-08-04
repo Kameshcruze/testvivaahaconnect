@@ -127,17 +127,6 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
               <span>Call Us</span>
               <span className="font-bold text-[#6A1E2C] group-hover:text-white">{PHONE_NUMBER}</span>
             </button>
-
-            {/* Primary CTA Button */}
-            <a
-              href={GOOGLE_FORM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#6A1E2C] via-[#8C283B] to-[#6A1E2C] text-[#FFF9F5] text-xs sm:text-sm font-bold shadow-lg shadow-[#6A1E2C]/25 hover:shadow-xl hover:shadow-[#6A1E2C]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 border border-[#C89B63]/30"
-            >
-              <span>Register Now</span>
-              <ArrowRight className="w-4 h-4 text-[#C89B63] group-hover:translate-x-1 transition-transform duration-300" />
-            </a>
           </div>
 
           {/* Mobile Hamburger Toggle */}

@@ -25,7 +25,7 @@ export default function WhyChooseUs() {
     },
     {
       title: "Trusted Service",
-      description: "Proudly connecting families across Tamil Nadu and all of India.",
+      description: "Proudly connecting families across all regions of Tamil Nadu.",
       icon: Award,
     },
     {

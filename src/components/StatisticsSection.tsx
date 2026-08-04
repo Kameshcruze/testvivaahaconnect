@@ -45,7 +45,7 @@ export default function StatisticsSection() {
       number: 100,
       suffix: "%",
       label: "Trusted Support",
-      description: "Assistance across TN & India",
+      description: "Assistance across Tamil Nadu",
       icon: ShieldCheck
     }
   ];

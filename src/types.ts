@@ -1,8 +1,12 @@
+import couple1 from './assets/images/couple1.jpg';
+import couple2 from './assets/images/couple2.jpg';
+import couple3 from './assets/images/couple3.jpg';
+
 export const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScHfyMu0hFHcybpp9jNI9-NEL-3P7K-Cck3HuyJ-qzH-D1YRA/viewform";
 export const PHONE_NUMBER = "+91 94869 55380";
 export const PHONE_RAW = "+919486955380";
 export const EMAIL_ADDRESS = "contact@vivaahaconnect.com";
-export const LOCATION_ADDRESS = "Coimbatore, Tamil Nadu, India";
+export const LOCATION_ADDRESS = "Coimbatore, Tamil Nadu";
 
 export interface Testimonial {
   id: string;
@@ -45,7 +49,7 @@ export const TESTIMONIALS_DATA: Testimonial[] = [
     location: "Coimbatore, Tamil Nadu",
     quote: "Vivaaha Connect provided a dignified, respectful, and transparent matchmaking process. We found our ideal life partner with absolute peace of mind for our families.",
     rating: 5,
-    image: "/hero-image.jpg",
+    image: couple1,
     matchType: "Verified Community Match"
   },
   {
@@ -55,18 +59,18 @@ export const TESTIMONIALS_DATA: Testimonial[] = [
     location: "Chennai, Tamil Nadu",
     quote: "The personalized phone assistance and genuine profile checks set Vivaaha Connect apart. They truly care about connecting compatible families.",
     rating: 5,
-    image: "/hero-image.jpg",
+    image: couple2,
     matchType: "Personalized Consultation Match"
   },
   {
     id: "3",
     names: "Suresh & Divya",
     role: "Married in Nov 2024",
-    location: "Madurai & Bengaluru",
+    location: "Madurai & Chennai",
     quote: "Privacy was our biggest priority. Vivaaha Connect respected our confidentiality and shared matches only after mutual family consent.",
     rating: 5,
-    image: "/hero-image.jpg",
-    matchType: "India-wide Connect"
+    image: couple3,
+    matchType: "Tamil Nadu Connect"
   }
 ];
 
@@ -80,7 +84,7 @@ export const FAQ_DATA: FAQItem[] = [
   {
     id: "faq-2",
     question: "Do you support all communities, religions, and castes?",
-    answer: "Yes, absolutely! Vivaaha Connect proudly welcomes brides and grooms from all religions, all castes, and all communities across Tamil Nadu and India. Matchmaking is open to everyone seeking a genuine life partner.",
+    answer: "Yes, absolutely! Vivaaha Connect proudly welcomes brides and grooms from all religions, all castes, and all communities across Tamil Nadu. Matchmaking is open to everyone seeking a genuine life partner.",
     category: "General"
   },
   {
@@ -136,12 +140,12 @@ export const WHY_CHOOSE_US_ITEMS = [
   },
   {
     title: "Friendly Guidance",
-    description: "Empathetic communication and patient family consultation tailored to modern expectations.",
+    description: "Empathetic communication and patient consultation tailored to modern expectations.",
     icon: "Users"
   },
   {
-    title: "Support Across TN & India",
-    description: "Extensive network reaching brides and grooms in Tamil Nadu, South India, and across the nation.",
+    title: "Support Across Tamil Nadu",
+    description: "Extensive network reaching brides and grooms across all regions of Tamil Nadu.",
     icon: "MapPin"
   }
 ];
@@ -157,7 +161,7 @@ export const FEATURES_LIST: FeatureItem[] = [
   { title: "Online Registration", description: "Convenient Google Form registration available 24/7 on mobile or desktop.", iconName: "Laptop", tag: "Easy Form" },
   { title: "Phone Assistance", description: "Direct voice guidance from experienced Tamil matrimony consultants.", iconName: "PhoneForwarded", tag: "Consultation" },
   { title: "Tamil Nadu Coverage", description: "Deep reach in Coimbatore, Chennai, Madurai, Trichy, Salem, Tiruppur & beyond.", iconName: "Map", tag: "Local Focus" },
-  { title: "India-wide Guidance", description: "Connecting South Indian families across Bengaluru, Hyderabad, Mumbai, and NRI hubs.", iconName: "Compass", tag: "Pan-India" },
+  { title: "Tamil Nadu Guidance", description: "Connecting families across all districts and major cities in Tamil Nadu.", iconName: "Compass", tag: "Tamil Nadu" },
   { title: "Quick Response", description: "Prompt feedback and match profile updates within 24–48 hours of review.", iconName: "Clock", tag: "Fast" }
 ];
 
@@ -192,7 +196,7 @@ export const TIMELINE_STEPS: StepItem[] = [
   },
   {
     step: 5,
-    title: "Family Discussion",
+    title: "Discussion",
     subtitle: "Mutual Consent",
     description: "Initiate respectful family talks with matched prospective partners.",
     iconName: "MessageCircle"

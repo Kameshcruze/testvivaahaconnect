@@ -54,7 +54,7 @@ export default function App() {
         <ServicesSection onOpenCallModal={handleOpenCallModal} />
         <RegistrationProcess />
         <FeaturesSection />
-        <StatisticsSection />
+        {/* <StatisticsSection /> */}
         <TestimonialsSection />
         <FAQSection onOpenCallModal={handleOpenCallModal} />
         <FinalCTA onOpenCallModal={handleOpenCallModal} />

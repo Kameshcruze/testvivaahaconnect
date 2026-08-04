@@ -51,7 +51,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#C89B63]/30 shadow-sm backdrop-blur-md self-center lg:self-start mb-3"
             >
               <span className="text-xs sm:text-sm font-semibold text-[#6A1E2C]">
-                Trusted Matrimony Across Tamil Nadu & India
+                Trusted Matrimony Across Tamil Nadu
               </span>
             </motion.div>
 
@@ -79,7 +79,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
             {/* Elegant Open to All Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#F8E8DA]/80 border border-[#C89B63]/30 backdrop-blur-sm self-center lg:self-start mb-5 text-xs sm:text-sm font-semibold text-[#6A1E2C]">
               <UserCheck className="w-4 h-4 text-[#C89B63] shrink-0" />
-              <span>Open to All Communities Across Tamil Nadu & India</span>
+              <span>Open to All Communities Across Tamil Nadu</span>
             </div>
 
             {/* Trust Card (4 points) */}
@@ -129,7 +129,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
             <div className="relative w-full rounded-3xl overflow-hidden border border-[#C89B63]/30 shadow-xl bg-[#6A1E2C]/5 aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/10]">
               <img
                 src={heroImage}
-                alt="Traditional Indian Bride and Groom - Vivaaha Connect"
+                alt="Traditional Bride and Groom - Vivaaha Connect"
                 className="w-full h-full object-cover object-center"
               />
               
@@ -204,8 +204,8 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               {/* Tab Content */}
               <p className="text-xs sm:text-sm text-[#222222]/80 leading-relaxed mb-4">
                 {activeTab === 'bride'
-                  ? 'Register bride profiles with complete confidentiality. Connect with educated, well-settled grooms across all communities in Tamil Nadu and India.'
-                  : 'Register groom profiles with complete confidentiality. Connect with educated, well-settled brides across all communities in Tamil Nadu and India.'}
+                  ? 'Register bride profiles with complete confidentiality. Connect with educated, well-settled grooms across all communities in Tamil Nadu.'
+                  : 'Register groom profiles with complete confidentiality. Connect with educated, well-settled brides across all communities in Tamil Nadu.'}
               </p>
 
               {/* Bullet Points */}

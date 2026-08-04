@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Heart, ExternalLink, Phone, Mail, MapPin, ShieldCheck, ArrowUp } from 'lucide-react';
-import { GOOGLE_FORM_URL, PHONE_NUMBER, EMAIL_ADDRESS, LOCATION_ADDRESS } from '../types';
+import { Heart, ExternalLink, Phone, MapPin, ArrowUp } from 'lucide-react';
+import { GOOGLE_FORM_URL, PHONE_NUMBER, LOCATION_ADDRESS } from '../types';
 
 export default function Footer() {
   const [modalOpen, setModalOpen] = useState<'privacy' | 'terms' | null>(null);
@@ -34,11 +34,11 @@ export default function Footer() {
             </div>
 
             <p className="text-xs text-[#FAF3EB]/70 leading-relaxed">
-              Vivaaha Connect is a trusted matrimony service helping brides and grooms from all communities across Tamil Nadu and India connect with genuine life partners through authentic profile verification, complete privacy, and friendly assistance.
+              Vivaaha Connect is a trusted matrimony service helping brides and grooms from all communities across Tamil Nadu connect with genuine life partners through authentic profile verification, complete privacy, and friendly assistance.
             </p>
 
             <p className="text-xs font-tamil text-[#C89B63]">
-              தமிழ்நாடு மற்றும் இந்தியா முழுவதுமுள்ள அனைத்து சமுதாயத்தினருக்குமான திருமணச் சேவை
+              தமிழ்நாடு முழுவதுமுள்ள அனைத்து சமுதாயத்தினருக்குமான திருமணச் சேவை
             </p>
           </div>
 
@@ -133,12 +133,6 @@ export default function Footer() {
                   {PHONE_NUMBER}
                 </a>
               </p>
-              <p className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[#C89B63] shrink-0" />
-                <a href={`mailto:${EMAIL_ADDRESS}`} className="hover:text-[#C89B63] transition">
-                  {EMAIL_ADDRESS}
-                </a>
-              </p>
             </div>
 
             <div className="pt-2">
@@ -157,12 +151,22 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#FAF3EB]/60">
-          <p>© {new Date().getFullYear()} Vivaaha Connect. All rights reserved. Connecting Hearts • Building Families.</p>
+          <div className="text-center sm:text-left">
+            <p>© {new Date().getFullYear()} Vivaaha Connect. All rights reserved.</p>
+            <p className="mt-1 text-[11px] text-[#FAF3EB]/50 text-center sm:text-left">
+              Developed by{' '}
+              <a
+                href="https://elitewebdevelopers.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#C89B63] hover:underline font-semibold"
+              >
+                Elite
+              </a>
+            </p>
+          </div>
           
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1 text-[#C89B63]">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" /> 100% Secure & Confidential
-            </span>
             <button
               onClick={scrollToTop}
               className="p-2 rounded-xl bg-white/10 hover:bg-[#C89B63] hover:text-[#2D0A11] transition text-[#FFF9F5]"

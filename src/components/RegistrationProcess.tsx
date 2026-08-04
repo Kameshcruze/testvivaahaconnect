@@ -24,7 +24,7 @@ export default function RegistrationProcess() {
     },
     {
       step: 4,
-      title: "Family Discussion",
+      title: "Discussion",
       description: "Connect and discuss with interested candidate families through mutual consent.",
       icon: Users,
     },

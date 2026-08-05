@@ -29,7 +29,7 @@ export default function Footer() {
             </div>
 
             <p className="text-xs text-[#FAF3EB]/70 leading-relaxed">
-              Vivaaha Connect is a trusted matrimony service helping brides and grooms from all communities across Tamil Nadu connect with genuine life partners through authentic profile verification, complete privacy, and friendly assistance.
+              Vivaaha Connect is a trusted matrimonial platform committed to helping individuals find meaningful life partners through verified profiles, secure communication, and personalized matchmaking support. We don't just connect profiles—we connect families for a brighter future.
             </p>
 
             <p className="text-xs font-tamil text-[#C89B63]">

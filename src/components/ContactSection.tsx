@@ -14,7 +14,13 @@ export default function ContactSection() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.phone) return;
+    if (!formData.name || !formData.phone || !formData.community || !formData.notes) return;
+
+    const textMessage = `Hello Vivaaha Connect,\n\nI would like to request a callback:\n\n• Name: ${formData.name}\n• Phone / WhatsApp: ${formData.phone}\n• Community: ${formData.community}\n• Details / Preferred Time: ${formData.notes}`;
+
+    const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;
+    window.open(whatsappUrl, '_blank');
+
     setSubmitted(true);
   };
 
@@ -144,7 +150,7 @@ export default function ContactSection() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1">
-                          Your Name (Candidate / Parent)
+                          Your Name
                         </label>
                         <input
                           type="text"
@@ -163,7 +169,7 @@ export default function ContactSection() {
                         <input
                           type="tel"
                           required
-                          placeholder=""
+                          placeholder="e.g. +91 98765 43210"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5] text-sm focus:outline-none focus:border-[#6A1E2C] transition"
@@ -173,11 +179,12 @@ export default function ContactSection() {
 
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1">
-                        Community / Religion (Optional)
+                        Community
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Any community / Hindu "
+                        required
+                        placeholder="e.g. Any community"
                         value={formData.community}
                         onChange={(e) => setFormData({ ...formData, community: e.target.value })}
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5] text-sm focus:outline-none focus:border-[#6A1E2C] transition"
@@ -190,6 +197,7 @@ export default function ContactSection() {
                       </label>
                       <textarea
                         rows={3}
+                        required
                         placeholder="e.g. Looking for bride, BE graduate, Coimbatore. Please call in evening."
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}

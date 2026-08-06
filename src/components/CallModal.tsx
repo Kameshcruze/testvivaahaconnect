@@ -22,7 +22,12 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
 
   const handleCallbackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneInput) return;
+    if (!phoneInput || !candidateName) return;
+
+    const textMessage = `Hello Vivaaha Connect,\n\nI would like to request a quick callback:\n\n• Name: ${candidateName}\n• Phone: ${phoneInput}`;
+    const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;
+    window.open(whatsappUrl, '_blank');
+
     setCallbackRequested(true);
   };
 
@@ -122,7 +127,8 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
                 <form onSubmit={handleCallbackSubmit} className="space-y-3">
                   <input
                     type="text"
-                    placeholder="Candidate or Parent Name"
+                    required
+                    placeholder="Your Name"
                     value={candidateName}
                     onChange={(e) => setCandidateName(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-[#C89B63]/30 bg-[#FFF9F5]/50 text-sm focus:outline-none focus:border-[#6A1E2C] transition"

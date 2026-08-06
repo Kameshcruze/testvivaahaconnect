@@ -3,6 +3,7 @@ import { motion, useScroll, useSpring, AnimatePresence } from 'motion/react';
 import { Heart, Menu, X, ArrowRight, Phone } from 'lucide-react';
 import { GOOGLE_FORM_URL, PHONE_NUMBER } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
+import { navigateToSection, getSectionIdFromPath, SECTION_PATHS } from '../utils/navigation';
 
 interface NavbarProps {
   onOpenCallModal: () => void;
@@ -22,6 +23,38 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
   });
 
   useEffect(() => {
+    // Initial mount handling for direct path (e.g., /services) or hash (#services)
+    const initialHash = window.location.hash.replace('#', '');
+    const initialPath = window.location.pathname;
+
+    let initialTarget = 'home';
+    if (initialHash) {
+      initialTarget = getSectionIdFromPath(initialHash);
+    } else if (initialPath && initialPath !== '/') {
+      initialTarget = getSectionIdFromPath(initialPath);
+    }
+
+    if (initialTarget && initialTarget !== 'home') {
+      setTimeout(() => {
+        navigateToSection(initialTarget);
+      }, 250);
+    } else if (initialHash) {
+      window.history.replaceState({ sectionId: 'home' }, '', '/');
+    }
+
+    const handlePopState = () => {
+      const targetId = getSectionIdFromPath(window.location.pathname);
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      } else if (targetId === 'home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      setActiveSection(targetId);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
     const handleScroll = () => {
       if (window.scrollY > 20) {
         setIsScrolled(true);
@@ -33,29 +66,41 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
       const sections = ['home', 'about', 'services', 'registration', 'contact'];
       const scrollPosition = window.scrollY + 120;
 
+      let currentSection = 'home';
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el) {
           const top = el.offsetTop;
           const height = el.offsetHeight;
           if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(section);
+            currentSection = section;
             break;
           }
         }
       }
+
+      setActiveSection(currentSection);
+
+      // Update URL path cleanly without hash
+      const targetPath = SECTION_PATHS[currentSection] || (currentSection === 'home' ? '/' : `/${currentSection}`);
+      if (window.location.pathname !== targetPath) {
+        window.history.replaceState({ sectionId: currentSection }, '', targetPath);
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   const navLinks = [
-    { name: 'Home', href: '#home', id: 'home' },
-    { name: 'About', href: '#about', id: 'about' },
-    { name: 'Services', href: '#services', id: 'services' },
-    { name: 'Registration', href: '#registration', id: 'registration' },
-    { name: 'Contact', href: '#contact', id: 'contact' },
+    { name: 'Home', path: '/', id: 'home' },
+    { name: 'About', path: '/about', id: 'about' },
+    { name: 'Services', path: '/services', id: 'services' },
+    { name: 'Registration', path: '/registration', id: 'registration' },
+    { name: 'Contact', path: '/contact', id: 'contact' },
   ];
 
   return (
@@ -76,7 +121,11 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
           }`}
         >
           {/* Left Side: Logo Image */}
-          <a href="#home" className="flex items-center group shrink-0 py-1">
+          <a
+            href="/"
+            onClick={(e) => navigateToSection('home', e)}
+            className="flex items-center group shrink-0 py-1"
+          >
             <img
               src={logoImg}
               alt="Vivaaha Connect"
@@ -91,7 +140,8 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
               return (
                 <a
                   key={link.name}
-                  href={link.href}
+                  href={link.path}
+                  onClick={(e) => navigateToSection(link.id, e)}
                   className={`relative px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 rounded-full ${
                     isActive
                       ? 'text-[#6A1E2C] font-bold'
@@ -158,8 +208,11 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
                 {navLinks.map((link) => (
                   <a
                     key={link.name}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
+                    href={link.path}
+                    onClick={(e) => {
+                      setMobileMenuOpen(false);
+                      navigateToSection(link.id, e);
+                    }}
                     className="px-4 py-3 rounded-2xl text-sm font-semibold text-[#222222] hover:bg-[#6A1E2C]/10 hover:text-[#6A1E2C] transition flex items-center justify-between"
                   >
                     <span>{link.name}</span>

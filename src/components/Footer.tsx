@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Heart, ExternalLink, Phone, MapPin, ArrowUp } from 'lucide-react';
 import { GOOGLE_FORM_URL, PHONE_NUMBER, HO_ADDRESS, BRANCH_ADDRESS } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
+import { navigateToSection } from '../utils/navigation';
 
 export default function Footer() {
   const [modalOpen, setModalOpen] = useState<'privacy' | 'terms' | null>(null);
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateToSection('home');
   };
 
   return (
@@ -20,13 +21,17 @@ export default function Footer() {
           
           {/* Col 1: Brand Info */}
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left md:col-span-2 lg:col-span-4 space-y-4">
-            <div className="flex items-center justify-center lg:justify-start gap-2.5">
+            <a
+              href="/"
+              onClick={(e) => navigateToSection('home', e)}
+              className="flex items-center justify-center lg:justify-start gap-2.5"
+            >
               <img
                 src={logoImg}
                 alt="Vivaaha Connect"
                 className="h-12 w-auto max-w-[200px] object-contain bg-white/95 px-3 py-1.5 rounded-xl border border-[#C89B63]/40 shadow-md"
               />
-            </div>
+            </a>
 
             <p className="text-xs text-[#FAF3EB]/70 leading-relaxed">
               Vivaaha Connect is a trusted matrimonial platform committed to helping individuals find meaningful life partners through verified profiles, secure communication, and personalized matchmaking support. We don't just connect profiles—we connect families for a brighter future.
@@ -46,22 +51,22 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2 text-xs font-medium text-[#FAF3EB]/80">
                 <li>
-                  <a href="#home" className="hover:text-[#C89B63] transition">Home</a>
+                  <a href="/" onClick={(e) => navigateToSection('home', e)} className="hover:text-[#C89B63] transition">Home</a>
                 </li>
                 <li>
-                  <a href="#about" className="hover:text-[#C89B63] transition">About Us</a>
+                  <a href="/about" onClick={(e) => navigateToSection('about', e)} className="hover:text-[#C89B63] transition">About Us</a>
                 </li>
                 <li>
-                  <a href="#services" className="hover:text-[#C89B63] transition">Services</a>
+                  <a href="/services" onClick={(e) => navigateToSection('services', e)} className="hover:text-[#C89B63] transition">Services</a>
                 </li>
                 <li>
-                  <a href="#why-choose-us" className="hover:text-[#C89B63] transition">Why Choose Us</a>
+                  <a href="/why-choose-us" onClick={(e) => navigateToSection('why-choose-us', e)} className="hover:text-[#C89B63] transition">Why Choose Us</a>
                 </li>
                 <li>
-                  <a href="#registration" className="hover:text-[#C89B63] transition">Process</a>
+                  <a href="/registration" onClick={(e) => navigateToSection('registration', e)} className="hover:text-[#C89B63] transition">Process</a>
                 </li>
                 <li>
-                  <a href="#contact" className="hover:text-[#C89B63] transition">Contact</a>
+                  <a href="/contact" onClick={(e) => navigateToSection('contact', e)} className="hover:text-[#C89B63] transition">Contact</a>
                 </li>
               </ul>
             </div>

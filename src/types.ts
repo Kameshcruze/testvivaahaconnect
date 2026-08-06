@@ -10,17 +10,17 @@ export const LOCATION_ADDRESS = "Coimbatore & Karur, Tamil Nadu";
 
 export const HO_ADDRESS = {
   title: "Head Office",
-  addressLine1: "30, Devi Poorani Nagar, Near Cheran Ma Nagar,",
-  addressLine2: "Kalapatti(po), Coimbatore -48",
-  fullText: "30, Devi Poorani Nagar, Near Cheran Ma Nagar, Kalapatti(po), Coimbatore -48",
+  addressLine1: "30, Devi Poorani Nagar,",
+  addressLine2: "Kalapatti(po), Coimbatore -641 048",
+  fullText: "30, Devi Poorani Nagar, Kalapatti(po), Coimbatore -641 048",
   city: "Coimbatore"
 };
 
 export const BRANCH_ADDRESS = {
   title: "Branch Office",
   addressLine1: "22, Senguthapuram 4th Cross,",
-  addressLine2: "Karur-02",
-  fullText: "22, Senguthapuram 4th Cross, Karur-02",
+  addressLine2: "Karur-639 002",
+  fullText: "22, Senguthapuram 4th Cross, Karur-639 002",
   city: "Karur"
 };
 

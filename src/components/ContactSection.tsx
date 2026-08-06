@@ -88,7 +88,7 @@ export default function ContactSection() {
                   <Phone className="w-5 h-5 text-[#C89B63]" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-[#6A1E2C]">Direct Helpline & WhatsApp</h4>
+                  <h4 className="text-sm font-bold text-[#6A1E2C]">Helpline & WhatsApp</h4>
                   <a
                     href={`tel:${PHONE_RAW}`}
                     className="text-base font-bold text-[#6A1E2C] hover:text-[#C89B63] transition"

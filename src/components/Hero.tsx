@@ -66,14 +66,14 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               </span>
             </div>
 
-            {/* Main Heading (Desktop ~64px-72px, Mobile ~36px-42px) */}
-            <h1 className="text-3xl sm:text-5xl lg:text-[68px] font-bold text-[#6A1E2C] leading-[1.1] tracking-tight mb-4">
+            {/* Main Heading */}
+            <h1 className="text-3xl sm:text-5xl lg:text-[60px] font-bold text-[#6A1E2C] leading-[1.15] tracking-tight mb-4">
               Find Your <span className="text-[#C89B63]">Perfect</span> Life Partner
             </h1>
 
             {/* Description */}
-            <p className="text-sm sm:text-base lg:text-[18px] text-[#222222]/80 leading-relaxed mb-4 max-w-[520px] mx-auto lg:mx-0">
-              We help brides and grooms from all communities find genuine, verified life partners through a trusted and personalized matchmaking service.
+            <p className="text-sm sm:text-base lg:text-[17px] text-[#222222]/80 leading-relaxed mb-4 max-w-[520px] mx-auto lg:mx-0">
+              Serving all communities across Tamil Nadu with trusted matrimonial connections and personalized matchmaking services.
             </p>
 
             {/* Elegant Open to All Badge */}

@@ -166,11 +166,11 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
             {/* Outline Call Us Button */}
             <button
               onClick={onOpenCallModal}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border border-[#C89B63]/50 text-[#6A1E2C] font-semibold text-xs sm:text-xs bg-white/60 hover:bg-[#6A1E2C] hover:text-white hover:border-[#6A1E2C] transition-all duration-300 shadow-sm"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border border-[#C89B63]/50 text-[#6A1E2C] font-semibold text-xs sm:text-xs bg-white/60 hover:bg-[#6A1E2C] hover:text-white hover:border-[#6A1E2C] transition-all duration-300 shadow-sm group"
             >
-              <Phone className="w-3.5 h-3.5 text-[#C89B63] group-hover:text-white" />
+              <Phone className="w-3.5 h-3.5 text-[#C89B63] group-hover:text-white transition-colors" />
               <span>Call Us</span>
-              <span className="font-bold text-[#6A1E2C] group-hover:text-white">{PHONE_NUMBER}</span>
+              <span className="font-bold text-[#6A1E2C] group-hover:text-white transition-colors">{PHONE_NUMBER}</span>
             </button>
           </div>
 

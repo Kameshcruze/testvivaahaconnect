@@ -8,6 +8,7 @@ export const SECTION_PATHS: Record<string, string> = {
   registration: '/registration',
   faq: '/faq',
   contact: '/contact',
+  testing: '/testing',
 };
 
 export function getSectionIdFromPath(path: string): string {

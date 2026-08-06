@@ -34,7 +34,7 @@ export default function Footer() {
             </a>
 
             <p className="text-xs text-[#FAF3EB]/70 leading-relaxed">
-              Vivaaha Connect is a trusted matrimonial platform committed to helping individuals find meaningful life partners through verified profiles, secure communication, and personalized matchmaking support. We don't just connect profiles—we connect families for a brighter future.
+              Serving all communities across Tamil Nadu with trusted matrimonial connections and personalized matchmaking services.
             </p>
 
             <p className="text-xs font-tamil text-[#C89B63]">
@@ -67,6 +67,16 @@ export default function Footer() {
                 </li>
                 <li>
                   <a href="/contact" onClick={(e) => navigateToSection('contact', e)} className="hover:text-[#C89B63] transition">Contact</a>
+                </li>
+                <li>
+                  <a
+                    href="/testing"
+                    onClick={(e) => navigateToSection('testing', e)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#C89B63]/20 text-[#C89B63] hover:bg-[#C89B63] hover:text-[#6A1E2C] font-bold transition-all shadow-sm"
+                  >
+                    <span>Testing</span>
+                    <span className="text-[10px] px-1 bg-[#C89B63] text-[#6A1E2C] rounded font-black">NEW</span>
+                  </a>
                 </li>
               </ul>
             </div>

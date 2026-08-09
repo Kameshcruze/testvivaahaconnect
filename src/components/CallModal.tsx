@@ -47,24 +47,24 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white border border-[#C89B63]/30 p-6 sm:p-8 shadow-2xl"
+            className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-white border border-[#C89B63]/30 p-5 sm:p-7 shadow-2xl box-border"
           >
             {/* Close button */}
             <button
               onClick={resetAndClose}
-              className="absolute top-4 right-4 p-2 rounded-full text-[#6A1E2C]/70 hover:text-[#6A1E2C] hover:bg-[#F8E8DA]/50 transition"
+              className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 p-2 rounded-full text-[#6A1E2C]/70 hover:text-[#6A1E2C] hover:bg-[#F8E8DA]/50 transition z-10"
               aria-label="Close dialog"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Header */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#6A1E2C] text-[#FFF9F5] flex items-center justify-center shadow-lg shadow-[#6A1E2C]/20">
-                <Phone className="w-6 h-6" />
+            <div className="flex items-center gap-3 mb-4 pr-10">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl bg-[#6A1E2C] text-[#FFF9F5] flex items-center justify-center shadow-lg shadow-[#6A1E2C]/20">
+                <Phone className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <h3 className="text-xl font-heading font-bold text-[#6A1E2C]">
+              <div className="min-w-0">
+                <h3 className="text-lg sm:text-xl font-heading font-bold text-[#6A1E2C] leading-snug">
                   Call Vivaaha Connect
                 </h3>
                 <p className="text-xs text-[#222222]/70">
@@ -133,18 +133,18 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
                     onChange={(e) => setCandidateName(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-[#C89B63]/30 bg-[#FFF9F5]/50 text-sm focus:outline-none focus:border-[#6A1E2C] transition"
                   />
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2.5">
                     <input
                       type="tel"
                       required
-                      placeholder="Your Phone / WhatsApp Number"
+                      placeholder="Phone / WhatsApp Number"
                       value={phoneInput}
                       onChange={(e) => setPhoneInput(e.target.value)}
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-[#C89B63]/30 bg-[#FFF9F5]/50 text-sm focus:outline-none focus:border-[#6A1E2C] transition"
+                      className="w-full sm:flex-1 px-4 py-2.5 rounded-xl border border-[#C89B63]/30 bg-[#FFF9F5]/50 text-sm focus:outline-none focus:border-[#6A1E2C] transition min-w-0"
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2.5 rounded-xl bg-[#C89B63] text-white font-medium text-sm flex items-center gap-1.5 hover:bg-[#b0844d] transition shrink-0"
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#C89B63] hover:bg-[#b0844d] text-white font-semibold text-sm flex items-center justify-center gap-1.5 transition shrink-0 active:scale-[0.98]"
                     >
                       <Send className="w-4 h-4" /> Request
                     </button>

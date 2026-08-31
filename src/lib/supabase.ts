@@ -1,15 +1,40 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Get credentials from localStorage or Vite environment variables
+export const getSupabaseConfig = (): { url: string; anonKey: string } => {
+  const localUrl = typeof window !== 'undefined' ? localStorage.getItem('vivaaha_supabase_url') : null;
+  const localKey = typeof window !== 'undefined' ? localStorage.getItem('vivaaha_supabase_anon_key') : null;
+
+  const url = (localUrl || import.meta.env.VITE_SUPABASE_URL || '').trim();
+  const anonKey = (localKey || import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+  return { url, anonKey };
+};
+
+export const saveSupabaseConfig = (url: string, anonKey: string): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('vivaaha_supabase_url', url.trim());
+    localStorage.setItem('vivaaha_supabase_anon_key', anonKey.trim());
+    supabaseInstance = null; // reset client instance
+  }
+};
+
+export const clearSupabaseConfig = (): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('vivaaha_supabase_url');
+    localStorage.removeItem('vivaaha_supabase_anon_key');
+    supabaseInstance = null;
+  }
+};
 
 export const isSupabaseConfigured = (): boolean => {
+  const { url, anonKey } = getSupabaseConfig();
   return (
-    Boolean(supabaseUrl) &&
-    Boolean(supabaseAnonKey) &&
-    supabaseUrl !== 'https://your-project-id.supabase.co' &&
-    supabaseAnonKey !== 'your-supabase-anon-key' &&
-    supabaseUrl.startsWith('https://')
+    Boolean(url) &&
+    Boolean(anonKey) &&
+    url !== 'https://your-project-id.supabase.co' &&
+    anonKey !== 'your-supabase-anon-key' &&
+    url.startsWith('https://')
   );
 };
 
@@ -17,14 +42,52 @@ export const isSupabaseConfigured = (): boolean => {
 let supabaseInstance: SupabaseClient | null = null;
 
 export const getSupabase = (): SupabaseClient | null => {
+  const { url, anonKey } = getSupabaseConfig();
   if (!supabaseInstance && isSupabaseConfigured()) {
     try {
-      supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+      supabaseInstance = createClient(url, anonKey);
     } catch (err) {
       console.warn('Failed to initialize Supabase client:', err);
     }
   }
   return supabaseInstance;
+};
+
+/**
+ * Tests the live connection to Supabase database
+ */
+export const testSupabaseConnection = async (): Promise<{
+  connected: boolean;
+  error?: string;
+  tableFound?: boolean;
+  recordCount?: number;
+}> => {
+  const supabase = getSupabase();
+  if (!supabase || !isSupabaseConfigured()) {
+    return { connected: false, error: 'Supabase URL or Anon Key is missing.' };
+  }
+
+  try {
+    const { data, error, count } = await supabase
+      .from('registrations')
+      .select('id', { count: 'exact', head: true });
+
+    if (error) {
+      return {
+        connected: false,
+        error: error.message,
+        tableFound: error.code !== '42P01', // 42P01 is undefined_table
+      };
+    }
+
+    return {
+      connected: true,
+      tableFound: true,
+      recordCount: count ?? (data ? data.length : 0),
+    };
+  } catch (err: any) {
+    return { connected: false, error: err.message || 'Connection failed' };
+  }
 };
 
 export interface RegistrationFormData {
@@ -158,7 +221,7 @@ export async function uploadRegistrationDocument(
  */
 export async function submitRegistrationForm(
   formData: RegistrationFormData
-): Promise<{ success: boolean; id: string; isCloud: boolean; error?: string }> {
+): Promise<{ success: boolean; id: string; isCloud: boolean; offline?: boolean; error?: string }> {
   const registrationId = `VC-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
   const now = new Date().toISOString();
   const supabase = getSupabase();
@@ -236,10 +299,10 @@ export async function submitRegistrationForm(
       if (error) {
         console.error('Supabase insert error:', error);
         return {
-          success: true,
+          success: false,
           id: registrationId,
           isCloud: false,
-          error: `Saved locally. (Supabase notice: ${error.message})`,
+          error: `Supabase Insert Error: ${error.message} ${error.details ? `(${error.details})` : ''}`,
         };
       }
 
@@ -251,19 +314,21 @@ export async function submitRegistrationForm(
     } catch (err: any) {
       console.error('Supabase submission failed:', err);
       return {
-        success: true,
+        success: false,
         id: registrationId,
         isCloud: false,
-        error: err.message || 'Saved to offline cache.',
+        error: `Database connection failed: ${err.message || 'Unknown network error'}`,
       };
     }
   }
 
-  // Demo / local mode
+  // If Supabase is not configured yet
   return {
     success: true,
     id: registrationId,
     isCloud: false,
+    offline: true,
+    error: 'Saved locally in browser cache. Connect Supabase to sync live to your database.',
   };
 }
 
@@ -280,13 +345,13 @@ CREATE TABLE IF NOT EXISTS public.registrations (
   id TEXT PRIMARY KEY,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   name TEXT NOT NULL,
-  gender TEXT NOT NULL,
+  gender TEXT,
   dob DATE,
   age INTEGER,
   height TEXT,
   weight TEXT,
   marital_status TEXT,
-  mobile_number TEXT NOT NULL,
+  mobile_number TEXT,
   email TEXT,
   whatsapp_number TEXT,
   current_location TEXT,

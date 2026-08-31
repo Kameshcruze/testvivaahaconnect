@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   User,
@@ -118,7 +118,15 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
   const jathagamInputRef = useRef<HTMLInputElement>(null);
   const certInputRef = useRef<HTMLInputElement>(null);
 
-  const isConnected = isSupabaseConfigured();
+  const [isConnected, setIsConnected] = useState<boolean>(isSupabaseConfigured());
+
+  const refreshConnection = () => {
+    setIsConnected(isSupabaseConfigured());
+  };
+
+  useEffect(() => {
+    refreshConnection();
+  }, []);
 
   // Auto calculate age from DOB
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,46 +185,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
     reader.readAsDataURL(file);
   };
 
-  // Step navigation validations
+  // Step navigation validations: ONLY candidate name is mandatory
   const validateStep = (step: number): boolean => {
     setErrorMessage(null);
     if (step === 1) {
       if (!formData.name.trim()) {
         setErrorMessage('Please enter candidate full name.');
-        return false;
-      }
-      if (!formData.gender) {
-        setErrorMessage('Please select gender (Male or Female).');
-        return false;
-      }
-      if (!formData.dob) {
-        setErrorMessage('Please choose date of birth.');
-        return false;
-      }
-      if (!formData.height.trim()) {
-        setErrorMessage('Please enter height.');
-        return false;
-      }
-    } else if (step === 2) {
-      if (!formData.mobileNumber.trim() || formData.mobileNumber.length < 10) {
-        setErrorMessage('Please enter a valid 10-digit mobile number.');
-        return false;
-      }
-      if (!formData.currentLocation.trim()) {
-        setErrorMessage('Please enter current location.');
-        return false;
-      }
-      if (!formData.community.trim()) {
-        setErrorMessage('Please enter community / caste details.');
-        return false;
-      }
-    } else if (step === 3) {
-      if (!formData.educationQualification.trim()) {
-        setErrorMessage('Please enter highest educational qualification.');
-        return false;
-      }
-      if (!formData.profession.trim()) {
-        setErrorMessage('Please enter current profession or job title.');
         return false;
       }
     }
@@ -236,14 +210,19 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (currentStep < 5) {
-      handleNextStep();
-      return;
+  // Comprehensive validation across all steps: only name is mandatory
+  const validateAllSteps = (): boolean => {
+    if (!formData.name.trim()) {
+      setCurrentStep(1);
+      setErrorMessage('Please enter candidate full name.');
+      return false;
     }
-    if (!validateStep(currentStep)) return;
+    return true;
+  };
+
+  // Final Form submission triggered ONLY on Step 5
+  const handleFinalSubmit = async () => {
+    if (!validateAllSteps()) return;
 
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -282,7 +261,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
         setSubmitSuccessId(response.id);
         setSubmissionIsCloud(response.isCloud);
       } else {
-        setErrorMessage(response.error || 'Failed to submit registration. Please try again.');
+        setErrorMessage(response.error || 'Failed to submit registration. Please check database connection.');
       }
     } catch (err: any) {
       console.error('Submission error:', err);
@@ -307,6 +286,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
       <SupabaseGuideModal
         isOpen={showSupabaseGuide}
         onClose={() => setShowSupabaseGuide(false)}
+        onConnectionUpdated={refreshConnection}
       />
 
       <div className="max-w-4xl mx-auto">
@@ -499,7 +479,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
             )}
 
             {/* Form Steps */}
-            <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
+            <form onSubmit={(e) => e.preventDefault()} className="p-6 sm:p-8 space-y-6">
               {/* STEP 1: Personal Details */}
               {currentStep === 1 && (
                 <motion.div
@@ -536,7 +516,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Gender (Male / Female checkboxes / radio) */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Gender (Profile For) *
+                        Gender (Profile For)
                       </label>
                       <div className="grid grid-cols-2 gap-3">
                         <label
@@ -580,13 +560,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Date of Birth with Calendar */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                        <span>Date of Birth (Calendar) *</span>
+                        <span>Date of Birth (Calendar)</span>
                       </label>
                       <div className="relative">
                         <input
                           type="date"
                           name="dob"
-                          required
                           value={formData.dob}
                           onChange={handleDobChange}
                           className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
@@ -597,12 +576,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Age */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Age (Years) *
+                        Age (Years)
                       </label>
                       <input
                         type="number"
                         name="age"
-                        required
                         min="18"
                         max="80"
                         value={formData.age}
@@ -615,12 +593,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Height */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Height *
+                        Height
                       </label>
                       <input
                         type="text"
                         name="height"
-                        required
                         value={formData.height}
                         onChange={handleInputChange}
                         placeholder="e.g. 5 ft 6 in / 168 cm"
@@ -646,7 +623,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Marital Status */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Marital Status *
+                        Marital Status
                       </label>
                       <select
                         name="maritalStatus"
@@ -684,12 +661,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Mobile Number */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Mobile Number *
+                        Mobile Number
                       </label>
                       <input
                         type="tel"
                         name="mobileNumber"
-                        required
                         value={formData.mobileNumber}
                         onChange={handleInputChange}
                         placeholder="e.g. 9876543210"
@@ -742,12 +718,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Current Location */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Current Location (City / State) *
+                        Current Location (City / State)
                       </label>
                       <input
                         type="text"
                         name="currentLocation"
-                        required
                         value={formData.currentLocation}
                         onChange={handleInputChange}
                         placeholder="e.g. Coimbatore, Chennai, Bangalore"
@@ -773,12 +748,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Community / Caste */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Community / Caste *
+                        Community / Caste
                       </label>
                       <input
                         type="text"
                         name="community"
-                        required
                         value={formData.community}
                         onChange={handleInputChange}
                         placeholder="e.g. Kongu Vellalar, Mudaliar, Chettiar, Nadar, etc."
@@ -839,12 +813,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Education Qualification */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Education Qualification *
+                        Education Qualification
                       </label>
                       <input
                         type="text"
                         name="educationQualification"
-                        required
                         value={formData.educationQualification}
                         onChange={handleInputChange}
                         placeholder="e.g. B.Tech / MBA / MBBS / Chartered Accountant"
@@ -855,12 +828,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Profession */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Profession / Job Title *
+                        Profession / Job Title
                       </label>
                       <input
                         type="text"
                         name="profession"
-                        required
                         value={formData.profession}
                         onChange={handleInputChange}
                         placeholder="e.g. Senior Software Engineer / Doctor / Business Owner"
@@ -1405,7 +1377,8 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                   </button>
                 ) : (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleFinalSubmit}
                     disabled={isSubmitting}
                     className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#6A1E2C] to-[#8C283B] text-white font-bold text-sm sm:text-base shadow-xl shadow-[#6A1E2C]/25 hover:shadow-[#6A1E2C]/40 hover:scale-[1.01] active:scale-[0.99] transition disabled:opacity-75 cursor-pointer"
                   >

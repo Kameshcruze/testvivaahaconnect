@@ -94,36 +94,12 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       }
       setDataError(null);
 
-      // Try server endpoint first
       let records: RegistrationRecord[] | null = null;
-      try {
-        const url = force ? '/api/admin/registrations?force=true' : '/api/admin/registrations';
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
 
-        if (res.status === 401 && !authToken.startsWith('client_session_')) {
-          handleLogout();
-          setLoginError('Session expired. Please log in again.');
-          return;
-        }
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && Array.isArray(data.registrations)) {
-            records = data.registrations;
-          }
-        }
-      } catch (networkErr) {
-        console.warn('Server endpoint unreachable, falling back to direct database query:', networkErr);
-      }
-
-      // Fallback directly to Supabase client if server endpoint didn't provide records
-      if (!records) {
-        const supabase = getSupabase();
-        if (supabase) {
+      // 1. Fetch directly from Supabase database (works on both static hosting and full-stack servers)
+      const supabase = getSupabase();
+      if (supabase) {
+        try {
           const { data: dbData, error: dbError } = await supabase
             .from('registrations')
             .select('*')
@@ -132,12 +108,35 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
           if (!dbError && dbData) {
             records = dbData as RegistrationRecord[];
           } else if (dbError) {
-            console.warn('Direct database fetch error:', dbError);
+            console.warn('Direct database fetch notice:', dbError.message);
           }
+        } catch (dbErr) {
+          console.warn('Direct Supabase fetch caught:', dbErr);
         }
       }
 
-      // Fallback to local storage if both remote queries yielded nothing
+      // 2. If Supabase direct fetch didn't return records, try server endpoint if available
+      if (!records) {
+        try {
+          const url = force ? '/api/admin/registrations?force=true' : '/api/admin/registrations';
+          const res = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+
+          if (res.ok) {
+            const data = await res.json().catch(() => null);
+            if (data?.success && Array.isArray(data.registrations)) {
+              records = data.registrations;
+            }
+          }
+        } catch (networkErr) {
+          // Ignore network errors on static hosting
+        }
+      }
+
+      // 3. Fallback to local storage if both remote queries yielded nothing
       if (!records) {
         try {
           const localData = JSON.parse(localStorage.getItem('vivaaha_registrations') || '[]');
@@ -181,11 +180,27 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       setLoginLoading(true);
       setLoginError(null);
 
-      // Attempt server authentication first
-      let authSuccess = false;
-      let sessionToken = '';
-      let userData: AdminUser = { username: cleanUser, role: 'Super Admin' };
+      // Check standard administrator credentials immediately
+      const expectedUser = 'admin';
+      const expectedPass = 'vivaaha@admin2026';
 
+      if (
+        cleanUser.toLowerCase() === expectedUser.toLowerCase() &&
+        cleanPass === expectedPass
+      ) {
+        const sessionToken = `vivaaha_session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const userData: AdminUser = { username: cleanUser, role: 'Super Admin' };
+
+        setToken(sessionToken);
+        setAdminUser(userData);
+        sessionStorage.setItem('vivaaha_admin_token', sessionToken);
+        sessionStorage.setItem('vivaaha_admin_user', JSON.stringify(userData));
+        setPasswordInput('');
+        return;
+      }
+
+      // Try server verification for custom backend credentials if configured
+      let serverAuthenticated = false;
       try {
         const res = await fetch('/api/admin/login', {
           method: 'POST',
@@ -197,47 +212,27 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
         });
 
         if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.token) {
-            authSuccess = true;
-            sessionToken = data.token;
-            if (data.user) userData = data.user;
+          const data = await res.json().catch(() => null);
+          if (data?.success && data?.token) {
+            serverAuthenticated = true;
+            setToken(data.token);
+            const userObj = data.user || { username: cleanUser, role: 'Super Admin' };
+            setAdminUser(userObj);
+            sessionStorage.setItem('vivaaha_admin_token', data.token);
+            sessionStorage.setItem('vivaaha_admin_user', JSON.stringify(userObj));
+            setPasswordInput('');
+            return;
           }
         }
       } catch (fetchErr) {
-        console.warn('Server login route error, attempting fallback verification:', fetchErr);
+        // Ignore static hosting 405/404 fetch errors
       }
 
-      // Client-side fallback verification (for static hostings or direct browser execution)
-      if (!authSuccess) {
-        const expectedUser = 'admin';
-        const expectedPass = 'vivaaha@admin2026';
-
-        if (
-          cleanUser.toLowerCase() === expectedUser.toLowerCase() &&
-          cleanPass === expectedPass
-        ) {
-          authSuccess = true;
-          sessionToken = `client_session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-          userData = { username: cleanUser, role: 'Super Admin' };
-        }
-      }
-
-      if (!authSuccess) {
+      if (!serverAuthenticated) {
         setLoginError('Invalid credentials. Please verify your administrator ID and password.');
-        return;
       }
-
-      // Success
-      setToken(sessionToken);
-      setAdminUser(userData);
-      sessionStorage.setItem('vivaaha_admin_token', sessionToken);
-      sessionStorage.setItem('vivaaha_admin_user', JSON.stringify(userData));
-
-      // Clear password field
-      setPasswordInput('');
     } catch (err: any) {
-      setLoginError(err.message || 'Connection error. Please try again.');
+      setLoginError(err.message || 'Error logging in. Please try again.');
     } finally {
       setLoginLoading(false);
     }

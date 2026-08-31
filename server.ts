@@ -193,23 +193,89 @@ app.get('/api/admin/verify', (req, res) => {
   });
 });
 
-// Fetch All Registrations (Protected)
+// Cache for fast admin registrations fetching
+let cachedAdminData: { timestamp: number; data: any[] } | null = null;
+const CACHE_TTL_MS = 5000; // 5 seconds cache to make repeated clicks/refreshes instant
+
+// Public candidate registration submission endpoint
+app.post('/api/registrations', async (req, res) => {
+  try {
+    const payload = req.body;
+    if (!payload || !payload.name) {
+      return res.status(400).json({ error: 'Candidate name is required' });
+    }
+
+    const registrationId = payload.id || `VC-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const recordPayload = {
+      ...payload,
+      id: registrationId,
+      created_at: payload.created_at || new Date().toISOString(),
+      status: payload.status || 'Pending Review',
+    };
+
+    const { error } = await supabase.from('registrations').insert([recordPayload]);
+
+    if (error) {
+      console.warn('Server Supabase insert error:', error.message);
+      return res.status(500).json({ error: error.message });
+    }
+
+    // Invalidate admin cache so fresh record shows up immediately
+    cachedAdminData = null;
+
+    return res.json({
+      success: true,
+      id: registrationId,
+    });
+  } catch (err: any) {
+    console.error('Error in /api/registrations:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
+});
+
+// Fetch All Registrations (Protected) - High speed with memory caching
 app.get('/api/admin/registrations', requireAdmin, async (req, res) => {
   try {
+    const now = Date.now();
+    // Return instant memory cache if valid and not a forced reload
+    if (cachedAdminData && now - cachedAdminData.timestamp < CACHE_TTL_MS && !req.query.force) {
+      return res.json({
+        success: true,
+        count: cachedAdminData.data.length,
+        registrations: cachedAdminData.data,
+        cached: true,
+      });
+    }
+
     const { data, error } = await supabase
       .from('registrations')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching registrations:', error);
+      console.error('Error fetching registrations from database:', error);
+      // If error occurs but we have stale cache, serve stale cache gracefully
+      if (cachedAdminData) {
+        return res.json({
+          success: true,
+          count: cachedAdminData.data.length,
+          registrations: cachedAdminData.data,
+          stale: true,
+        });
+      }
       return res.status(500).json({ error: error.message });
     }
 
+    const resultList = data || [];
+    cachedAdminData = {
+      timestamp: now,
+      data: resultList,
+    };
+
     return res.json({
       success: true,
-      count: data?.length || 0,
-      registrations: data || [],
+      count: resultList.length,
+      registrations: resultList,
     });
   } catch (err: any) {
     console.error('Server error fetching registrations:', err);
@@ -265,6 +331,9 @@ app.patch('/api/admin/registrations/:id', requireAdmin, async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
+    // Invalidate cache
+    cachedAdminData = null;
+
     return res.json({ success: true, registration: data?.[0] });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Internal Server Error' });
@@ -284,6 +353,9 @@ app.delete('/api/admin/registrations/:id', requireAdmin, async (req, res) => {
     if (error) {
       return res.status(500).json({ error: error.message });
     }
+
+    // Invalidate cache
+    cachedAdminData = null;
 
     return res.json({ success: true, message: `Registration ${id} deleted successfully` });
   } catch (err: any) {

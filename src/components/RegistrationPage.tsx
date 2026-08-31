@@ -34,6 +34,7 @@ import {
   submitRegistrationForm,
   uploadRegistrationDocument,
 } from '../lib/supabase';
+import { validateFileSize, MAX_FILE_SIZE_MB } from '../lib/fileOptimizer';
 import { PHONE_NUMBER, PHONE_RAW, KONGU_KULAMS } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
 
@@ -159,14 +160,42 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
     }
   };
 
-  // Photo change handler
+  // Photo change handler with strict 5MB validation
   const handlePhotoSelect = (file: File) => {
+    setErrorMessage(null);
+    const validation = validateFileSize(file);
+    if (!validation.valid) {
+      setErrorMessage(validation.error || 'Photo exceeds maximum allowed limit of 5 MB.');
+      return;
+    }
     setPhotoFile(file);
     const reader = new FileReader();
     reader.onload = () => {
       setPhotoPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
+  };
+
+  // Jathagam file handler with strict 5MB validation
+  const handleJathagamSelect = (file: File) => {
+    setErrorMessage(null);
+    const validation = validateFileSize(file);
+    if (!validation.valid) {
+      setErrorMessage(validation.error || 'Jathagam document exceeds maximum allowed limit of 5 MB.');
+      return;
+    }
+    setJathagamFile(file);
+  };
+
+  // Community Certificate handler with strict 5MB validation
+  const handleCommunityCertSelect = (file: File) => {
+    setErrorMessage(null);
+    const validation = validateFileSize(file);
+    if (!validation.valid) {
+      setErrorMessage(validation.error || 'Community certificate exceeds maximum allowed limit of 5 MB.');
+      return;
+    }
+    setCommunityCertFile(file);
   };
 
   // Step navigation validations: ALL fields are mandatory
@@ -372,7 +401,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
     return true;
   };
 
-  // Final Form submission triggered ONLY on Step 5
+  // Final Form submission triggered ONLY on Step 5 with parallel document processing
   const handleFinalSubmit = async () => {
     if (!validateAllSteps()) return;
 
@@ -381,32 +410,41 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
 
     try {
       const finalData: RegistrationFormData = { ...formData };
+      setUploadingStatus('Optimizing & uploading documents in parallel (Max 5MB)...');
 
-      // Upload Photo if present
+      // Upload files concurrently in parallel instead of sequential blocking
+      const uploadPromises: Promise<any>[] = [];
+
       if (photoFile) {
-        setUploadingStatus('Uploading profile photograph...');
-        const photoResult = await uploadRegistrationDocument(photoFile, 'photos');
-        finalData.photoUrl = photoResult.url;
-        finalData.photoFileName = photoResult.fileName;
+        uploadPromises.push(
+          uploadRegistrationDocument(photoFile, 'photos').then((res) => {
+            finalData.photoUrl = res.url;
+            finalData.photoFileName = res.fileName;
+          })
+        );
       }
 
-      // Upload Jathagam if present
       if (jathagamFile) {
-        setUploadingStatus('Uploading horoscope (Jathagam) document...');
-        const jathagamResult = await uploadRegistrationDocument(jathagamFile, 'jathagam');
-        finalData.jathagamUrl = jathagamResult.url;
-        finalData.jathagamFileName = jathagamResult.fileName;
+        uploadPromises.push(
+          uploadRegistrationDocument(jathagamFile, 'jathagam').then((res) => {
+            finalData.jathagamUrl = res.url;
+            finalData.jathagamFileName = res.fileName;
+          })
+        );
       }
 
-      // Upload Community Certificate if present
       if (communityCertFile) {
-        setUploadingStatus('Uploading community certificate...');
-        const certResult = await uploadRegistrationDocument(communityCertFile, 'certificates');
-        finalData.communityCertificateUrl = certResult.url;
-        finalData.communityCertificateFileName = certResult.fileName;
+        uploadPromises.push(
+          uploadRegistrationDocument(communityCertFile, 'certificates').then((res) => {
+            finalData.communityCertificateUrl = res.url;
+            finalData.communityCertificateFileName = res.fileName;
+          })
+        );
       }
 
-      setUploadingStatus('Saving profile to database...');
+      await Promise.all(uploadPromises);
+
+      setUploadingStatus('Saving profile to Vivaaha database...');
       const response = await submitRegistrationForm(finalData);
 
       if (response.success) {
@@ -1371,7 +1409,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                         )}
 
                         <p className="text-[11px] text-[#222222]/60">
-                          {photoFile ? photoFile.name : 'PNG, JPG up to 10MB'}
+                          {photoFile ? `${photoFile.name} (${(photoFile.size / (1024 * 1024)).toFixed(1)} MB)` : 'PNG, JPG (Max 5 MB)'}
                         </p>
                       </div>
 
@@ -1420,7 +1458,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                         )}
 
                         <p className="text-[11px] text-[#222222]/60">
-                          {jathagamFile ? `${(jathagamFile.size / (1024 * 1024)).toFixed(1)} MB` : 'Image or PDF (Max 15MB)'}
+                          {jathagamFile ? `${(jathagamFile.size / (1024 * 1024)).toFixed(1)} MB` : 'Image or PDF (Max 5 MB)'}
                         </p>
                       </div>
 
@@ -1430,7 +1468,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                         accept="image/*,application/pdf"
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
-                            setJathagamFile(e.target.files[0]);
+                            handleJathagamSelect(e.target.files[0]);
                           }
                         }}
                         className="hidden"
@@ -1469,7 +1507,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                         )}
 
                         <p className="text-[11px] text-[#222222]/60">
-                          {communityCertFile ? `${(communityCertFile.size / (1024 * 1024)).toFixed(1)} MB` : 'Image or PDF (Max 15MB)'}
+                          {communityCertFile ? `${(communityCertFile.size / (1024 * 1024)).toFixed(1)} MB` : 'Image or PDF (Max 5 MB)'}
                         </p>
                       </div>
 
@@ -1479,7 +1517,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                         accept="image/*,application/pdf"
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
-                            setCommunityCertFile(e.target.files[0]);
+                            handleCommunityCertSelect(e.target.files[0]);
                           }
                         }}
                         className="hidden"

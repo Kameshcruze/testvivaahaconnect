@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Preloader from './components/Preloader';
 import CursorGlow from './components/CursorGlow';
 import FloralParticles from './components/FloralParticles';
@@ -17,9 +17,33 @@ import FinalCTA from './components/FinalCTA';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import FloatingActions from './components/FloatingActions';
+import RegistrationPage from './components/RegistrationPage';
+import { AppPage, getPageFromPath, navigateToPage } from './utils/navigation';
 
 export default function App() {
+  const [currentPage, setCurrentPage] = useState<AppPage>(() => getPageFromPath(window.location.pathname));
   const [callModalOpen, setCallModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleNavigationEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ page: AppPage; sectionId?: string }>;
+      if (customEvent.detail && customEvent.detail.page) {
+        setCurrentPage(customEvent.detail.page);
+      }
+    };
+
+    const handlePopState = () => {
+      setCurrentPage(getPageFromPath(window.location.pathname));
+    };
+
+    window.addEventListener('app-navigation', handleNavigationEvent);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('app-navigation', handleNavigationEvent);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   const handleOpenCallModal = () => {
     setCallModalOpen(true);
@@ -27,6 +51,10 @@ export default function App() {
 
   const handleCloseCallModal = () => {
     setCallModalOpen(false);
+  };
+
+  const handleBackToHome = () => {
+    navigateToPage('home');
   };
 
   return (
@@ -43,23 +71,32 @@ export default function App() {
       {/* Interactive Call Helpline Modal */}
       <CallModal isOpen={callModalOpen} onClose={handleCloseCallModal} />
 
-      {/* Navbar */}
+      {/* Top Navbar */}
       <Navbar onOpenCallModal={handleOpenCallModal} />
 
-      {/* Main Page Content */}
-      <main className="relative z-10 pb-16 sm:pb-0">
-        <Hero onOpenCallModal={handleOpenCallModal} />
-        <AboutSection />
-        <WhyChooseUs />
-        <ServicesSection onOpenCallModal={handleOpenCallModal} />
-        <RegistrationProcess />
-        <FeaturesSection />
-        {/* <StatisticsSection /> */}
-        <TestimonialsSection />
-        <FAQSection onOpenCallModal={handleOpenCallModal} />
-        <FinalCTA onOpenCallModal={handleOpenCallModal} />
-        <ContactSection />
-      </main>
+      {/* Conditional View: Registration Page vs Home Landing Page */}
+      {currentPage === 'registration' ? (
+        <main className="relative z-10 pt-20 pb-16">
+          <RegistrationPage
+            onBackToHome={handleBackToHome}
+            onOpenCallModal={handleOpenCallModal}
+          />
+        </main>
+      ) : (
+        <main className="relative z-10 pb-16 sm:pb-0">
+          <Hero onOpenCallModal={handleOpenCallModal} />
+          <AboutSection />
+          <WhyChooseUs />
+          <ServicesSection onOpenCallModal={handleOpenCallModal} />
+          <RegistrationProcess />
+          <FeaturesSection />
+          {/* <StatisticsSection /> */}
+          <TestimonialsSection />
+          <FAQSection onOpenCallModal={handleOpenCallModal} />
+          <FinalCTA onOpenCallModal={handleOpenCallModal} />
+          <ContactSection />
+        </main>
+      )}
 
       {/* Footer */}
       <Footer />
@@ -69,3 +106,4 @@ export default function App() {
     </div>
   );
 }
+

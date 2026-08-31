@@ -223,10 +223,11 @@ export default function Navbar({ onOpenCallModal }: NavbarProps) {
 
               <div className="pt-3 border-t border-[#C89B63]/20 flex flex-col gap-2.5">
                 <a
-                  href={GOOGLE_FORM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMobileMenuOpen(false)}
+                  href="/registration"
+                  onClick={(e) => {
+                    setMobileMenuOpen(false);
+                    navigateToSection('registration', e);
+                  }}
                   className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#6A1E2C] to-[#8C283B] text-white text-center font-bold text-sm shadow-md flex items-center justify-center gap-2"
                 >
                   <span>Register Now</span>

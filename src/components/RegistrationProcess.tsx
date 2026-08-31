@@ -1,13 +1,13 @@
 import { motion } from 'motion/react';
 import { CheckCircle2, ArrowRight, MousePointerClick, ShieldCheck, Heart, Users, Award } from 'lucide-react';
-import { GOOGLE_FORM_URL } from '../types';
+import { navigateToSection } from '../utils/navigation';
 
 export default function RegistrationProcess() {
   const steps = [
     {
       step: 1,
       title: "Register Online",
-      description: "Fill out our simple online form with basic candidate details and partner preferences.",
+      description: "Fill out our simple online form with candidate details, family background, and documents.",
       icon: MousePointerClick,
     },
     {
@@ -97,9 +97,8 @@ export default function RegistrationProcess() {
           </div>
 
           <a
-            href={GOOGLE_FORM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/registration"
+            onClick={(e) => navigateToSection('registration', e)}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#C89B63] hover:bg-[#b0844d] text-white font-bold text-xs sm:text-sm shadow-md transition"
           >
             <span>Register Profile Online</span>
@@ -111,3 +110,4 @@ export default function RegistrationProcess() {
     </section>
   );
 }
+

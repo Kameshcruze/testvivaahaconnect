@@ -6,10 +6,21 @@ export const SECTION_PATHS: Record<string, string> = {
   services: '/services',
   'why-choose-us': '/why-choose-us',
   registration: '/registration',
+  process: '/registration',
   faq: '/faq',
   contact: '/contact',
-  testing: '/testing',
+  testing: '/registration',
 };
+
+export type AppPage = 'home' | 'registration';
+
+export function getPageFromPath(path: string): AppPage {
+  const clean = path.trim().toLowerCase().replace(/\/$/, '');
+  if (clean === '/registration' || clean === '/register' || clean === '/testing') {
+    return 'registration';
+  }
+  return 'home';
+}
 
 export function getSectionIdFromPath(path: string): string {
   const cleanPath = path.trim().replace(/\/$/, '');
@@ -19,22 +30,38 @@ export function getSectionIdFromPath(path: string): string {
   return segment;
 }
 
+export function navigateToPage(page: AppPage, sectionId?: string, e?: React.MouseEvent) {
+  if (e) {
+    e.preventDefault();
+  }
+
+  const targetPath = page === 'registration' ? '/registration' : sectionId && sectionId !== 'home' ? `/${sectionId}` : '/';
+
+  window.history.pushState({ page, sectionId }, '', targetPath);
+  window.dispatchEvent(new CustomEvent('app-navigation', { detail: { page, sectionId } }));
+
+  if (page === 'registration') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (sectionId && sectionId !== 'home') {
+    setTimeout(() => {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
 export function navigateToSection(sectionId: string, e?: React.MouseEvent) {
   if (e) {
     e.preventDefault();
   }
 
-  const targetId = sectionId === 'process' ? 'registration' : sectionId;
-  const el = document.getElementById(targetId);
-
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' });
-  } else if (targetId === 'home') {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (sectionId === 'registration' || sectionId === 'testing' || sectionId === 'register') {
+    navigateToPage('registration', undefined, e);
+    return;
   }
 
-  const targetPath = SECTION_PATHS[targetId] || (targetId === 'home' ? '/' : `/${targetId}`);
-  if (window.location.pathname !== targetPath) {
-    window.history.pushState({ sectionId: targetId }, '', targetPath);
-  }
+  // Navigate to home section
+  navigateToPage('home', sectionId, e);
 }

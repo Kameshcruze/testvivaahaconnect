@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { ArrowRight, Phone, Heart } from 'lucide-react';
-import { GOOGLE_FORM_URL } from '../types';
+import { navigateToSection } from '../utils/navigation';
 
 interface FinalCTAProps {
   onOpenCallModal: () => void;
@@ -55,9 +55,8 @@ export default function FinalCTA({ onOpenCallModal }: FinalCTAProps) {
         >
           {/* Register Profile */}
           <a
-            href={GOOGLE_FORM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/registration"
+            onClick={(e) => navigateToSection('registration', e)}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-[#C89B63] hover:bg-[#b0844d] text-[#2D0A11] text-base font-bold shadow-xl transition-all duration-300"
           >
             <span>Register Profile</span>

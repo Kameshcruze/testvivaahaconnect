@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Phone, CheckCircle2, ArrowRight, ShieldCheck, Heart, ExternalLink, UserCheck } from 'lucide-react';
-import { GOOGLE_FORM_URL } from '../types';
+import { Phone, CheckCircle2, ArrowRight, ShieldCheck, Heart, UserCheck } from 'lucide-react';
 import heroImage from '../assets/images/hero image.webp';
+import { navigateToSection } from '../utils/navigation';
 
 interface HeroProps {
   onOpenCallModal: () => void;
@@ -98,9 +98,8 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 w-full sm:w-auto">
               {/* Primary Register Profile */}
               <a
-                href={GOOGLE_FORM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/registration"
+                onClick={(e) => navigateToSection('registration', e)}
                 className="group inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#6A1E2C] hover:bg-[#8C283B] text-white text-sm sm:text-base font-bold shadow-lg shadow-[#6A1E2C]/20 hover:shadow-xl hover:shadow-[#6A1E2C]/30 transition-all duration-300"
               >
                 <span>Register Profile</span>
@@ -229,15 +228,14 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
 
               {/* Direct Card Action Button */}
               <a
-                href={GOOGLE_FORM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/registration"
+                onClick={(e) => navigateToSection('registration', e)}
                 className="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-[#6A1E2C] hover:bg-[#8C283B] text-white font-bold text-xs sm:text-sm shadow-md transition"
               >
                 <span>
                   {activeTab === 'bride' ? 'Register Bride Profile' : 'Register Groom Profile'}
                 </span>
-                <ExternalLink className="w-4 h-4 text-[#C89B63]" />
+                <ArrowRight className="w-4 h-4 text-[#C89B63]" />
               </a>
             </div>
 
@@ -248,3 +246,4 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
     </section>
   );
 }
+

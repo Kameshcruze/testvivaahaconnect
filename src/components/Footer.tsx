@@ -89,22 +89,20 @@ export default function Footer() {
               <ul className="space-y-2 text-xs font-medium text-[#FAF3EB]/80">
                 <li>
                   <a
-                    href={GOOGLE_FORM_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/registration"
+                    onClick={(e) => navigateToSection('registration', e)}
                     className="inline-flex items-center gap-1 hover:text-[#C89B63] transition"
                   >
-                    Bride Registration <ExternalLink className="w-3 h-3" />
+                    Bride Registration
                   </a>
                 </li>
                 <li>
                   <a
-                    href={GOOGLE_FORM_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/registration"
+                    onClick={(e) => navigateToSection('registration', e)}
                     className="inline-flex items-center gap-1 hover:text-[#C89B63] transition"
                   >
-                    Groom Registration <ExternalLink className="w-3 h-3" />
+                    Groom Registration
                   </a>
                 </li>
                 <li className="pt-2 border-t border-[#C89B63]/15">
@@ -154,12 +152,11 @@ export default function Footer() {
 
             <div className="pt-2">
               <a
-                href={GOOGLE_FORM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#C89B63] text-[#2D0A11] font-bold text-xs hover:bg-[#d8a870] transition"
+                href="/registration"
+                onClick={(e) => navigateToSection('registration', e)}
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#C89B63] text-[#2D0A11] font-bold text-xs hover:bg-[#d8a870] transition shadow-md"
               >
-                Online Registration Form <ExternalLink className="w-3.5 h-3.5" />
+                Online Registration Form
               </a>
             </div>
           </div>

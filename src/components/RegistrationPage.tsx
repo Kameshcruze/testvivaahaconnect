@@ -24,8 +24,6 @@ import {
   Home,
   FileCheck,
   Send,
-  Database,
-  Info,
   RefreshCw,
   ExternalLink,
   ChevronRight,
@@ -36,10 +34,8 @@ import {
   RegistrationFormData,
   submitRegistrationForm,
   uploadRegistrationDocument,
-  isSupabaseConfigured,
 } from '../lib/supabase';
 import { PHONE_NUMBER, PHONE_RAW } from '../types';
-import SupabaseGuideModal from './SupabaseGuideModal';
 import logoImg from '../assets/images/Logo1.PNG';
 
 interface RegistrationPageProps {
@@ -102,7 +98,6 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
   const [submitSuccessId, setSubmitSuccessId] = useState<string | null>(null);
   const [submissionIsCloud, setSubmissionIsCloud] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showSupabaseGuide, setShowSupabaseGuide] = useState<boolean>(false);
   const [sameAsMobile, setSameAsMobile] = useState<boolean>(false);
 
   // File states
@@ -117,16 +112,6 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
   const photoInputRef = useRef<HTMLInputElement>(null);
   const jathagamInputRef = useRef<HTMLInputElement>(null);
   const certInputRef = useRef<HTMLInputElement>(null);
-
-  const [isConnected, setIsConnected] = useState<boolean>(isSupabaseConfigured());
-
-  const refreshConnection = () => {
-    setIsConnected(isSupabaseConfigured());
-  };
-
-  useEffect(() => {
-    refreshConnection();
-  }, []);
 
   // Auto calculate age from DOB
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,13 +267,6 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
 
   return (
     <div className="min-h-screen bg-[#FFF9F5] text-[#222222] pt-6 pb-20 px-4 sm:px-6 lg:px-8">
-      {/* Supabase Guide Modal */}
-      <SupabaseGuideModal
-        isOpen={showSupabaseGuide}
-        onClose={() => setShowSupabaseGuide(false)}
-        onConnectionUpdated={refreshConnection}
-      />
-
       <div className="max-w-4xl mx-auto">
         {/* Top Bar with Logo & Navigation */}
         <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#C89B63]/25">
@@ -307,21 +285,6 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
               className="h-10 w-auto object-contain hidden sm:block"
             />
           </div>
-
-          {/* Supabase connection indicator button */}
-          <button
-            onClick={() => setShowSupabaseGuide(true)}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl border text-xs font-bold transition shadow-sm ${
-              isConnected
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
-                : 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100'
-            }`}
-            title="Click to view Supabase connection setup"
-          >
-            <Database className="w-3.5 h-3.5 text-[#C89B63]" />
-            <span>{isConnected ? 'Supabase: Connected' : 'Supabase Setup'}</span>
-            <Info className="w-3.5 h-3.5 opacity-70" />
-          </button>
         </div>
 
         {/* Header Title Banner */}

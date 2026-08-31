@@ -63,7 +63,7 @@ export default function Footer() {
                   <a href="/why-choose-us" onClick={(e) => navigateToSection('why-choose-us', e)} className="hover:text-[#C89B63] transition">Why Choose Us</a>
                 </li>
                 <li>
-                  <a href="/registration" onClick={(e) => navigateToSection('registration', e)} className="hover:text-[#C89B63] transition">Process</a>
+                  <a href="/process" onClick={(e) => navigateToSection('process', e)} className="hover:text-[#C89B63] transition">Process</a>
                 </li>
                 <li>
                   <a href="/contact" onClick={(e) => navigateToSection('contact', e)} className="hover:text-[#C89B63] transition">Contact</a>

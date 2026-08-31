@@ -1,12 +1,39 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Get credentials from localStorage or Vite environment variables
+// Auto-clean any stale invalid localStorage configs
+if (typeof window !== 'undefined') {
+  try {
+    const cachedUrl = localStorage.getItem('vivaaha_supabase_url');
+    if (cachedUrl && (cachedUrl.includes('awigjicqnpjfvwvknnej') || cachedUrl.includes('localhost'))) {
+      localStorage.removeItem('vivaaha_supabase_url');
+      localStorage.removeItem('vivaaha_supabase_anon_key');
+    }
+  } catch (e) {
+    // Ignore storage access errors
+  }
+}
+
+// Default Supabase project credentials for Vivaaha Connect
+const DEFAULT_SUPABASE_URL = 'https://wdscpvjjyltsuvivlsta.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indkc2NwdmpqeWx0c3V2aXZsc3RhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxODY1MzMsImV4cCI6MjEwMzc2MjUzM30.J9b5WcfVrWUPsohuuivOIgnjPTxtvPWx75MluLrzagE';
+
+// Get credentials from Vite environment variables or defaults
 export const getSupabaseConfig = (): { url: string; anonKey: string } => {
   const localUrl = typeof window !== 'undefined' ? localStorage.getItem('vivaaha_supabase_url') : null;
   const localKey = typeof window !== 'undefined' ? localStorage.getItem('vivaaha_supabase_anon_key') : null;
 
-  const url = (localUrl || import.meta.env.VITE_SUPABASE_URL || '').trim();
-  const anonKey = (localKey || import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  const url = (
+    localUrl ||
+    import.meta.env.VITE_SUPABASE_URL ||
+    DEFAULT_SUPABASE_URL
+  ).trim();
+
+  const anonKey = (
+    localKey ||
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    DEFAULT_SUPABASE_ANON_KEY
+  ).trim();
 
   return { url, anonKey };
 };
@@ -45,7 +72,9 @@ export const getSupabase = (): SupabaseClient | null => {
   const { url, anonKey } = getSupabaseConfig();
   if (!supabaseInstance && isSupabaseConfigured()) {
     try {
-      supabaseInstance = createClient(url, anonKey);
+      supabaseInstance = createClient(url, anonKey, {
+        auth: { persistSession: false },
+      });
     } catch (err) {
       console.warn('Failed to initialize Supabase client:', err);
     }
@@ -302,7 +331,7 @@ export async function submitRegistrationForm(
           success: false,
           id: registrationId,
           isCloud: false,
-          error: `Supabase Insert Error: ${error.message} ${error.details ? `(${error.details})` : ''}`,
+          error: `Supabase Database Error: ${error.message} (${error.code || 'Check table schema & RLS policies in Supabase'})`,
         };
       }
 
@@ -312,23 +341,28 @@ export async function submitRegistrationForm(
         isCloud: true,
       };
     } catch (err: any) {
-      console.error('Supabase submission failed:', err);
+      console.error('Supabase submission network error:', err);
+      const isDnsOrNetwork =
+        err?.message?.includes('Failed to fetch') ||
+        err?.name === 'TypeError' ||
+        err?.message?.includes('NetworkError');
+
       return {
         success: false,
         id: registrationId,
         isCloud: false,
-        error: `Database connection failed: ${err.message || 'Unknown network error'}`,
+        error: isDnsOrNetwork
+          ? `Cannot connect to Supabase database (${DEFAULT_SUPABASE_URL}). The project may be paused in your Supabase dashboard or the URL is inactive. Please log in to supabase.com and unpause/check your project status.`
+          : `Database submission failed: ${err.message || 'Unknown network error'}`,
       };
     }
   }
 
-  // If Supabase is not configured yet
   return {
-    success: true,
+    success: false,
     id: registrationId,
     isCloud: false,
-    offline: true,
-    error: 'Saved locally in browser cache. Connect Supabase to sync live to your database.',
+    error: 'Supabase credentials are not configured.',
   };
 }
 

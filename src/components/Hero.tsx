@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Phone, CheckCircle2, ArrowRight, ShieldCheck, Heart, UserCheck } from 'lucide-react';
-import heroImage from '../assets/images/hero image.webp';
+import heroImage from '../assets/images/hero-image.webp';
 import { navigateToSection } from '../utils/navigation';
 
 interface HeroProps {
@@ -13,7 +13,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
 
   const trustPoints = [
     "Verified Profiles",
-    "All Communities Welcome",
+    "Kongu Vellalar Community",
     "Complete Privacy",
     "Personal Matchmaking Support",
   ];
@@ -73,13 +73,13 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
 
             {/* Description */}
             <p className="text-sm sm:text-base lg:text-[17px] text-[#222222]/80 leading-relaxed mb-4 max-w-[520px] mx-auto lg:mx-0">
-              Serving all communities across Tamil Nadu with trusted matrimonial connections and personalized matchmaking services.
+              Exclusive matrimony platform dedicated to the Kongu Vellalar Gounder community across Tamil Nadu and worldwide with trusted connections and Kulam-compatible matchmaking.
             </p>
 
-            {/* Elegant Open to All Badge */}
+            {/* Elegant Community Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#F8E8DA]/80 border border-[#C89B63]/30 backdrop-blur-sm self-center lg:self-start mb-5 text-xs sm:text-sm font-semibold text-[#6A1E2C]">
               <UserCheck className="w-4 h-4 text-[#C89B63] shrink-0" />
-              <span>Open to All Communities Across Tamil Nadu</span>
+              <span>Dedicated Exclusively to Kongu Vellalar Gounder Community</span>
             </div>
 
             {/* Trust Card (4 points) */}
@@ -206,8 +206,8 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               {/* Tab Content */}
               <p className="text-xs sm:text-sm text-[#222222]/80 leading-relaxed mb-4">
                 {activeTab === 'bride'
-                  ? 'Register bride profiles with complete confidentiality. Connect with educated, well-settled grooms across all communities in Tamil Nadu.'
-                  : 'Register groom profiles with complete confidentiality. Connect with educated, well-settled brides across all communities in Tamil Nadu.'}
+                  ? 'Register Kongu Vellalar bride profiles with complete confidentiality. Connect with educated, well-settled grooms from compatible Kulams.'
+                  : 'Register Kongu Vellalar groom profiles with complete confidentiality. Connect with educated, well-settled brides from compatible Kulams.'}
               </p>
 
               {/* Bullet Points */}
@@ -222,7 +222,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>All Castes & Sub-castes Welcome</span>
+                  <span>Traditional Kulam Lineage & Horoscope Check</span>
                 </div>
               </div>
 

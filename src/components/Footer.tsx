@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { Heart, ExternalLink, Phone, MapPin, ArrowUp } from 'lucide-react';
+import { Heart, ExternalLink, Phone, MapPin, ArrowUp, Shield, Lock } from 'lucide-react';
 import { GOOGLE_FORM_URL, PHONE_NUMBER, HO_ADDRESS, BRANCH_ADDRESS } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
-import { navigateToSection } from '../utils/navigation';
+import { navigateToSection, navigateToPage } from '../utils/navigation';
 
 export default function Footer() {
   const [modalOpen, setModalOpen] = useState<'privacy' | 'terms' | null>(null);
 
   const scrollToTop = () => {
     navigateToSection('home');
+  };
+
+  const handleOpenAdmin = (e: React.MouseEvent) => {
+    navigateToPage('admin', undefined, e);
   };
 
   return (
@@ -34,11 +38,11 @@ export default function Footer() {
             </a>
 
             <p className="text-xs text-[#FAF3EB]/70 leading-relaxed">
-              Serving all communities across Tamil Nadu with trusted matrimonial connections and personalized matchmaking services.
+              Dedicated exclusively to the Kongu Vellalar Gounder community across Tamil Nadu and worldwide with trusted matrimonial connections and personalized matchmaking services.
             </p>
 
             <p className="text-xs font-tamil text-[#C89B63]">
-              தமிழ்நாடு முழுவதுமுள்ள அனைத்து சமூகத்தினருக்குமான நம்பகமான திருமண சேவை
+              கொங்கு வேளாளர் கவுண்டர் சமூகத்தினருக்கான தனித்துவமான மற்றும் நம்பகமான திருமண சேவை
             </p>
           </div>
 
@@ -121,6 +125,16 @@ export default function Footer() {
                     Terms & Conditions
                   </button>
                 </li>
+                <li className="pt-2 border-t border-[#C89B63]/15">
+                  <a
+                    href="/admin"
+                    onClick={handleOpenAdmin}
+                    className="inline-flex items-center gap-1.5 text-[#C89B63]/90 hover:text-[#FFF9F5] transition font-semibold"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-[#C89B63]" />
+                    <span>Admin Portal</span>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -164,10 +178,10 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-center relative gap-4 text-xs text-[#FAF3EB]/60 text-center">
-          <div className="text-center">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between relative gap-4 text-xs text-[#FAF3EB]/60">
+          <div className="text-center sm:text-left">
             <p>© {new Date().getFullYear()} Vivaaha Connect. All rights reserved.</p>
-            <p className="mt-1 text-[11px] text-[#FAF3EB]/50 text-center">
+            <p className="mt-1 text-[11px] text-[#FAF3EB]/50">
               Developed by{' '}
               <a
                 href="https://elitewebdevelopers.vercel.app/"
@@ -179,8 +193,17 @@ export default function Footer() {
               </a>
             </p>
           </div>
-          
-          <div className="sm:absolute sm:right-0 flex items-center gap-4">
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleOpenAdmin}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#C89B63]/20 text-[#FAF3EB]/70 hover:text-[#C89B63] transition text-[11px] font-semibold border border-white/10"
+              title="Admin Login & Management Portal"
+            >
+              <Lock className="w-3.5 h-3.5 text-[#C89B63]" />
+              <span>Admin Login</span>
+            </button>
+
             <button
               onClick={scrollToTop}
               className="p-2 rounded-xl bg-white/10 hover:bg-[#C89B63] hover:text-[#2D0A11] transition text-[#FFF9F5]"

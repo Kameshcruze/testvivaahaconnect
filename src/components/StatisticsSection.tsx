@@ -21,7 +21,7 @@ export default function StatisticsSection() {
       number: 1000,
       suffix: "+",
       label: "Happy Registrations",
-      description: "Brides & grooms from all communities",
+      description: "Kongu Vellalar brides & grooms",
       icon: Users
     },
     {

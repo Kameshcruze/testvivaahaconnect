@@ -18,22 +18,39 @@ const DEFAULT_SUPABASE_URL = 'https://wdscpvjjyltsuvivlsta.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indkc2NwdmpqeWx0c3V2aXZsc3RhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxODY1MzMsImV4cCI6MjEwMzc2MjUzM30.J9b5WcfVrWUPsohuuivOIgnjPTxtvPWx75MluLrzagE';
 
+// Helper to check if a URL is the old defunct host
+const isInvalidUrl = (u?: string | null): boolean => {
+  if (!u) return true;
+  return u.includes('awigjicq') || u.includes('localhost') || u.includes('your-project-id');
+};
+
 // Get credentials from Vite environment variables or defaults
 export const getSupabaseConfig = (): { url: string; anonKey: string } => {
-  const localUrl = typeof window !== 'undefined' ? localStorage.getItem('vivaaha_supabase_url') : null;
-  const localKey = typeof window !== 'undefined' ? localStorage.getItem('vivaaha_supabase_anon_key') : null;
+  let localUrl = typeof window !== 'undefined' ? localStorage.getItem('vivaaha_supabase_url') : null;
+  let localKey = typeof window !== 'undefined' ? localStorage.getItem('vivaaha_supabase_anon_key') : null;
 
-  const url = (
-    localUrl ||
-    import.meta.env.VITE_SUPABASE_URL ||
-    DEFAULT_SUPABASE_URL
-  ).trim();
+  if (isInvalidUrl(localUrl)) {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('vivaaha_supabase_url');
+        localStorage.removeItem('vivaaha_supabase_anon_key');
+      } catch (e) {
+        // ignore
+      }
+    }
+    localUrl = null;
+    localKey = null;
+  }
 
-  const anonKey = (
-    localKey ||
-    import.meta.env.VITE_SUPABASE_ANON_KEY ||
-    DEFAULT_SUPABASE_ANON_KEY
-  ).trim();
+  let envUrl = import.meta.env.VITE_SUPABASE_URL;
+  let envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (isInvalidUrl(envUrl)) {
+    envUrl = null;
+  }
+
+  const url = (localUrl || envUrl || DEFAULT_SUPABASE_URL).trim();
+  const anonKey = (localKey || (envUrl ? envKey : null) || DEFAULT_SUPABASE_ANON_KEY).trim();
 
   return { url, anonKey };
 };
@@ -326,12 +343,12 @@ export async function submitRegistrationForm(
       const { error } = await supabase.from('registrations').insert([recordPayload]);
 
       if (error) {
-        console.error('Supabase insert error:', error);
+        console.error('Database insert error:', error);
         return {
           success: false,
           id: registrationId,
           isCloud: false,
-          error: `Supabase Database Error: ${error.message} (${error.code || 'Check table schema & RLS policies in Supabase'})`,
+          error: `Database Error: ${error.message} (${error.code || 'Check table schema and security policies'})`,
         };
       }
 
@@ -341,7 +358,7 @@ export async function submitRegistrationForm(
         isCloud: true,
       };
     } catch (err: any) {
-      console.error('Supabase submission network error:', err);
+      console.error('Database submission network error:', err);
       const isDnsOrNetwork =
         err?.message?.includes('Failed to fetch') ||
         err?.name === 'TypeError' ||
@@ -352,7 +369,7 @@ export async function submitRegistrationForm(
         id: registrationId,
         isCloud: false,
         error: isDnsOrNetwork
-          ? `Cannot connect to Supabase database (${DEFAULT_SUPABASE_URL}). The project may be paused in your Supabase dashboard or the URL is inactive. Please log in to supabase.com and unpause/check your project status.`
+          ? `Cannot connect to database. The service may be temporarily unavailable or network connection failed.`
           : `Database submission failed: ${err.message || 'Unknown network error'}`,
       };
     }
@@ -362,7 +379,7 @@ export async function submitRegistrationForm(
     success: false,
     id: registrationId,
     isCloud: false,
-    error: 'Supabase credentials are not configured.',
+    error: 'Database credentials are not configured.',
   };
 }
 

@@ -179,12 +179,12 @@ export default function ContactSection() {
 
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1">
-                        Community
+                        Community & Kulam
                       </label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Any community"
+                        placeholder="Kongu Vellalar Gounder (e.g. Sempoothan / Kannan)"
                         value={formData.community}
                         onChange={(e) => setFormData({ ...formData, community: e.target.value })}
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5] text-sm focus:outline-none focus:border-[#6A1E2C] transition"

@@ -28,7 +28,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
             viewport={{ once: true }}
             className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#6A1E2C] tracking-tight"
           >
-            Dedicated Matrimony Solutions for <span className="text-[#C89B63] italic pr-2 inline-block">Every Family</span>
+            Dedicated Matrimony Solutions for <span className="text-[#C89B63] italic pr-2 inline-block">Kongu Vellalar Families</span>
           </motion.h2>
 
           <motion.p
@@ -37,7 +37,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
             viewport={{ once: true }}
             className="mt-3 text-sm sm:text-base text-[#222222]/75"
           >
-            Choose your registration path or schedule a direct consultation with our helpline desk.
+            Choose your registration path or connect directly with our dedicated Kongu Vellalar matrimony consultants.
           </motion.p>
         </div>
 
@@ -70,7 +70,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
               </h3>
 
               <p className="text-xs sm:text-sm text-[#222222]/80 leading-relaxed mb-5">
-                Register bride profiles with complete confidentiality. Connect with educated, well-settled grooms across all communities in Tamil Nadu.
+                Register Kongu Vellalar bride profiles with complete confidentiality. Connect with educated, well-settled grooms from compatible Kulams across Tamil Nadu & worldwide.
               </p>
 
               <ul className="space-y-2 mb-6 text-xs font-medium text-[#222222]">
@@ -84,15 +84,13 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>All Castes & Sub-castes Welcome</span>
+                  <span>Kongu Vellalar Kulam Compatibility</span>
                 </li>
               </ul>
             </div>
 
             <a
-              href={GOOGLE_FORM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/registration"
               className="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-[#6A1E2C] text-white font-semibold text-xs sm:text-sm hover:bg-[#8C283B] shadow-md transition-all group"
             >
               <span>Register Bride Profile</span>
@@ -126,7 +124,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
               </h3>
 
               <p className="text-xs sm:text-sm text-[#222222]/80 leading-relaxed mb-5">
-                Register groom profiles to discover compatible, cultured brides. Tailored matchmaking based on educational, professional, and family values.
+                Register Kongu Vellalar groom profiles to discover compatible, cultured brides. Tailored matchmaking based on educational, professional, and traditional family values.
               </p>
 
               <ul className="space-y-2 mb-6 text-xs font-medium text-[#222222]">
@@ -136,7 +134,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Handpicked Compatibility Suggestions</span>
+                  <span>Kulam & Horoscope Matching</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -146,9 +144,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
             </div>
 
             <a
-              href={GOOGLE_FORM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/registration"
               className="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-[#6A1E2C] text-white font-semibold text-xs sm:text-sm hover:bg-[#8C283B] shadow-md transition-all group"
             >
               <span>Register Groom Profile</span>

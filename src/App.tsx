@@ -18,6 +18,7 @@ import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import FloatingActions from './components/FloatingActions';
 import RegistrationPage from './components/RegistrationPage';
+import AdminPortal from './components/AdminPortal';
 import { AppPage, getPageFromPath, navigateToPage } from './utils/navigation';
 
 export default function App() {
@@ -56,6 +57,14 @@ export default function App() {
   const handleBackToHome = () => {
     navigateToPage('home');
   };
+
+  if (currentPage === 'admin') {
+    return (
+      <div className="relative min-h-screen bg-[#FFF9F5] text-[#222222] font-sans selection:bg-[#C89B63]/30 selection:text-[#6A1E2C]">
+        <AdminPortal onBackToWebsite={handleBackToHome} />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-[#FFF9F5] text-[#222222] font-sans selection:bg-[#C89B63]/30 selection:text-[#6A1E2C] overflow-x-hidden">

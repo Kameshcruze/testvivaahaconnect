@@ -57,6 +57,64 @@ export interface StepItem {
   iconName: string;
 }
 
+export interface RegistrationRecord {
+  id: string;
+  created_at: string;
+  name: string;
+  gender: string;
+  dob?: string | null;
+  age?: number | string | null;
+  height?: string | null;
+  weight?: string | null;
+  marital_status?: string | null;
+  mobile_number?: string | null;
+  email?: string | null;
+  whatsapp_number?: string | null;
+  current_location?: string | null;
+  native_place?: string | null;
+  community?: string | null;
+  kulam?: string | null;
+  kuladeivam?: string | null;
+  education_qualification?: string | null;
+  profession?: string | null;
+  company_name?: string | null;
+  work_location?: string | null;
+  income?: string | null;
+  father_name?: string | null;
+  father_occupation?: string | null;
+  mother_name?: string | null;
+  mother_occupation?: string | null;
+  brothers_count?: string | number | null;
+  brothers_married?: string | number | null;
+  brothers_unmarried?: string | number | null;
+  sisters_count?: string | number | null;
+  sisters_married?: string | number | null;
+  sisters_unmarried?: string | number | null;
+  family_type?: string | null;
+  family_status?: string | null;
+  family_background?: string | null;
+  partner_age_range?: string | null;
+  partner_education?: string | null;
+  partner_profession?: string | null;
+  partner_income_preference?: string | null;
+  partner_community_preference?: string | null;
+  partner_location_preference?: string | null;
+  partner_other_expectations?: string | null;
+  photo_url?: string | null;
+  photo_file_name?: string | null;
+  jathagam_url?: string | null;
+  jathagam_file_name?: string | null;
+  community_certificate_url?: string | null;
+  community_certificate_file_name?: string | null;
+  status?: string | null;
+}
+
+export interface AdminUser {
+  username: string;
+  role: string;
+}
+
+
 export const TESTIMONIALS_DATA: Testimonial[] = [
   {
     id: "1",
@@ -90,35 +148,93 @@ export const TESTIMONIALS_DATA: Testimonial[] = [
   }
 ];
 
+export const KONGU_KULAMS: string[] = [
+  "Sempoothan (செம்பூத்தான்)",
+  "Kannan (கண்ணன்)",
+  "Kannanthai (கண்ணந்தை)",
+  "Porulanthai / Porulanthar (பொருளாந்தை)",
+  "Aadai (ஆடை)",
+  "Pavalan / Pavalankudi (பவளன்)",
+  "Vilayan (விளையன்)",
+  "Kaari (காரி)",
+  "Kaadai (காடை)",
+  "Kaadan (காடன்)",
+  "Keeran (கீரன்)",
+  "Anthuvan (அந்துவன்)",
+  "Aariyan (ஆரியன்)",
+  "Eenjan (ஈஞ்சன்)",
+  "Oonanjaan (ஊனஞ்சான்)",
+  "Enkulam (எண்குலம்)",
+  "Earan (ஏரன்)",
+  "Odhaalan (ஓதாளன்)",
+  "Kungkili (குங்கிலி)",
+  "Kundali (குண்டலி)",
+  "Kunthali (குந்தலி)",
+  "Koorai (கூரை)",
+  "Kodikaaran (கொடிக்காரன்)",
+  "Kovan (கோவன்)",
+  "Saathanthai (சாத்தந்தை)",
+  "Saathoori (சாத்தூரி)",
+  "Sellan (செல்லன்)",
+  "Semban (செம்பன்)",
+  "Sengkannan (செங்கண்ணன்)",
+  "Sengunthar (செங்குந்தர்)",
+  "Sevoor (சேவூர்)",
+  "Thannasi (தன்னாசி)",
+  "Dhananjayan (தனஞ்சயன்)",
+  "Thoravalan (தொரவலன்)",
+  "Naaraiyan (நாரையன்)",
+  "Neelan (நீலன்)",
+  "Panangaadar (பனங்காடர்)",
+  "Panaiyan (பனையன்)",
+  "Payiran (பயிரன்)",
+  "Pannai (பண்ணை)",
+  "Poochanthai (பூச்சந்தை)",
+  "Periyan (பெரியன்)",
+  "Ponnan (பொன்னன்)",
+  "Maniyan (மணியன்)",
+  "Maadalan (மாடளன்)",
+  "Medhi (மேதி)",
+  "Muthan (முத்தன்)",
+  "Moolan (மூலன்)",
+  "Mailan (மைலன்)",
+  "Vannakkan (வண்ணக்கன்)",
+  "Villi (வில்லி)",
+  "Venduvan (வெண்டுவன்)",
+  "Velli (வெள்ளி)",
+  "Vendhan (வேந்தன்)",
+  "Other Kongu Kulam (மற்ற கொங்கு குலம்)",
+];
+
 export const FAQ_DATA: FAQItem[] = [
   {
     id: "faq-1",
-    question: "How do I register my profile with Vivaaha Connect?",
-    answer: "Registration is simple and quick! Just click on any 'Register Profile' button on our website to fill out our secure Google Form with basic member details, education, occupation, and family preferences. Our team will review your details and contact you promptly.",
+    question: "How do I register a profile with Vivaaha Connect?",
+    answer: "Registration is simple and quick! Fill out the step-by-step matrimony registration form with candidate details, Kulam, education, occupation, and family preferences. Our matrimony consultants will verify the information and contact you promptly.",
     category: "Registration"
   },
   {
     id: "faq-2",
-    question: "Do you support all Hindu communities and castes?",
-    answer: "Yes, Vivaaha Connect exclusively serves Hindu brides and grooms across all communities, castes, and sub-castes in Tamil Nadu. Matchmaking is open to all Hindu families seeking a genuine life partner.",
+    question: "Is this service exclusively for the Kongu Vellalar community?",
+    answer: "Yes, Vivaaha Connect is an exclusive matrimony platform dedicated solely to the Kongu Vellalar Gounder (கொங்கு வேளாளர் கவுண்டர்) community across Kongu Nadu, Tamil Nadu, and worldwide.",
     category: "General"
   },
   {
     id: "faq-3",
-    question: "Is my personal and contact information kept strictly private?",
-    answer: "Yes, 100% privacy protection is guaranteed. Member contact details and confidential family information are never made public. Profiles are shared only with mutually verified matches after explicit consent.",
-    category: "Privacy"
-  },
-  {
-    id: "faq-4",
-    question: "How will I receive matched profiles after registration?",
-    answer: "Once registered, our experienced matrimony consultants curate matching profiles based on your specific criteria (age, education, location, community, horoscopes if desired). Matches are delivered directly via phone, WhatsApp, or email with complete profile summaries.",
+    question: "How is Kulam / Gotram compatibility handled?",
+    answer: "We strictly uphold traditional Kongu Vellalar matrimonial customs, ensuring Thayadhi Kulam (தாயாதி குலம்) exclusions and compatible Kulam alliances are respected during matchmaking.",
     category: "Matchmaking"
   },
   {
+    id: "faq-4",
+    question: "Is personal and contact information kept strictly private?",
+    answer: "Yes, 100% privacy protection is guaranteed. Candidate contact numbers and photographs are never made public. Profiles are shared only with verified Kongu Vellalar families after mutual consent.",
+    category: "Privacy"
+  },
+  {
     id: "faq-5",
-    question: "Can I call and speak to a consultant before registering?",
-    answer: "Yes! We encourage members and family members to call us directly at +91 94869 55380. Our friendly team in Coimbatore is happy to answer your questions and guide you through the process.",
+    question: "Can I call and speak to a consultant directly?",
+    answer: "Yes! We encourage families to call us directly at +91 94869 55380. Our dedicated team in Coimbatore is happy to assist you with profile registration and matching.",
     category: "General"
   }
 ];

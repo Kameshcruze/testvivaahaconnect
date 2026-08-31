@@ -16,6 +16,15 @@ export default function TestimonialsSection() {
 
   const current = TESTIMONIALS_DATA[currentIndex];
 
+  const handleDragEnd = (_e: any, info: { offset: { x: number }; velocity: { x: number } }) => {
+    const swipeThreshold = 50;
+    if (info.offset.x < -swipeThreshold || info.velocity.x < -300) {
+      nextSlide();
+    } else if (info.offset.x > swipeThreshold || info.velocity.x > 300) {
+      prevSlide();
+    }
+  };
+
   return (
     <section className="relative py-8 sm:py-12 lg:py-14 bg-[#FFF9F5] overflow-hidden">
       {/* Background Decorative Lighting */}
@@ -59,11 +68,15 @@ export default function TestimonialsSection() {
           <AnimatePresence mode="wait">
             <motion.div
               key={current.id}
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="glass-card rounded-3xl p-8 sm:p-12 border-2 border-[#C89B63]/30 shadow-2xl relative bg-white/90"
+              exit={{ opacity: 0, x: -40 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={handleDragEnd}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="glass-card rounded-3xl p-6 sm:p-12 border-2 border-[#C89B63]/30 shadow-2xl relative bg-white/90 cursor-grab active:cursor-grabbing touch-pan-y select-none"
             >
               <Quote className="absolute top-6 right-8 w-16 h-16 text-[#C89B63]/15 pointer-events-none" />
 

@@ -17,7 +17,6 @@ import {
   AlertCircle,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
   ShieldCheck,
   Building,
   DollarSign,
@@ -35,7 +34,7 @@ import {
   submitRegistrationForm,
   uploadRegistrationDocument,
 } from '../lib/supabase';
-import { PHONE_NUMBER, PHONE_RAW } from '../types';
+import { PHONE_NUMBER, PHONE_RAW, KONGU_KULAMS } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
 
 interface RegistrationPageProps {
@@ -45,7 +44,7 @@ interface RegistrationPageProps {
 
 const INITIAL_FORM_DATA: RegistrationFormData = {
   name: '',
-  gender: '',
+  gender: 'Male',
   dob: '',
   age: '',
   height: '',
@@ -58,7 +57,7 @@ const INITIAL_FORM_DATA: RegistrationFormData = {
   currentLocation: '',
   nativePlace: '',
 
-  community: '',
+  community: 'Kongu Vellalar Gounder',
   kulam: '',
   kuladeivam: '',
 
@@ -72,10 +71,10 @@ const INITIAL_FORM_DATA: RegistrationFormData = {
   fatherOccupation: '',
   motherName: '',
   motherOccupation: '',
-  brothersCount: '0',
+  brothersCount: 'None',
   brothersMarried: '0',
   brothersUnmarried: '0',
-  sistersCount: '0',
+  sistersCount: 'None',
   sistersMarried: '0',
   sistersUnmarried: '0',
   familyType: 'Nuclear Family',
@@ -86,7 +85,7 @@ const INITIAL_FORM_DATA: RegistrationFormData = {
   partnerEducation: '',
   partnerProfession: '',
   partnerIncomePreference: '',
-  partnerCommunityPreference: '',
+  partnerCommunityPreference: 'Kongu Vellalar Gounder',
   partnerLocationPreference: '',
   partnerOtherExpectations: '',
 };
@@ -170,15 +169,165 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
     reader.readAsDataURL(file);
   };
 
-  // Step navigation validations: ONLY candidate name is mandatory
+  // Step navigation validations: ALL fields are mandatory
   const validateStep = (step: number): boolean => {
     setErrorMessage(null);
     if (step === 1) {
       if (!formData.name.trim()) {
-        setErrorMessage('Please enter candidate full name.');
+        setErrorMessage('Please enter candidate full name (mandatory).');
+        return false;
+      }
+      if (!formData.gender) {
+        setErrorMessage('Please select candidate gender (Male or Female).');
+        return false;
+      }
+      if (!formData.dob) {
+        setErrorMessage('Please enter Date of Birth (mandatory).');
+        return false;
+      }
+      if (!formData.age) {
+        setErrorMessage('Please enter candidate age (mandatory).');
+        return false;
+      }
+      if (!formData.height.trim()) {
+        setErrorMessage('Please enter candidate height (mandatory).');
+        return false;
+      }
+      if (!formData.weight.trim()) {
+        setErrorMessage('Please enter candidate weight (mandatory).');
+        return false;
+      }
+      if (!formData.maritalStatus) {
+        setErrorMessage('Please select marital status (mandatory).');
         return false;
       }
     }
+
+    if (step === 2) {
+      if (!formData.mobileNumber.trim()) {
+        setErrorMessage('Please enter primary mobile number (mandatory).');
+        return false;
+      }
+      if (!formData.whatsappNumber.trim()) {
+        setErrorMessage('Please enter WhatsApp contact number (mandatory).');
+        return false;
+      }
+      if (!formData.email.trim()) {
+        setErrorMessage('Please enter email address (mandatory).');
+        return false;
+      }
+      if (!formData.currentLocation.trim()) {
+        setErrorMessage('Please enter current location city / state (mandatory).');
+        return false;
+      }
+      if (!formData.nativePlace.trim()) {
+        setErrorMessage('Please enter native place (district / village) (mandatory).');
+        return false;
+      }
+      if (!formData.community.trim()) {
+        setErrorMessage('Please enter community (Kongu Vellalar Gounder) (mandatory).');
+        return false;
+      }
+      if (!formData.kulam.trim()) {
+        setErrorMessage('Please enter Kulam / Gotram (mandatory).');
+        return false;
+      }
+      if (!formData.kuladeivam.trim()) {
+        setErrorMessage('Please enter Kuladeivam & Temple location (mandatory).');
+        return false;
+      }
+    }
+
+    if (step === 3) {
+      if (!formData.educationQualification.trim()) {
+        setErrorMessage('Please enter highest educational qualification (mandatory).');
+        return false;
+      }
+      if (!formData.profession.trim()) {
+        setErrorMessage('Please enter profession / job title (mandatory).');
+        return false;
+      }
+      if (!formData.companyName.trim()) {
+        setErrorMessage('Please enter company / business name (mandatory).');
+        return false;
+      }
+      if (!formData.workLocation.trim()) {
+        setErrorMessage('Please enter work location city (mandatory).');
+        return false;
+      }
+      if (!formData.income.trim()) {
+        setErrorMessage('Please enter monthly or annual income (mandatory).');
+        return false;
+      }
+      if (!formData.fatherName.trim()) {
+        setErrorMessage("Please enter father's full name (mandatory).");
+        return false;
+      }
+      if (!formData.fatherOccupation.trim()) {
+        setErrorMessage("Please enter father's occupation (mandatory).");
+        return false;
+      }
+      if (!formData.motherName.trim()) {
+        setErrorMessage("Please enter mother's full name (mandatory).");
+        return false;
+      }
+      if (!formData.motherOccupation.trim()) {
+        setErrorMessage("Please enter mother's occupation (mandatory).");
+        return false;
+      }
+      if (!formData.brothersCount.trim()) {
+        setErrorMessage('Please enter brother(s) details (or "None") (mandatory).');
+        return false;
+      }
+      if (!formData.sistersCount.trim()) {
+        setErrorMessage('Please enter sister(s) details (or "None") (mandatory).');
+        return false;
+      }
+      if (!formData.familyType) {
+        setErrorMessage('Please select family type (mandatory).');
+        return false;
+      }
+      if (!formData.familyStatus) {
+        setErrorMessage('Please select family status (mandatory).');
+        return false;
+      }
+      if (!formData.familyBackground.trim()) {
+        setErrorMessage('Please provide brief family background details (mandatory).');
+        return false;
+      }
+    }
+
+    if (step === 4) {
+      if (!formData.partnerAgeRange.trim()) {
+        setErrorMessage('Please enter preferred partner age range (mandatory).');
+        return false;
+      }
+      if (!formData.partnerEducation.trim()) {
+        setErrorMessage('Please enter partner education preference (mandatory).');
+        return false;
+      }
+      if (!formData.partnerProfession.trim()) {
+        setErrorMessage('Please enter partner profession preference (mandatory).');
+        return false;
+      }
+      if (!formData.partnerIncomePreference.trim()) {
+        setErrorMessage('Please enter partner income preference (mandatory).');
+        return false;
+      }
+      if (!formData.partnerCommunityPreference.trim()) {
+        setErrorMessage('Please enter partner community preference (mandatory).');
+        return false;
+      }
+      if (!formData.partnerLocationPreference.trim()) {
+        setErrorMessage('Please enter partner location preference (mandatory).');
+        return false;
+      }
+      if (!formData.partnerOtherExpectations.trim()) {
+        setErrorMessage('Please enter other partner expectations or astrology preferences (mandatory).');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -195,13 +344,31 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Comprehensive validation across all steps: only name is mandatory
+  // Comprehensive validation across all steps: ALL fields are mandatory
   const validateAllSteps = (): boolean => {
-    if (!formData.name.trim()) {
-      setCurrentStep(1);
-      setErrorMessage('Please enter candidate full name.');
+    for (let s = 1; s <= 4; s++) {
+      if (!validateStep(s)) {
+        setCurrentStep(s);
+        return false;
+      }
+    }
+
+    if (!photoFile) {
+      setCurrentStep(5);
+      setErrorMessage('Please upload candidate photograph (mandatory).');
       return false;
     }
+    if (!jathagamFile) {
+      setCurrentStep(5);
+      setErrorMessage('Please upload horoscope (Jathagam) document or photo (mandatory).');
+      return false;
+    }
+    if (!communityCertFile) {
+      setCurrentStep(5);
+      setErrorMessage('Please upload community certificate document or photo (mandatory).');
+      return false;
+    }
+
     return true;
   };
 
@@ -290,8 +457,8 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
         {/* Header Title Banner */}
         {!submitSuccessId && (
           <div className="text-center mb-8 space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6A1E2C]/10 text-[#6A1E2C] text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-[#C89B63]" /> Matrimony Registration Form
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#6A1E2C]/10 text-[#6A1E2C] text-xs font-bold uppercase tracking-wider">
+              Matrimony Registration Form
             </span>
             <h1 className="text-2xl sm:text-4xl font-bold font-heading text-[#6A1E2C]">
               Candidate Profile Registration
@@ -352,7 +519,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                 <div>
                   <span className="text-[#222222]/60">Database Storage:</span>
                   <p className="font-bold text-emerald-700">
-                    {submissionIsCloud ? '✓ Supabase Cloud' : '✓ Saved to System'}
+                    {submissionIsCloud ? '✓ Secure Database' : '✓ Saved to System'}
                   </p>
                 </div>
               </div>
@@ -455,7 +622,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       <User className="w-5 h-5 text-[#C89B63]" /> 1. Personal & Physical Details
                     </h3>
                     <p className="text-xs text-[#222222]/70">
-                      Basic candidate identity and horoscope birth details.
+                      All fields marked with <span className="text-red-600 font-bold">*</span> are mandatory.
                     </p>
                   </div>
 
@@ -463,7 +630,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Full Name */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Candidate Full Name *
+                        Candidate Full Name <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
@@ -476,30 +643,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       />
                     </div>
 
-                    {/* Gender (Male / Female checkboxes / radio) */}
+                    {/* Gender (Male to LEFT, Female to RIGHT) */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Gender (Profile For)
+                        Gender (Profile For) <span className="text-red-600 font-bold">*</span>
                       </label>
                       <div className="grid grid-cols-2 gap-3">
-                        <label
-                          className={`flex items-center justify-center gap-2.5 p-3.5 rounded-2xl border cursor-pointer transition text-sm font-bold ${
-                            formData.gender === 'Female'
-                              ? 'bg-[#6A1E2C] text-white border-[#6A1E2C] shadow-md'
-                              : 'bg-white border-[#C89B63]/40 text-[#6A1E2C] hover:bg-[#FAF3EB]'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="gender"
-                            value="Female"
-                            checked={formData.gender === 'Female'}
-                            onChange={handleInputChange}
-                            className="hidden"
-                          />
-                          <span>Bride (Female / பெண்)</span>
-                        </label>
-
                         <label
                           className={`flex items-center justify-center gap-2.5 p-3.5 rounded-2xl border cursor-pointer transition text-sm font-bold ${
                             formData.gender === 'Male'
@@ -517,18 +666,37 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                           />
                           <span>Groom (Male / ஆண்)</span>
                         </label>
+
+                        <label
+                          className={`flex items-center justify-center gap-2.5 p-3.5 rounded-2xl border cursor-pointer transition text-sm font-bold ${
+                            formData.gender === 'Female'
+                              ? 'bg-[#6A1E2C] text-white border-[#6A1E2C] shadow-md'
+                              : 'bg-white border-[#C89B63]/40 text-[#6A1E2C] hover:bg-[#FAF3EB]'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="Female"
+                            checked={formData.gender === 'Female'}
+                            onChange={handleInputChange}
+                            className="hidden"
+                          />
+                          <span>Bride (Female / பெண்)</span>
+                        </label>
                       </div>
                     </div>
 
                     {/* Date of Birth with Calendar */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                        <span>Date of Birth (Calendar)</span>
+                        <span>Date of Birth (Calendar) <span className="text-red-600 font-bold">*</span></span>
                       </label>
                       <div className="relative">
                         <input
                           type="date"
                           name="dob"
+                          required
                           value={formData.dob}
                           onChange={handleDobChange}
                           className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
@@ -539,11 +707,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Age */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Age (Years)
+                        Age (Years) <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="number"
                         name="age"
+                        required
                         min="18"
                         max="80"
                         value={formData.age}
@@ -556,11 +725,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Height */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Height
+                        Height <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="height"
+                        required
                         value={formData.height}
                         onChange={handleInputChange}
                         placeholder="e.g. 5 ft 6 in / 168 cm"
@@ -571,11 +741,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Weight */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Weight
+                        Weight <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="weight"
+                        required
                         value={formData.weight}
                         onChange={handleInputChange}
                         placeholder="e.g. 62 kg"
@@ -586,10 +757,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Marital Status */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Marital Status
+                        Marital Status <span className="text-red-600 font-bold">*</span>
                       </label>
                       <select
                         name="maritalStatus"
+                        required
                         value={formData.maritalStatus}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
@@ -616,7 +788,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       <MapPin className="w-5 h-5 text-[#C89B63]" /> 2. Contact & Community Details
                     </h3>
                     <p className="text-xs text-[#222222]/70">
-                      Reachability and ancestral cultural background.
+                      All fields marked with <span className="text-red-600 font-bold">*</span> are mandatory for profile matching.
                     </p>
                   </div>
 
@@ -624,11 +796,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Mobile Number */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Mobile Number
+                        Mobile Number <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="tel"
                         name="mobileNumber"
+                        required
                         value={formData.mobileNumber}
                         onChange={handleInputChange}
                         placeholder="e.g. 9876543210"
@@ -640,7 +813,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider">
-                          WhatsApp Number
+                          WhatsApp Number <span className="text-red-600 font-bold">*</span>
                         </label>
                         <label className="text-[11px] text-[#6A1E2C] font-semibold flex items-center gap-1 cursor-pointer">
                           <input
@@ -655,6 +828,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       <input
                         type="tel"
                         name="whatsappNumber"
+                        required
                         value={formData.whatsappNumber}
                         onChange={handleInputChange}
                         placeholder="WhatsApp contact number"
@@ -666,11 +840,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Email ID */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Email Address
+                        Email Address <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="email"
                         name="email"
+                        required
                         value={formData.email}
                         onChange={handleInputChange}
                         placeholder="e.g. candidate@example.com"
@@ -681,14 +856,15 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Current Location */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Current Location (City / State)
+                        Current Location (City / State) <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="currentLocation"
+                        required
                         value={formData.currentLocation}
                         onChange={handleInputChange}
-                        placeholder="e.g. Coimbatore, Chennai, Bangalore"
+                        placeholder="e.g. Coimbatore, Erode, Tirupur, Salem, Chennai"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -696,14 +872,15 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Native Place */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Native Place (District / Village)
+                        Native Place (District / Village) <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="nativePlace"
+                        required
                         value={formData.nativePlace}
                         onChange={handleInputChange}
-                        placeholder="e.g. Karur, Madurai, Erode"
+                        placeholder="e.g. Karur, Kangeyam, Perundurai, Namakkal"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -711,44 +888,53 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Community / Caste */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Community / Caste
+                        Community / Caste <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="community"
+                        required
                         value={formData.community}
                         onChange={handleInputChange}
-                        placeholder="e.g. Kongu Vellalar, Mudaliar, Chettiar, Nadar, etc."
+                        placeholder="Kongu Vellalar Gounder"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
 
-                    {/* Kulam / Gotram */}
+                    {/* Kulam / Gotram with datalist */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Kulam / Gotram
+                        Kulam / Gotram (குலம்) <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="kulam"
+                        required
+                        list="kulam-suggestions"
                         value={formData.kulam}
                         onChange={handleInputChange}
-                        placeholder="e.g. Sempoothan, Kannan, Bharadwaja"
+                        placeholder="Select or enter your Kulam (e.g. Sempoothan)"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
+                      <datalist id="kulam-suggestions">
+                        {KONGU_KULAMS.map((k) => (
+                          <option key={k} value={k} />
+                        ))}
+                      </datalist>
                     </div>
 
                     {/* Kuladeivam */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Kuladeivam & Temple Location
+                        Kuladeivam & Temple Location (குலதெய்வம்) <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="kuladeivam"
+                        required
                         value={formData.kuladeivam}
                         onChange={handleInputChange}
-                        placeholder="e.g. Angala Parameswari, Kodumudi, etc."
+                        placeholder="e.g. Angala Parameswari, Kodumudi / Chennimalai Murugan"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -768,7 +954,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       <GraduationCap className="w-5 h-5 text-[#C89B63]" /> 3. Education, Career & Family
                     </h3>
                     <p className="text-xs text-[#222222]/70">
-                      Professional qualifications, income, and parental details.
+                      All fields marked with <span className="text-red-600 font-bold">*</span> are mandatory.
                     </p>
                   </div>
 
@@ -776,14 +962,15 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Education Qualification */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Education Qualification
+                        Education Qualification <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="educationQualification"
+                        required
                         value={formData.educationQualification}
                         onChange={handleInputChange}
-                        placeholder="e.g. B.Tech / MBA / MBBS / Chartered Accountant"
+                        placeholder="e.g. B.E / B.Tech / MBA / MBBS / Chartered Accountant"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -791,11 +978,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Profession */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Profession / Job Title
+                        Profession / Job Title <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="profession"
+                        required
                         value={formData.profession}
                         onChange={handleInputChange}
                         placeholder="e.g. Senior Software Engineer / Doctor / Business Owner"
@@ -806,14 +994,15 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Company / Business Name */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Company / Business Name
+                        Company / Business Name <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="companyName"
+                        required
                         value={formData.companyName}
                         onChange={handleInputChange}
-                        placeholder="e.g. TCS / Self-employed / Own Enterprise"
+                        placeholder="e.g. Infosys / Own Enterprise / Textile Business"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -821,14 +1010,15 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Work Location */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Work Location
+                        Work Location <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="workLocation"
+                        required
                         value={formData.workLocation}
                         onChange={handleInputChange}
-                        placeholder="e.g. Chennai, Bangalore, Abroad (USA/UK/Dubai)"
+                        placeholder="e.g. Coimbatore, Bangalore, Chennai, Abroad (USA/UK/Dubai)"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -836,14 +1026,15 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Monthly / Annual Income */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Monthly / Annual Income
+                        Monthly / Annual Income <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="income"
+                        required
                         value={formData.income}
                         onChange={handleInputChange}
-                        placeholder="e.g. 12 LPA / ₹1,00,000 per month"
+                        placeholder="e.g. 15 LPA / ₹1,25,000 per month"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -851,11 +1042,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Father Name & Occupation */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Father's Name
+                        Father's Name <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="fatherName"
+                        required
                         value={formData.fatherName}
                         onChange={handleInputChange}
                         placeholder="Father's full name"
@@ -865,14 +1057,15 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
 
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Father's Occupation
+                        Father's Occupation <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="fatherOccupation"
+                        required
                         value={formData.fatherOccupation}
                         onChange={handleInputChange}
-                        placeholder="e.g. Business / Retired Govt Official / Agriculture"
+                        placeholder="e.g. Business / Agriculture / Retired Govt Official"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -880,11 +1073,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Mother Name & Occupation */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Mother's Name
+                        Mother's Name <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="motherName"
+                        required
                         value={formData.motherName}
                         onChange={handleInputChange}
                         placeholder="Mother's full name"
@@ -894,11 +1088,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
 
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Mother's Occupation
+                        Mother's Occupation <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="motherOccupation"
+                        required
                         value={formData.motherOccupation}
                         onChange={handleInputChange}
                         placeholder="e.g. Homemaker / Teacher / Govt Officer"
@@ -909,25 +1104,27 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Siblings */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Brother(s) (Married / Unmarried)
+                        Brother(s) (Married / Unmarried) <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="brothersCount"
+                        required
                         value={formData.brothersCount}
                         onChange={handleInputChange}
-                        placeholder="e.g. 1 Elder brother (Married), 1 Younger (Unmarried)"
+                        placeholder="e.g. 1 Elder brother (Married) or None"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Sister(s) (Married / Unmarried)
+                        Sister(s) (Married / Unmarried) <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="sistersCount"
+                        required
                         value={formData.sistersCount}
                         onChange={handleInputChange}
                         placeholder="e.g. 1 Younger sister (Unmarried) or None"
@@ -938,10 +1135,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Family Type & Family Status */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Family Type
+                        Family Type <span className="text-red-600 font-bold">*</span>
                       </label>
                       <select
                         name="familyType"
+                        required
                         value={formData.familyType}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
@@ -953,10 +1151,11 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
 
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Family Status
+                        Family Status <span className="text-red-600 font-bold">*</span>
                       </label>
                       <select
                         name="familyStatus"
+                        required
                         value={formData.familyStatus}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
@@ -970,11 +1169,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Family Background */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Family Background / About Family
+                        Family Background / About Family <span className="text-red-600 font-bold">*</span>
                       </label>
                       <textarea
                         rows={3}
                         name="familyBackground"
+                        required
                         value={formData.familyBackground}
                         onChange={handleInputChange}
                         placeholder="Tell prospective families about your family values, ancestral heritage, and lifestyle..."
@@ -997,7 +1197,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       <Heart className="w-5 h-5 text-[#C89B63]" /> 4. Partner Expectations
                     </h3>
                     <p className="text-xs text-[#222222]/70">
-                      Specify preferences to help our matrimony consultants find the most compatible matches.
+                      All fields marked with <span className="text-red-600 font-bold">*</span> are mandatory for accurate matchmaking.
                     </p>
                   </div>
 
@@ -1005,11 +1205,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Age Range Preference */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Preferred Age Range
+                        Preferred Age Range <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="partnerAgeRange"
+                        required
                         value={formData.partnerAgeRange}
                         onChange={handleInputChange}
                         placeholder="e.g. 24 - 28 Years"
@@ -1020,11 +1221,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Education Preference */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Education Preference
+                        Education Preference <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="partnerEducation"
+                        required
                         value={formData.partnerEducation}
                         onChange={handleInputChange}
                         placeholder="e.g. Any Graduate / Post Graduate / Doctor / Engineer"
@@ -1035,11 +1237,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Profession Preference */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Profession Preference
+                        Profession Preference <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="partnerProfession"
+                        required
                         value={formData.partnerProfession}
                         onChange={handleInputChange}
                         placeholder="e.g. IT Professional / Govt Job / Business / Doctor"
@@ -1050,11 +1253,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Income Preference */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Income Preference
+                        Income Preference <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="partnerIncomePreference"
+                        required
                         value={formData.partnerIncomePreference}
                         onChange={handleInputChange}
                         placeholder="e.g. 6 LPA+ / No specific bar"
@@ -1065,14 +1269,15 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Community Preference */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Community Preference
+                        Community Preference <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="partnerCommunityPreference"
+                        required
                         value={formData.partnerCommunityPreference}
                         onChange={handleInputChange}
-                        placeholder="e.g. Same Community or Open to Inter-caste"
+                        placeholder="e.g. Kongu Vellalar Gounder"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -1080,11 +1285,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Location Preference */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Location Preference
+                        Location Preference <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="partnerLocationPreference"
+                        required
                         value={formData.partnerLocationPreference}
                         onChange={handleInputChange}
                         placeholder="e.g. Tamil Nadu / Bangalore / Abroad Willing"
@@ -1095,11 +1301,12 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     {/* Other Expectations */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Other Expectations & Values
+                        Other Expectations & Values <span className="text-red-600 font-bold">*</span>
                       </label>
                       <textarea
                         rows={3}
                         name="partnerOtherExpectations"
+                        required
                         value={formData.partnerOtherExpectations}
                         onChange={handleInputChange}
                         placeholder="Mention horoscope matching requirements (Sevvai dosham, Rasi/Natchathiram preferences) or personal values..."
@@ -1122,7 +1329,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       <Upload className="w-5 h-5 text-[#C89B63]" /> 5. Photo & Document Uploads
                     </h3>
                     <p className="text-xs text-[#222222]/70">
-                      Upload candidate photograph, horoscope (Jathagam), and community certificate. Supports Image (JPG/PNG), PDF, and document files.
+                      Upload candidate photograph, horoscope (Jathagam), and community certificate. All 3 files marked <span className="text-red-600 font-bold">*</span> are mandatory for verification.
                     </p>
                   </div>
 
@@ -1131,7 +1338,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     <div className="p-5 rounded-3xl border-2 border-dashed border-[#C89B63]/40 bg-[#FFF9F5]/50 flex flex-col items-center text-center justify-between space-y-3">
                       <div className="w-full space-y-2">
                         <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#6A1E2C]">
-                          <ImageIcon className="w-4 h-4 text-[#C89B63]" /> Recent Photo
+                          <ImageIcon className="w-4 h-4 text-[#C89B63]" /> Recent Photo <span className="text-red-600 font-bold">*</span>
                         </div>
 
                         {photoPreview ? (
@@ -1159,7 +1366,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                             className="w-24 h-24 mx-auto rounded-2xl bg-white border border-[#C89B63]/30 flex flex-col items-center justify-center text-[#C89B63] cursor-pointer hover:bg-[#FAF3EB] transition shadow-sm"
                           >
                             <Upload className="w-6 h-6" />
-                            <span className="text-[10px] font-bold mt-1 text-[#6A1E2C]">Upload Photo</span>
+                            <span className="text-[10px] font-bold mt-1 text-[#6A1E2C]">Upload Photo *</span>
                           </div>
                         )}
 
@@ -1185,7 +1392,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                         onClick={() => photoInputRef.current?.click()}
                         className="w-full py-2 rounded-xl bg-white border border-[#C89B63]/40 text-[#6A1E2C] text-xs font-bold hover:bg-[#6A1E2C] hover:text-white transition shadow-sm"
                       >
-                        {photoFile ? 'Change Photo' : 'Select Photo'}
+                        {photoFile ? 'Change Photo' : 'Select Photo *'}
                       </button>
                     </div>
 
@@ -1193,7 +1400,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     <div className="p-5 rounded-3xl border-2 border-dashed border-[#C89B63]/40 bg-[#FFF9F5]/50 flex flex-col items-center text-center justify-between space-y-3">
                       <div className="w-full space-y-2">
                         <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#6A1E2C]">
-                          <FileText className="w-4 h-4 text-[#C89B63]" /> Jathagam / Horoscope
+                          <FileText className="w-4 h-4 text-[#C89B63]" /> Jathagam / Horoscope <span className="text-red-600 font-bold">*</span>
                         </div>
 
                         {jathagamFile ? (
@@ -1208,7 +1415,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                             className="w-24 h-24 mx-auto rounded-2xl bg-white border border-[#C89B63]/30 flex flex-col items-center justify-center text-[#C89B63] cursor-pointer hover:bg-[#FAF3EB] transition shadow-sm"
                           >
                             <FileText className="w-6 h-6" />
-                            <span className="text-[10px] font-bold mt-1 text-[#6A1E2C]">Upload File</span>
+                            <span className="text-[10px] font-bold mt-1 text-[#6A1E2C]">Upload File *</span>
                           </div>
                         )}
 
@@ -1234,7 +1441,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                         onClick={() => jathagamInputRef.current?.click()}
                         className="w-full py-2 rounded-xl bg-white border border-[#C89B63]/40 text-[#6A1E2C] text-xs font-bold hover:bg-[#6A1E2C] hover:text-white transition shadow-sm"
                       >
-                        {jathagamFile ? 'Change Jathagam' : 'Select Jathagam'}
+                        {jathagamFile ? 'Change Jathagam' : 'Select Jathagam *'}
                       </button>
                     </div>
 
@@ -1242,7 +1449,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                     <div className="p-5 rounded-3xl border-2 border-dashed border-[#C89B63]/40 bg-[#FFF9F5]/50 flex flex-col items-center text-center justify-between space-y-3">
                       <div className="w-full space-y-2">
                         <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#6A1E2C]">
-                          <ShieldCheck className="w-4 h-4 text-[#C89B63]" /> Community Certificate
+                          <ShieldCheck className="w-4 h-4 text-[#C89B63]" /> Community Certificate <span className="text-red-600 font-bold">*</span>
                         </div>
 
                         {communityCertFile ? (
@@ -1257,7 +1464,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                             className="w-24 h-24 mx-auto rounded-2xl bg-white border border-[#C89B63]/30 flex flex-col items-center justify-center text-[#C89B63] cursor-pointer hover:bg-[#FAF3EB] transition shadow-sm"
                           >
                             <ShieldCheck className="w-6 h-6" />
-                            <span className="text-[10px] font-bold mt-1 text-[#6A1E2C]">Upload Cert</span>
+                            <span className="text-[10px] font-bold mt-1 text-[#6A1E2C]">Upload Cert *</span>
                           </div>
                         )}
 
@@ -1283,7 +1490,7 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                         onClick={() => certInputRef.current?.click()}
                         className="w-full py-2 rounded-xl bg-white border border-[#C89B63]/40 text-[#6A1E2C] text-xs font-bold hover:bg-[#6A1E2C] hover:text-white transition shadow-sm"
                       >
-                        {communityCertFile ? 'Change Certificate' : 'Select Certificate'}
+                        {communityCertFile ? 'Change Certificate' : 'Select Certificate *'}
                       </button>
                     </div>
                   </div>

@@ -17,11 +17,11 @@ export default function AboutSection() {
           </div>
 
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#6A1E2C] leading-tight tracking-tight mb-4">
-            Trusted Matrimony for Every Family
+            Trusted Kongu Vellalar Matrimony
           </h2>
 
           <p className="text-base sm:text-lg lg:text-xl text-[#222222]/85 leading-relaxed font-normal mb-6">
-            Vivaaha Connect helps brides and grooms from all communities find compatible life partners through verified profiles, personalized guidance, and complete privacy. We make the matchmaking journey simple, trusted, and family-friendly.
+            Vivaaha Connect is exclusively dedicated to Kongu Vellalar Gounder families. We help brides and grooms discover highly compatible life partners honoring traditional Kulam customs, verified professional backgrounds, and complete family privacy.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -29,7 +29,7 @@ export default function AboutSection() {
               <ShieldCheck className="w-4 h-4 text-[#C89B63]" /> 100% Verified Profiles
             </span>
             <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#C89B63]/30 text-xs sm:text-sm font-bold text-[#6A1E2C] shadow-sm">
-              <Users className="w-4 h-4 text-[#C89B63]" /> Open to All Communities
+              <Users className="w-4 h-4 text-[#C89B63]" /> Kongu Vellalar Only
             </span>
             <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#C89B63]/30 text-xs sm:text-sm font-bold text-[#6A1E2C] shadow-sm">
               <Lock className="w-4 h-4 text-[#C89B63]" /> Privacy Assured

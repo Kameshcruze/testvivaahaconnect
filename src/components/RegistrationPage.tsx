@@ -765,29 +765,6 @@ export default function RegistrationPage({
               </div>
             </div>
 
-            {/* Auto-Save & Session Protection Info Bar */}
-            <div className="px-4 sm:px-6 py-2.5 bg-[#FFF9F5] border-b border-[#C89B63]/15 flex flex-wrap items-center justify-between gap-2 text-[11px] sm:text-xs">
-              <div className="flex items-center gap-2 text-emerald-700 font-semibold">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span>Auto-saved to local session</span>
-                <span className="hidden sm:inline text-[#222222]/50 font-normal">
-                  (Safe against tab closure or connection drops)
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleClearDraft}
-                className="text-[#6A1E2C] hover:text-red-700 font-medium inline-flex items-center gap-1 transition"
-                title="Clear all entered fields and start over"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Clear Draft</span>
-              </button>
-            </div>
 
             {/* Restored Draft Alert Banner */}
             {hasRestoredDraft && (

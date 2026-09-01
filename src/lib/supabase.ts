@@ -459,11 +459,13 @@ export async function submitEnquiryRecord(
     notes: enquiry.notes || null,
   };
 
-  // Safe local copy in localStorage
+  // Safe local copy in localStorage & real-time window notification
   try {
     const existing = JSON.parse(localStorage.getItem('vivaaha_enquiries') || '[]');
-    existing.unshift(recordPayload);
-    localStorage.setItem('vivaaha_enquiries', JSON.stringify(existing.slice(0, 50)));
+    const filtered = existing.filter((e: any) => e.id !== enquiryId);
+    filtered.unshift(recordPayload);
+    localStorage.setItem('vivaaha_enquiries', JSON.stringify(filtered.slice(0, 100)));
+    window.dispatchEvent(new CustomEvent('vivaaha_enquiry_submitted', { detail: recordPayload }));
   } catch (e) {
     console.warn('Local enquiry cache warning:', e);
   }

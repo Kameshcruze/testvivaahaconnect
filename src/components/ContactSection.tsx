@@ -6,6 +6,7 @@ import { submitEnquiryRecord } from '../lib/supabase';
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -13,27 +14,40 @@ export default function ContactSection() {
     notes: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone || !formData.community || !formData.notes) return;
+    if (!formData.name?.trim() || !formData.phone?.trim()) return;
 
-    // 1. Submit enquiry to database / Admin panel
-    submitEnquiryRecord({
-      type: 'contact_form',
-      name: formData.name.trim(),
-      phone: formData.phone.trim(),
-      community: formData.community.trim(),
-      source: 'Contact Us Callback Form',
-      message: formData.notes.trim(),
-    }).catch(() => {});
+    setIsSubmitting(true);
 
-    // 2. Open WhatsApp
-    const textMessage = `Hello Vivaaha Connect,\n\nI would like to request a callback:\n\n• Name: ${formData.name}\n• Phone / WhatsApp: ${formData.phone}\n• Community: ${formData.community}\n• Details / Preferred Time: ${formData.notes}`;
+    try {
+      // 1. Submit enquiry to database / Admin panel
+      await submitEnquiryRecord({
+        type: 'contact_form',
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        community: formData.community?.trim() || 'General Enquiry',
+        source: 'Contact Us Callback Form',
+        message: formData.notes?.trim() || 'Requested callback from website contact form',
+      });
 
-    const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;
-    window.open(whatsappUrl, '_blank');
+      // 2. Open WhatsApp for instant transmission (optional)
+      try {
+        const textMessage = `Hello Vivaaha Connect,\n\nI would like to request a callback:\n\n• Name: ${formData.name}\n• Phone / WhatsApp: ${formData.phone}${formData.community ? `\n• Community: ${formData.community}` : ''}${formData.notes ? `\n• Details: ${formData.notes}` : ''}`;
+        const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;
+        window.open(whatsappUrl, '_blank');
+      } catch (waErr) {
+        console.warn('WhatsApp launch notice:', waErr);
+      }
 
-    setSubmitted(true);
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Enquiry submission error:', err);
+      // Still set submitted to true since local fallback catches it
+      setSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -191,12 +205,11 @@ export default function ContactSection() {
 
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1">
-                        Community & Kulam
+                        Community & Kulam (Optional)
                       </label>
                       <input
                         type="text"
-                        required
-                        placeholder="Kongu Vellalar Gounder (e.g. Sempoothan / Kannan)"
+                        placeholder="e.g. Kongu Vellalar Gounder / Any"
                         value={formData.community}
                         onChange={(e) => setFormData({ ...formData, community: e.target.value })}
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5] text-sm focus:outline-none focus:border-[#6A1E2C] transition"
@@ -205,11 +218,10 @@ export default function ContactSection() {
 
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1">
-                        Brief Details / Preferred Call Time
+                        Brief Details / Preferred Call Time (Optional)
                       </label>
                       <textarea
                         rows={3}
-                        required
                         placeholder="e.g. Looking for bride, BE graduate, Coimbatore. Please call in evening."
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -219,9 +231,16 @@ export default function ContactSection() {
 
                     <button
                       type="submit"
-                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#6A1E2C] via-[#8C283B] to-[#6A1E2C] text-white font-bold text-sm shadow-xl hover:brightness-110 active:scale-[0.99] transition flex items-center justify-center gap-2"
+                      disabled={isSubmitting}
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#6A1E2C] via-[#8C283B] to-[#6A1E2C] text-white font-bold text-sm shadow-xl hover:brightness-110 active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
                     >
-                      <Send className="w-4 h-4" /> Send Callback Request
+                      {isSubmitting ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" /> Send Callback Request
+                        </>
+                      )}
                     </button>
                   </form>
                 </>

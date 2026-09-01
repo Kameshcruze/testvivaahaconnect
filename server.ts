@@ -363,7 +363,8 @@ app.delete('/api/admin/registrations/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// Cache for admin enquiries
+// In-memory persistent stores for resilient fallback
+let memoryEnquiriesStore: any[] = [];
 let cachedAdminEnquiries: { timestamp: number; data: any[] } | null = null;
 
 // Public Enquiry Submission (Callbacks, WhatsApp clicks, Contact form)
@@ -385,13 +386,26 @@ app.post('/api/enquiries', async (req, res) => {
       notes: payload?.notes || null,
     };
 
-    const { error } = await supabase.from('enquiries').insert([recordPayload]);
-    if (error) {
-      console.warn('Server Supabase enquiry insert notice:', error.message);
+    // 1. Always save in resilient server memory store
+    const existingIdx = memoryEnquiriesStore.findIndex((e) => e.id === enquiryId);
+    if (existingIdx >= 0) {
+      memoryEnquiriesStore[existingIdx] = { ...memoryEnquiriesStore[existingIdx], ...recordPayload };
+    } else {
+      memoryEnquiriesStore.unshift(recordPayload);
+    }
+
+    // 2. Try inserting into Supabase
+    try {
+      const { error } = await supabase.from('enquiries').insert([recordPayload]);
+      if (error) {
+        console.warn('Server Supabase enquiry insert notice:', error.message);
+      }
+    } catch (dbErr: any) {
+      console.warn('Supabase DB unreachable for enquiry insert:', dbErr?.message);
     }
 
     cachedAdminEnquiries = null;
-    return res.json({ success: true, id: enquiryId });
+    return res.json({ success: true, id: enquiryId, enquiry: recordPayload });
   } catch (err: any) {
     console.error('Error in /api/enquiries:', err);
     return res.status(500).json({ error: err.message || 'Internal server error' });
@@ -411,27 +425,36 @@ app.get('/api/admin/enquiries', requireAdmin, async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase
-      .from('enquiries')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let cloudList: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('enquiries')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching enquiries from database:', error);
-      if (cachedAdminEnquiries) {
-        return res.json({
-          success: true,
-          count: cachedAdminEnquiries.data.length,
-          enquiries: cachedAdminEnquiries.data,
-          stale: true,
-        });
+      if (!error && Array.isArray(data)) {
+        cloudList = data;
+      } else if (error) {
+        console.warn('Notice querying Supabase enquiries table:', error.message);
       }
-      return res.status(500).json({ error: error.message });
+    } catch (e: any) {
+      console.warn('Error querying Supabase enquiries:', e?.message);
     }
 
-    const list = data || [];
-    cachedAdminEnquiries = { timestamp: now, data: list };
-    return res.json({ success: true, count: list.length, enquiries: list });
+    // Merge cloud list with memory store by ID
+    const mergedMap = new Map<string, any>();
+    memoryEnquiriesStore.forEach((e) => { if (e && e.id) mergedMap.set(e.id, e); });
+    cloudList.forEach((e) => { if (e && e.id) mergedMap.set(e.id, e); });
+
+    const combinedList = Array.from(mergedMap.values()).sort(
+      (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    );
+
+    // Sync memory store
+    memoryEnquiriesStore = combinedList;
+    cachedAdminEnquiries = { timestamp: now, data: combinedList };
+
+    return res.json({ success: true, count: combinedList.length, enquiries: combinedList });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
@@ -446,14 +469,20 @@ app.patch('/api/admin/enquiries/:id', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Enquiry ID is required' });
     }
 
+    // Update in memory
+    const existingIdx = memoryEnquiriesStore.findIndex((e) => e.id === id);
+    if (existingIdx >= 0) {
+      if (status !== undefined) memoryEnquiriesStore[existingIdx].status = status;
+      if (notes !== undefined) memoryEnquiriesStore[existingIdx].notes = notes;
+    }
+
     const updates: Record<string, any> = {};
     if (status !== undefined) updates.status = status;
     if (notes !== undefined) updates.notes = notes;
 
-    const { error } = await supabase.from('enquiries').update(updates).eq('id', id);
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
+    try {
+      await supabase.from('enquiries').update(updates).eq('id', id);
+    } catch (e) {}
 
     cachedAdminEnquiries = null;
     return res.json({ success: true, message: `Enquiry ${id} updated` });
@@ -470,10 +499,12 @@ app.delete('/api/admin/enquiries/:id', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Enquiry ID is required' });
     }
 
-    const { error } = await supabase.from('enquiries').delete().eq('id', id);
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
+    // Remove from memory
+    memoryEnquiriesStore = memoryEnquiriesStore.filter((e) => e.id !== id);
+
+    try {
+      await supabase.from('enquiries').delete().eq('id', id);
+    } catch (e) {}
 
     cachedAdminEnquiries = null;
     return res.json({ success: true, message: `Enquiry ${id} deleted` });

@@ -93,11 +93,45 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
   const [communityFilter, setCommunityFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
-  // Verify existing token on mount
+  // Verify existing token on mount and listen for real-time enquiry submissions
   useEffect(() => {
     if (token) {
       verifyAndFetch(token);
     }
+
+    const handleNewEnquiry = (event: any) => {
+      const newEnquiry = event?.detail;
+      if (newEnquiry?.id) {
+        setEnquiries((prev) => {
+          const exists = prev.some((e) => e.id === newEnquiry.id);
+          if (exists) return prev;
+          const updated = [newEnquiry, ...prev];
+          try {
+            localStorage.setItem('vivaaha_enquiries', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'vivaaha_enquiries' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setEnquiries(parsed);
+          }
+        } catch {}
+      }
+    };
+
+    window.addEventListener('vivaaha_enquiry_submitted', handleNewEnquiry);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('vivaaha_enquiry_submitted', handleNewEnquiry);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [token]);
 
   const verifyAndFetch = async (authToken: string, force = false) => {
@@ -177,36 +211,75 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
         } catch {}
       }
 
-      // 3. Local storage fallback
-      if (!records) {
+      // 3. Resilient Deduplicating Merging for Enquiries
+      const localEnquiries: EnquiryRecord[] = (() => {
         try {
-          const localData = JSON.parse(localStorage.getItem('vivaaha_registrations') || '[]');
-          if (Array.isArray(localData) && localData.length > 0) {
-            records = localData;
-          }
+          const raw = localStorage.getItem('vivaaha_enquiries');
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      })();
+
+      const mergedEnquiriesMap = new Map<string, EnquiryRecord>();
+      // 1. Current in-memory state
+      enquiries.forEach((e) => {
+        if (e && e.id) mergedEnquiriesMap.set(e.id, e);
+      });
+      // 2. Local storage records
+      localEnquiries.forEach((e) => {
+        if (e && e.id) mergedEnquiriesMap.set(e.id, e);
+      });
+      // 3. Remote records (from Supabase or server API)
+      if (Array.isArray(enqRecords)) {
+        enqRecords.forEach((e) => {
+          if (e && e.id) mergedEnquiriesMap.set(e.id, e);
+        });
+      }
+
+      const finalEnquiries = Array.from(mergedEnquiriesMap.values()).sort(
+        (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      );
+
+      if (finalEnquiries.length > 0) {
+        setEnquiries(finalEnquiries);
+        try {
+          localStorage.setItem('vivaaha_enquiries', JSON.stringify(finalEnquiries));
         } catch {}
       }
 
-      if (!enqRecords) {
+      // 4. Resilient Deduplicating Merging for Registrations
+      const localRegistrations: RegistrationRecord[] = (() => {
         try {
-          const localEnq = JSON.parse(localStorage.getItem('vivaaha_enquiries') || '[]');
-          if (Array.isArray(localEnq) && localEnq.length > 0) {
-            enqRecords = localEnq;
-          }
-        } catch {}
+          const raw = localStorage.getItem('vivaaha_registrations');
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      })();
+
+      const mergedRegMap = new Map<string, RegistrationRecord>();
+      registrations.forEach((r) => {
+        if (r && r.id) mergedRegMap.set(r.id, r);
+      });
+      localRegistrations.forEach((r) => {
+        if (r && r.id) mergedRegMap.set(r.id, r);
+      });
+      if (Array.isArray(records)) {
+        records.forEach((r) => {
+          if (r && r.id) mergedRegMap.set(r.id, r);
+        });
       }
 
-      if (records) {
-        setRegistrations(records);
-        try {
-          sessionStorage.setItem('vivaaha_cached_admin_records', JSON.stringify(records));
-        } catch {}
-      }
+      const finalRegistrations = Array.from(mergedRegMap.values()).sort(
+        (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      );
 
-      if (enqRecords) {
-        setEnquiries(enqRecords);
+      if (finalRegistrations.length > 0) {
+        setRegistrations(finalRegistrations);
         try {
-          localStorage.setItem('vivaaha_enquiries', JSON.stringify(enqRecords));
+          sessionStorage.setItem('vivaaha_cached_admin_records', JSON.stringify(finalRegistrations));
+          localStorage.setItem('vivaaha_registrations', JSON.stringify(finalRegistrations));
         } catch {}
       }
     } catch (err: any) {

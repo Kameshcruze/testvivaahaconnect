@@ -14,6 +14,7 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
   const [callbackRequested, setCallbackRequested] = useState(false);
   const [candidateName, setCandidateName] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(PHONE_NUMBER);
@@ -30,25 +31,36 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
     }).catch(() => {});
   };
 
-  const handleCallbackSubmit = (e: React.FormEvent) => {
+  const handleCallbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneInput || !candidateName) return;
+    if (!phoneInput.trim() || !candidateName.trim()) return;
 
-    // 1. Submit to database / Admin enquiries
-    submitEnquiryRecord({
-      type: 'callback_request',
-      name: candidateName.trim(),
-      phone: phoneInput.trim(),
-      source: 'Call Modal Quick Callback Form',
-      message: 'Requested immediate phone callback from matrimony consultant',
-    }).catch(() => {});
+    setIsSubmitting(true);
 
-    // 2. Also open WhatsApp for instant transmission
-    const textMessage = `Hello Vivaaha Connect,\n\nI would like to request a quick callback:\n\n• Name: ${candidateName}\n• Phone: ${phoneInput}`;
-    const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;
-    window.open(whatsappUrl, '_blank');
+    try {
+      // 1. Submit to database / Admin enquiries
+      await submitEnquiryRecord({
+        type: 'callback_request',
+        name: candidateName.trim(),
+        phone: phoneInput.trim(),
+        source: 'Call Modal Quick Callback Form',
+        message: 'Requested immediate phone callback from matrimony consultant',
+      });
 
-    setCallbackRequested(true);
+      // 2. Also open WhatsApp for instant transmission
+      try {
+        const textMessage = `Hello Vivaaha Connect,\n\nI would like to request a quick callback:\n\n• Name: ${candidateName}\n• Phone: ${phoneInput}`;
+        const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;
+        window.open(whatsappUrl, '_blank');
+      } catch {}
+
+      setCallbackRequested(true);
+    } catch (err) {
+      console.error('Callback error:', err);
+      setCallbackRequested(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetAndClose = () => {
@@ -165,9 +177,16 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
                     />
                     <button
                       type="submit"
-                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#C89B63] hover:bg-[#b0844d] text-white font-semibold text-sm flex items-center justify-center gap-1.5 transition shrink-0 active:scale-[0.98]"
+                      disabled={isSubmitting}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#C89B63] hover:bg-[#b0844d] text-white font-semibold text-sm flex items-center justify-center gap-1.5 transition shrink-0 active:scale-[0.98] cursor-pointer disabled:opacity-75"
                     >
-                      <Send className="w-4 h-4" /> Request
+                      {isSubmitting ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" /> Request
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>

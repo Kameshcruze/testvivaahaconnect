@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { optimizeImageFile, validateFileSize } from './fileOptimizer';
+import { EnquiryRecord, EnquiryType, EnquiryStatus } from '../types';
 
 // Auto-clean any stale invalid localStorage configs
 if (typeof window !== 'undefined') {
@@ -426,6 +427,49 @@ export async function submitRegistrationForm(
 }
 
 /**
+ * Helper to normalize any enquiry record coming from Supabase or API
+ */
+export function normalizeEnquiryRecord(raw: any): EnquiryRecord {
+  if (!raw) {
+    return {
+      id: `ENQ-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      type: 'general_enquiry',
+      status: 'New',
+    };
+  }
+
+  // Determine type / channel
+  let type: EnquiryType = 'callback_request';
+  const rawType = raw.type || raw.channel;
+  if (rawType === 'whatsapp_click' || rawType === 'whatsapp') {
+    type = 'whatsapp_click';
+  } else if (rawType === 'phone_call' || rawType === 'call' || rawType === 'phone') {
+    type = 'phone_call';
+  } else if (rawType === 'contact_form' || rawType === 'contact') {
+    type = 'contact_form';
+  } else if (rawType === 'general_enquiry') {
+    type = 'general_enquiry';
+  } else if (rawType === 'callback' || rawType === 'callback_request') {
+    type = 'callback_request';
+  }
+
+  return {
+    id: String(raw.id || `ENQ-${Date.now()}`),
+    created_at: raw.created_at || raw.createdAt || new Date().toISOString(),
+    type,
+    name: raw.name || null,
+    phone: raw.phone || raw.mobile || null,
+    email: raw.email || null,
+    community: raw.community || raw.topic || raw.kulam || null,
+    source: raw.source || raw.source_page || 'Website',
+    message: raw.message || null,
+    status: (raw.status || 'New') as EnquiryStatus,
+    notes: raw.notes || (raw.preferred_time ? `Preferred Time: ${raw.preferred_time}` : null),
+  };
+}
+
+/**
  * Inserts an Enquiry / Callback / WhatsApp interaction into Supabase `enquiries` table,
  * server API, and local storage fallback.
  */
@@ -445,7 +489,7 @@ export async function submitEnquiryRecord(
   const now = new Date().toISOString();
   const supabase = getSupabase();
 
-  const recordPayload = {
+  const standardEnquiry: EnquiryRecord = {
     id: enquiryId,
     created_at: now,
     type: enquiry.type,
@@ -463,23 +507,54 @@ export async function submitEnquiryRecord(
   try {
     const existing = JSON.parse(localStorage.getItem('vivaaha_enquiries') || '[]');
     const filtered = existing.filter((e: any) => e.id !== enquiryId);
-    filtered.unshift(recordPayload);
+    filtered.unshift(standardEnquiry);
     localStorage.setItem('vivaaha_enquiries', JSON.stringify(filtered.slice(0, 100)));
-    window.dispatchEvent(new CustomEvent('vivaaha_enquiry_submitted', { detail: recordPayload }));
+    window.dispatchEvent(new CustomEvent('vivaaha_enquiry_submitted', { detail: standardEnquiry }));
   } catch (e) {
     console.warn('Local enquiry cache warning:', e);
   }
 
-  // 1. Direct Supabase insert
+  // 1. Direct Supabase insert (matching live DB schema with fallback)
   if (supabase && isSupabaseConfigured()) {
     try {
-      const insertPromise = supabase.from('enquiries').insert([recordPayload]);
-      const timeoutPromise = new Promise<{ error: Error }>((_, reject) =>
-        setTimeout(() => reject(new Error('Enquiry network timeout')), 4000)
-      );
+      // Primary DB Payload: uses channel, topic, source_page which match current table
+      const dbPayload: Record<string, any> = {
+        id: enquiryId,
+        created_at: now,
+        name: enquiry.name || null,
+        phone: enquiry.phone || null,
+        email: enquiry.email || null,
+        channel: enquiry.type || 'callback',
+        topic: enquiry.community || null,
+        source_page: enquiry.source || 'Website',
+        message: enquiry.message || null,
+        status: 'New',
+        notes: enquiry.notes || null,
+      };
 
-      const result: any = await Promise.race([insertPromise, timeoutPromise]);
-      if (result && !result.error) {
+      const { error } = await supabase.from('enquiries').insert([dbPayload]);
+      if (!error) {
+        return { success: true, id: enquiryId, isCloud: true };
+      }
+
+      console.warn('Primary Supabase enquiry insert notice:', error.message);
+
+      // Retry with alternative column names if custom schema
+      const altPayload: Record<string, any> = {
+        id: enquiryId,
+        created_at: now,
+        type: enquiry.type,
+        name: enquiry.name || null,
+        phone: enquiry.phone || null,
+        email: enquiry.email || null,
+        community: enquiry.community || null,
+        source: enquiry.source || 'Website',
+        message: enquiry.message || null,
+        status: 'New',
+        notes: enquiry.notes || null,
+      };
+      const { error: altError } = await supabase.from('enquiries').insert([altPayload]);
+      if (!altError) {
         return { success: true, id: enquiryId, isCloud: true };
       }
     } catch (e) {
@@ -492,7 +567,7 @@ export async function submitEnquiryRecord(
     const res = await fetch('/api/enquiries', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(recordPayload),
+      body: JSON.stringify(standardEnquiry),
     });
     if (res.ok) {
       const data = await res.json().catch(() => null);
@@ -572,16 +647,35 @@ CREATE TABLE IF NOT EXISTS public.registrations (
 CREATE TABLE IF NOT EXISTS public.enquiries (
   id TEXT PRIMARY KEY,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  type TEXT NOT NULL, -- 'callback_request', 'whatsapp_click', 'phone_call', 'contact_form'
+  channel TEXT, -- 'callback', 'whatsapp', 'phone', 'contact_form'
+  type TEXT,
   name TEXT,
   phone TEXT,
   email TEXT,
+  topic TEXT, -- community or topic
   community TEXT,
-  source TEXT, -- 'Help Popup (5s)', 'Call Modal Form', 'Contact Section Form', 'Floating Call', etc.
+  preferred_time TEXT,
+  source_page TEXT, -- 'Help Popup (5s)', 'Call Modal Form', 'Contact Section Form', 'Floating Call', etc.
+  source TEXT,
   message TEXT,
   status TEXT DEFAULT 'New', -- 'New', 'Contacted', 'In Progress', 'Converted', 'Closed'
   notes TEXT
 );
+
+-- Ensure all columns exist even if table was created with an earlier schema
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS channel TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS type TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS topic TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS community TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS preferred_time TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS source_page TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS source TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS message TEXT;
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'New';
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS notes TEXT;
 
 -- 3. Enable Row Level Security (RLS)
 ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;

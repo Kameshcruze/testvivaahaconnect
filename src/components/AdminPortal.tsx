@@ -34,7 +34,7 @@ import {
 import { RegistrationRecord, AdminUser, EnquiryRecord, EnquiryStatus } from '../types';
 import RegistrationDetailModal from './RegistrationDetailModal';
 import AdminEnquiriesTab from './AdminEnquiriesTab';
-import { getSupabase } from '../lib/supabase';
+import { getSupabase, normalizeEnquiryRecord } from '../lib/supabase';
 import logoImg from '../assets/images/Logo1.PNG';
 
 interface AdminPortalProps {
@@ -166,8 +166,8 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
             .select('*')
             .order('created_at', { ascending: false });
 
-          if (!enqError && enqData) {
-            enqRecords = enqData as EnquiryRecord[];
+          if (!enqError && enqData && Array.isArray(enqData)) {
+            enqRecords = enqData.map(normalizeEnquiryRecord);
           }
         } catch (dbErr) {
           console.warn('Direct Supabase fetch caught:', dbErr);
@@ -205,7 +205,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
           if (res.ok) {
             const data = await res.json().catch(() => null);
             if (data?.success && Array.isArray(data.enquiries)) {
-              enqRecords = data.enquiries;
+              enqRecords = data.enquiries.map(normalizeEnquiryRecord);
             }
           }
         } catch {}

@@ -372,10 +372,12 @@ app.post('/api/enquiries', async (req, res) => {
   try {
     const payload = req.body;
     const enquiryId = payload?.id || `ENQ-${Date.now().toString(36).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
-    const recordPayload = {
+    const now = payload?.created_at || new Date().toISOString();
+    
+    const standardRecord = {
       id: enquiryId,
-      created_at: payload?.created_at || new Date().toISOString(),
-      type: payload?.type || 'general_enquiry',
+      created_at: now,
+      type: payload?.type || 'callback_request',
       name: payload?.name || null,
       phone: payload?.phone || null,
       email: payload?.email || null,
@@ -389,23 +391,53 @@ app.post('/api/enquiries', async (req, res) => {
     // 1. Always save in resilient server memory store
     const existingIdx = memoryEnquiriesStore.findIndex((e) => e.id === enquiryId);
     if (existingIdx >= 0) {
-      memoryEnquiriesStore[existingIdx] = { ...memoryEnquiriesStore[existingIdx], ...recordPayload };
+      memoryEnquiriesStore[existingIdx] = { ...memoryEnquiriesStore[existingIdx], ...standardRecord };
     } else {
-      memoryEnquiriesStore.unshift(recordPayload);
+      memoryEnquiriesStore.unshift(standardRecord);
     }
 
-    // 2. Try inserting into Supabase
+    // 2. Insert into Supabase with live table schema compatibility
     try {
-      const { error } = await supabase.from('enquiries').insert([recordPayload]);
+      const dbPayload = {
+        id: enquiryId,
+        created_at: now,
+        name: payload?.name || null,
+        phone: payload?.phone || null,
+        email: payload?.email || null,
+        channel: payload?.type || 'callback',
+        topic: payload?.community || null,
+        source_page: payload?.source || 'Website',
+        message: payload?.message || null,
+        status: payload?.status || 'New',
+        notes: payload?.notes || null,
+      };
+
+      const { error } = await supabase.from('enquiries').insert([dbPayload]);
       if (error) {
-        console.warn('Server Supabase enquiry insert notice:', error.message);
+        // Fallback to alternative schema
+        const altPayload = {
+          id: enquiryId,
+          created_at: now,
+          type: payload?.type || 'callback_request',
+          name: payload?.name || null,
+          phone: payload?.phone || null,
+          email: payload?.email || null,
+          community: payload?.community || null,
+          source: payload?.source || 'Website',
+          message: payload?.message || null,
+          status: payload?.status || 'New',
+          notes: payload?.notes || null,
+        };
+        try {
+          await supabase.from('enquiries').insert([altPayload]);
+        } catch {}
       }
     } catch (dbErr: any) {
-      console.warn('Supabase DB unreachable for enquiry insert:', dbErr?.message);
+      console.warn('Supabase DB notice for enquiry insert:', dbErr?.message);
     }
 
     cachedAdminEnquiries = null;
-    return res.json({ success: true, id: enquiryId, enquiry: recordPayload });
+    return res.json({ success: true, id: enquiryId, enquiry: standardRecord });
   } catch (err: any) {
     console.error('Error in /api/enquiries:', err);
     return res.status(500).json({ error: err.message || 'Internal server error' });
@@ -433,7 +465,19 @@ app.get('/api/admin/enquiries', requireAdmin, async (req, res) => {
         .order('created_at', { ascending: false });
 
       if (!error && Array.isArray(data)) {
-        cloudList = data;
+        cloudList = data.map((raw: any) => ({
+          id: raw.id,
+          created_at: raw.created_at || raw.createdAt || new Date().toISOString(),
+          type: raw.type || raw.channel || 'callback_request',
+          name: raw.name || null,
+          phone: raw.phone || null,
+          email: raw.email || null,
+          community: raw.community || raw.topic || null,
+          source: raw.source || raw.source_page || 'Website',
+          message: raw.message || null,
+          status: raw.status || 'New',
+          notes: raw.notes || (raw.preferred_time ? `Preferred Time: ${raw.preferred_time}` : null),
+        }));
       } else if (error) {
         console.warn('Notice querying Supabase enquiries table:', error.message);
       }

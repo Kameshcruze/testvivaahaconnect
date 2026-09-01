@@ -355,6 +355,16 @@ export default function RegistrationDetailModal({
                       <strong className="text-stone-800">{registration.kulam || '—'}</strong>
                     </div>
                     <div>
+                      <span className="text-stone-400 block text-[10px]">Rasi & Natchathiram</span>
+                      <strong className="text-[#6A1E2C] font-bold">
+                        {registration.rasi || '—'} {registration.natchatram ? `• ${registration.natchatram}` : ''}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-stone-400 block text-[10px]">Laknam / Ascendant</span>
+                      <strong className="text-[#6A1E2C] font-bold">{registration.laknam || '—'}</strong>
+                    </div>
+                    <div>
                       <span className="text-stone-400 block text-[10px]">Qualification</span>
                       <strong className="text-stone-800">{registration.education_qualification || '—'}</strong>
                     </div>
@@ -448,6 +458,18 @@ export default function RegistrationDetailModal({
                 <div className="p-3 rounded-xl bg-amber-50/60 border border-amber-200/60">
                   <span className="text-amber-800 text-[10px] block font-semibold">Kula Deivam (குலதெய்வம்)</span>
                   <p className="font-bold text-amber-950 mt-0.5">{registration.kuladeivam || '—'}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-orange-50/60 border border-orange-200/60">
+                  <span className="text-orange-800 text-[10px] block font-semibold">Rasi / Moon Sign (ராசி)</span>
+                  <p className="font-bold text-orange-950 mt-0.5">{registration.rasi || '—'}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-orange-50/60 border border-orange-200/60">
+                  <span className="text-orange-800 text-[10px] block font-semibold">Natchathiram / Star (நட்சத்திரம்)</span>
+                  <p className="font-bold text-orange-950 mt-0.5">{registration.natchatram || '—'}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-orange-50/60 border border-orange-200/60">
+                  <span className="text-orange-800 text-[10px] block font-semibold">Laknam / Ascendant (லக்னம்)</span>
+                  <p className="font-bold text-orange-950 mt-0.5">{registration.laknam || '—'}</p>
                 </div>
               </div>
             </div>
@@ -600,6 +622,9 @@ export default function RegistrationDetailModal({
                         src={registration.photo_url}
                         alt="Candidate"
                         className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     ) : (
                       <div className="text-center p-4 text-stone-400">

@@ -17,7 +17,7 @@ export default function AboutSection() {
           </div>
 
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#6A1E2C] leading-tight tracking-tight mb-4">
-            Trusted Kongu Vellalar Matrimony
+            Trusted Kongu Vellalar Gounder Matrimony
           </h2>
 
           <p className="text-base sm:text-lg lg:text-xl text-[#222222]/85 leading-relaxed font-normal mb-6">
@@ -29,7 +29,7 @@ export default function AboutSection() {
               <ShieldCheck className="w-4 h-4 text-[#C89B63]" /> 100% Verified Profiles
             </span>
             <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#C89B63]/30 text-xs sm:text-sm font-bold text-[#6A1E2C] shadow-sm">
-              <Users className="w-4 h-4 text-[#C89B63]" /> Kongu Vellalar Only
+              <Users className="w-4 h-4 text-[#C89B63]" /> Kongu Vellalar Gounder Only
             </span>
             <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#C89B63]/30 text-xs sm:text-sm font-bold text-[#6A1E2C] shadow-sm">
               <Lock className="w-4 h-4 text-[#C89B63]" /> Privacy Assured

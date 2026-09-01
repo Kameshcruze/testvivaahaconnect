@@ -90,8 +90,13 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [genderFilter, setGenderFilter] = useState<'all' | 'Female' | 'Male'>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [communityFilter, setCommunityFilter] = useState<string>('all');
+  const [kulamFilter, setKulamFilter] = useState<string>('all');
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+
+  const handleImageError = (id: string) => {
+    setBrokenImages((prev) => ({ ...prev, [id]: true }));
+  };
 
   // Verify existing token on mount and listen for real-time enquiry submissions
   useEffect(() => {
@@ -535,6 +540,9 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       'Email',
       'Community',
       'Kulam',
+      'Rasi',
+      'Natchathiram',
+      'Laknam',
       'Qualification',
       'Profession',
       'Income',
@@ -555,6 +563,9 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       `"${r.email || ''}"`,
       `"${r.community || ''}"`,
       `"${r.kulam || ''}"`,
+      `"${r.rasi || ''}"`,
+      `"${r.natchatram || ''}"`,
+      `"${r.laknam || ''}"`,
       `"${r.education_qualification || ''}"`,
       `"${r.profession || ''}"`,
       `"${r.income || ''}"`,
@@ -586,9 +597,10 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       const matchPhone = r.mobile_number?.includes(q) || r.whatsapp_number?.includes(q);
       const matchCity = r.current_location?.toLowerCase().includes(q) || r.native_place?.toLowerCase().includes(q);
       const matchCommunity = r.community?.toLowerCase().includes(q) || r.kulam?.toLowerCase().includes(q);
+      const matchAstrology = r.rasi?.toLowerCase().includes(q) || r.natchatram?.toLowerCase().includes(q) || r.laknam?.toLowerCase().includes(q);
       const matchProf = r.profession?.toLowerCase().includes(q) || r.education_qualification?.toLowerCase().includes(q);
 
-      if (!matchName && !matchId && !matchPhone && !matchCity && !matchCommunity && !matchProf) {
+      if (!matchName && !matchId && !matchPhone && !matchCity && !matchCommunity && !matchAstrology && !matchProf) {
         return false;
       }
     }
@@ -612,9 +624,9 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       }
     }
 
-    // Community Filter
-    if (communityFilter !== 'all') {
-      if (r.community !== communityFilter) {
+    // Kulam Filter
+    if (kulamFilter !== 'all') {
+      if (r.kulam !== kulamFilter) {
         return false;
       }
     }
@@ -622,9 +634,9 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
     return true;
   });
 
-  // Extract unique communities for dropdown
-  const uniqueCommunities = Array.from(
-    new Set(registrations.map((r) => r.community).filter(Boolean))
+  // Extract unique Kulams for Kongu Vellalar Gounder matching
+  const uniqueKulams = Array.from(
+    new Set(registrations.map((r) => r.kulam).filter(Boolean))
   ) as string[];
 
   // Metric counts
@@ -1021,23 +1033,21 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                 </select>
               </div>
 
-              {uniqueCommunities.length > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-stone-500 font-semibold text-[11px] sm:text-xs">Community:</span>
-                  <select
-                    value={communityFilter}
-                    onChange={(e) => setCommunityFilter(e.target.value)}
-                    className="bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-stone-700 outline-none cursor-pointer max-w-[160px] sm:max-w-[200px] truncate"
-                  >
-                    <option value="all">All Communities</option>
-                    {uniqueCommunities.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div className="flex items-center gap-1.5">
+                <span className="text-stone-500 font-semibold text-[11px] sm:text-xs">Kulam (கூட்டம்):</span>
+                <select
+                  value={kulamFilter}
+                  onChange={(e) => setKulamFilter(e.target.value)}
+                  className="bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-stone-700 outline-none cursor-pointer max-w-[170px] sm:max-w-[210px] truncate"
+                >
+                  <option value="all">All Kulams (Kongu Vellalar Gounder)</option>
+                  {uniqueKulams.map((k) => (
+                    <option key={k} value={k}>
+                      {k}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="flex items-center justify-between sm:justify-end gap-3 text-stone-500 text-xs">
@@ -1106,14 +1116,19 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                 <div>
                   {/* Card Top: Avatar, Name, ID, Gender */}
                   <div className="flex items-start gap-3">
-                    {item.photo_url ? (
+                    {item.photo_url && !brokenImages[item.id] ? (
                       <img
                         src={item.photo_url}
-                        alt={item.name}
-                        className="w-12 h-12 rounded-xl object-cover border border-stone-200 bg-stone-100 shrink-0"
+                        alt={item.name || 'Candidate'}
+                        onError={() => handleImageError(item.id)}
+                        className="w-12 h-12 rounded-xl object-cover border border-stone-200 bg-stone-100 shrink-0 shadow-sm"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-xl bg-[#C89B63]/20 text-[#6A1E2C] font-bold flex items-center justify-center text-base shrink-0">
+                      <div className={`w-12 h-12 rounded-xl text-white font-bold flex items-center justify-center text-base shrink-0 shadow-sm ${
+                        (item.gender || '').toLowerCase().includes('female') || (item.gender || '').toLowerCase().includes('bride')
+                          ? 'bg-gradient-to-br from-rose-500 to-[#6A1E2C]'
+                          : 'bg-gradient-to-br from-amber-600 to-[#6A1E2C]'
+                      }`}>
                         {item.name ? item.name.charAt(0).toUpperCase() : 'V'}
                       </div>
                     )}
@@ -1143,15 +1158,21 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     </div>
                   </div>
 
-                  {/* Card Details: Kulam, Profession, Income */}
+                  {/* Card Details: Kulam, Astrology, Profession, Income */}
                   <div className="mt-3 pt-3 border-t border-stone-100 grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-stone-400 text-[10px] block">Community / Kulam</span>
+                      <span className="text-stone-400 text-[10px] block">Kulam (கூட்டம்)</span>
                       <p className="font-semibold text-stone-800 truncate">
-                        {item.kulam ? `${item.kulam}` : item.community || '—'}
+                        {item.kulam || item.community || '—'}
                       </p>
                     </div>
                     <div>
+                      <span className="text-stone-400 text-[10px] block">Astrology (ராசி / நட்சத்திரம்)</span>
+                      <p className="font-semibold text-[#6A1E2C] truncate">
+                        {item.rasi || item.natchatram ? `${item.rasi || ''} ${item.natchatram ? `• ${item.natchatram}` : ''}` : '—'}
+                      </p>
+                    </div>
+                    <div className="col-span-2">
                       <span className="text-stone-400 text-[10px] block">Profession & Income</span>
                       <p className="font-semibold text-stone-800 truncate">
                         {item.profession || item.education_qualification || '—'} {item.income ? `(${item.income})` : ''}
@@ -1247,14 +1268,19 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                       {/* Candidate Column */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          {item.photo_url ? (
+                          {item.photo_url && !brokenImages[item.id] ? (
                             <img
                               src={item.photo_url}
-                              alt={item.name}
-                              className="w-10 h-10 rounded-xl object-cover border border-stone-200 bg-stone-100 shrink-0"
+                              alt={item.name || 'Candidate'}
+                              onError={() => handleImageError(item.id)}
+                              className="w-10 h-10 rounded-xl object-cover border border-stone-200 bg-stone-100 shrink-0 shadow-sm"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-xl bg-[#C89B63]/20 text-[#6A1E2C] font-bold flex items-center justify-center shrink-0">
+                            <div className={`w-10 h-10 rounded-xl text-white font-bold flex items-center justify-center shrink-0 shadow-sm ${
+                              (item.gender || '').toLowerCase().includes('female') || (item.gender || '').toLowerCase().includes('bride')
+                                ? 'bg-gradient-to-br from-rose-500 to-[#6A1E2C]'
+                                : 'bg-gradient-to-br from-amber-600 to-[#6A1E2C]'
+                            }`}>
                               {item.name ? item.name.charAt(0).toUpperCase() : 'V'}
                             </div>
                           )}
@@ -1290,10 +1316,15 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                         </span>
                       </td>
 
-                      {/* Community */}
+                      {/* Community & Astrology */}
                       <td className="py-3.5 px-4">
                         <span className="font-semibold text-stone-900 block">{item.community || '—'}</span>
-                        <span className="text-[11px] text-stone-400 block">{item.kulam ? `Kulam: ${item.kulam}` : ''}</span>
+                        <span className="text-[11px] text-stone-500 block">{item.kulam ? `Kulam: ${item.kulam}` : ''}</span>
+                        {(item.rasi || item.natchatram) && (
+                          <span className="text-[10px] text-[#8B4513] font-semibold block">
+                            {item.rasi || ''}{item.natchatram ? ` • ${item.natchatram}` : ''}
+                          </span>
+                        )}
                       </td>
 
                       {/* Profession & Income */}

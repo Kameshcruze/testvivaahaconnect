@@ -75,6 +75,9 @@ export interface RegistrationRecord {
   community?: string | null;
   kulam?: string | null;
   kuladeivam?: string | null;
+  rasi?: string | null;
+  natchatram?: string | null;
+  laknam?: string | null;
   education_qualification?: string | null;
   profession?: string | null;
   company_name?: string | null;
@@ -223,6 +226,66 @@ export const KONGU_KULAMS: string[] = [
   "Other Kongu Kulam (மற்ற கொங்கு குலம்)",
 ];
 
+export const TAMIL_RASIS: string[] = [
+  "Mesham (மேஷம் / Aries)",
+  "Rishabam (ரிஷபம் / Taurus)",
+  "Mithunam (மிதுனம் / Gemini)",
+  "Kadagam (கடகம் / Cancer)",
+  "Simmam (சிம்மம் / Leo)",
+  "Kanni (கன்னி / Virgo)",
+  "Thulaam (துலாம் / Libra)",
+  "Viruchigam (விருச்சிகம் / Scorpio)",
+  "Dhanusu (தனுசு / Sagittarius)",
+  "Makaram (மகரம் / Capricorn)",
+  "Kumbam (கும்பம் / Aquarius)",
+  "Meenam (மீனம் / Pisces)",
+];
+
+export const TAMIL_NATCHATHIRAMS: string[] = [
+  "Aswini (அஸ்வினி)",
+  "Bharani (பரணி)",
+  "Karthigai (கார்த்திகை)",
+  "Rohini (ரோகிணி)",
+  "Mrigasheersham (மிருகசீரிடம்)",
+  "Thiruvathirai (திருவாதிரை)",
+  "Punarpoosam (புனர்பூசம்)",
+  "Poosam (பூசம்)",
+  "Aayilyam (ஆயில்யம்)",
+  "Magam (மகம்)",
+  "Pooram (பூரம்)",
+  "Uthiram (உத்திரம்)",
+  "Hastham (அஸ்தம்)",
+  "Chithirai (சித்திரை)",
+  "Swathi (சுவாதி)",
+  "Visagam (விசாகம்)",
+  "Anusham (அனுஷம்)",
+  "Kettai (கேட்டை)",
+  "Moolam (மூலம்)",
+  "Pooradam (பூராடம்)",
+  "Uthiradam (உத்திராடம்)",
+  "Thiruvonam (திருவோணம்)",
+  "Avittam (அவிட்டம்)",
+  "Sadhayam (சதயம்)",
+  "Poorattathi (பூரட்டாதி)",
+  "Uthirattathi (உத்திரட்டாதி)",
+  "Revathi (ரேவதி)",
+];
+
+export const TAMIL_LAGNAMS: string[] = [
+  "Mesha Lagnam (மேஷ லக்னம்)",
+  "Rishaba Lagnam (ரிஷப லக்னம்)",
+  "Mithuna Lagnam (மிதுன லக்னம்)",
+  "Kadaga Lagnam (கடக லக்னம்)",
+  "Simma Lagnam (சிம்ம லக்னம்)",
+  "Kanni Lagnam (கன்னி லக்னம்)",
+  "Thulaa Lagnam (துலா லக்னம்)",
+  "Viruchiga Lagnam (விருச்சிக லக்னம்)",
+  "Dhanusu Lagnam (தனுசு லக்னம்)",
+  "Makara Lagnam (மகர லக்னம்)",
+  "Kumba Lagnam (கும்ப லக்னம்)",
+  "Meena Lagnam (மீன லக்னம்)",
+];
+
 export const FAQ_DATA: FAQItem[] = [
   {
     id: "faq-1",
@@ -232,20 +295,20 @@ export const FAQ_DATA: FAQItem[] = [
   },
   {
     id: "faq-2",
-    question: "Is this service exclusively for the Kongu Vellalar community?",
+    question: "Is this service exclusively for the Kongu Vellalar Gounder community?",
     answer: "Yes, Vivaaha Connect is an exclusive matrimony platform dedicated solely to the Kongu Vellalar Gounder (கொங்கு வேளாளர் கவுண்டர்) community across Kongu Nadu, Tamil Nadu, and worldwide.",
     category: "General"
   },
   {
     id: "faq-3",
     question: "How is Kulam / Gotram compatibility handled?",
-    answer: "We strictly uphold traditional Kongu Vellalar matrimonial customs, ensuring Thayadhi Kulam (தாயாதி குலம்) exclusions and compatible Kulam alliances are respected during matchmaking.",
+    answer: "We strictly uphold traditional Kongu Vellalar Gounder matrimonial customs, ensuring Thayadhi Kulam (தாயாதி குலம்) exclusions and compatible Kulam alliances are respected during matchmaking.",
     category: "Matchmaking"
   },
   {
     id: "faq-4",
     question: "Is personal and contact information kept strictly private?",
-    answer: "Yes, 100% privacy protection is guaranteed. Candidate contact numbers and photographs are never made public. Profiles are shared only with verified Kongu Vellalar families after mutual consent.",
+    answer: "Yes, 100% privacy protection is guaranteed. Candidate contact numbers and photographs are never made public. Profiles are shared only with verified Kongu Vellalar Gounder families after mutual consent.",
     category: "Privacy"
   },
   {

@@ -13,7 +13,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
 
   const trustPoints = [
     "Verified Profiles",
-    "Kongu Vellalar Community",
+    "Kongu Vellalar Gounder Community",
     "Complete Privacy",
     "Personal Matchmaking Support",
   ];
@@ -82,20 +82,8 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               <span>Dedicated Exclusively to Kongu Vellalar Gounder Community</span>
             </div>
 
-            {/* Trust Card (4 points) */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-white/90 border border-[#C89B63]/25 shadow-sm backdrop-blur-md mb-6 max-w-[520px] w-full text-left">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {trustPoints.map((point, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#C89B63] shrink-0" />
-                    <span className="text-xs sm:text-sm font-bold text-[#222222]">{point}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Hero Main Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 w-full sm:w-auto">
+            {/* Hero Main Action Buttons (Placed above Trust Card) */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 w-full sm:w-auto mb-6">
               {/* Primary Register Profile */}
               <a
                 href="/registration"
@@ -109,11 +97,23 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               {/* Call Now */}
               <button
                 onClick={onOpenCallModal}
-                className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white border border-[#C89B63]/40 text-[#6A1E2C] text-sm sm:text-base font-bold shadow-sm hover:bg-[#6A1E2C] hover:text-white hover:border-[#6A1E2C] transition-all duration-300 group"
+                className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white border border-[#C89B63]/40 text-[#6A1E2C] text-sm sm:text-base font-bold shadow-sm hover:bg-[#6A1E2C] hover:text-white hover:border-[#6A1E2C] transition-all duration-300 group cursor-pointer"
               >
                 <Phone className="w-4 h-4 text-[#C89B63] group-hover:text-white transition-colors" />
                 <span>Call Us</span>
               </button>
+            </div>
+
+            {/* Trust Card (4 points - Placed below Call Us / Action Buttons) */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-white/90 border border-[#C89B63]/25 shadow-sm backdrop-blur-md max-w-[520px] w-full text-left">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {trustPoints.map((point, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#C89B63] shrink-0" />
+                    <span className="text-xs sm:text-sm font-bold text-[#222222]">{point}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
 
@@ -182,7 +182,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
                 <div className="inline-flex p-1 rounded-xl bg-[#6A1E2C]/10 border border-[#C89B63]/20 self-start sm:self-auto shrink-0">
                   <button
                     onClick={() => setActiveTab('bride')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                       activeTab === 'bride'
                         ? 'bg-[#6A1E2C] text-white shadow-sm'
                         : 'text-[#6A1E2C] hover:bg-white/50'
@@ -192,7 +192,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
                   </button>
                   <button
                     onClick={() => setActiveTab('groom')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                       activeTab === 'groom'
                         ? 'bg-[#6A1E2C] text-white shadow-sm'
                         : 'text-[#6A1E2C] hover:bg-white/50'
@@ -206,8 +206,8 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               {/* Tab Content */}
               <p className="text-xs sm:text-sm text-[#222222]/80 leading-relaxed mb-4">
                 {activeTab === 'bride'
-                  ? 'Register Kongu Vellalar bride profiles with complete confidentiality. Connect with educated, well-settled grooms from compatible Kulams.'
-                  : 'Register Kongu Vellalar groom profiles with complete confidentiality. Connect with educated, well-settled brides from compatible Kulams.'}
+                  ? 'Register Kongu Vellalar Gounder bride profiles with complete confidentiality. Connect with educated, well-settled grooms from compatible Kulams.'
+                  : 'Register Kongu Vellalar Gounder groom profiles with complete confidentiality. Connect with educated, well-settled brides from compatible Kulams.'}
               </p>
 
               {/* Bullet Points */}

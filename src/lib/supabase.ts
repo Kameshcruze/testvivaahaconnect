@@ -160,6 +160,11 @@ export interface RegistrationFormData {
   kulam: string;
   kuladeivam: string;
 
+  // Horoscope Details
+  rasi?: string;
+  natchatram?: string;
+  laknam?: string;
+
   // Education & Profession
   educationQualification: string;
   profession: string;
@@ -318,6 +323,9 @@ export async function submitRegistrationForm(
     community: formData.community,
     kulam: formData.kulam,
     kuladeivam: formData.kuladeivam,
+    rasi: formData.rasi || null,
+    natchatram: formData.natchatram || null,
+    laknam: formData.laknam || null,
     education_qualification: formData.educationQualification,
     profession: formData.profession,
     company_name: formData.companyName,

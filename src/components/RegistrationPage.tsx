@@ -35,7 +35,7 @@ import {
   uploadRegistrationDocument,
 } from '../lib/supabase';
 import { validateFileSize, MAX_FILE_SIZE_MB } from '../lib/fileOptimizer';
-import { PHONE_NUMBER, PHONE_RAW, KONGU_KULAMS } from '../types';
+import { PHONE_NUMBER, PHONE_RAW, KONGU_KULAMS, TAMIL_RASIS, TAMIL_NATCHATHIRAMS, TAMIL_LAGNAMS } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
 
 interface RegistrationPageProps {
@@ -85,6 +85,10 @@ const INITIAL_FORM_DATA: RegistrationFormData = {
   community: 'Kongu Vellalar Gounder',
   kulam: '',
   kuladeivam: '',
+
+  rasi: '',
+  natchatram: '',
+  laknam: '',
 
   educationQualification: '',
   profession: '',
@@ -384,6 +388,18 @@ export default function RegistrationPage({
       }
       if (!formData.kuladeivam.trim()) {
         setErrorMessage('Please enter Kuladeivam & Temple location (mandatory).');
+        return false;
+      }
+      if (!formData.rasi?.trim()) {
+        setErrorMessage('Please select or enter candidate Rasi (ராசி) (mandatory).');
+        return false;
+      }
+      if (!formData.natchatram?.trim()) {
+        setErrorMessage('Please select or enter candidate Natchathiram (நட்சத்திரம்) (mandatory).');
+        return false;
+      }
+      if (!formData.laknam?.trim()) {
+        setErrorMessage('Please select or enter candidate Laknam (லக்னம்) (mandatory).');
         return false;
       }
     }
@@ -990,7 +1006,7 @@ export default function RegistrationPage({
                 >
                   <div className="border-b border-[#C89B63]/20 pb-3">
                     <h3 className="text-lg font-bold font-heading text-[#6A1E2C] flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-[#C89B63]" /> 2. Contact & Community Details
+                      <MapPin className="w-5 h-5 text-[#C89B63]" /> 2. Contact, Community & Horoscope Details
                     </h3>
                     <p className="text-xs text-[#222222]/70">
                       All fields marked with <span className="text-red-600 font-bold">*</span> are mandatory for profile matching.
@@ -1146,6 +1162,82 @@ export default function RegistrationPage({
                         placeholder="e.g. Angala Parameswari, Kodumudi / Chennimalai Murugan"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
+                    </div>
+
+                    {/* Astrological / Horoscope Details Header */}
+                    <div className="sm:col-span-2 pt-2 border-t border-[#C89B63]/20">
+                      <div className="bg-[#FFF6ED] p-3 rounded-xl border border-[#C89B63]/30 flex items-center justify-between">
+                        <span className="text-xs font-bold font-heading text-[#6A1E2C] uppercase tracking-wider flex items-center gap-1.5">
+                          ✨ Astrological Details (ஜாதக விபரங்கள்)
+                        </span>
+                        <span className="text-[10px] font-semibold text-[#8B4513]">Rasi, Natchathiram & Laknam</span>
+                      </div>
+                    </div>
+
+                    {/* Rasi (ராசி) */}
+                    <div>
+                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
+                        Rasi / Moon Sign (ராசி) <span className="text-red-600 font-bold">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="rasi"
+                        required
+                        list="rasi-suggestions"
+                        value={formData.rasi || ''}
+                        onChange={handleInputChange}
+                        placeholder="Select or enter Rasi (e.g. Mesham)"
+                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
+                      />
+                      <datalist id="rasi-suggestions">
+                        {TAMIL_RASIS.map((r) => (
+                          <option key={r} value={r} />
+                        ))}
+                      </datalist>
+                    </div>
+
+                    {/* Natchathiram (நட்சத்திரம்) */}
+                    <div>
+                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
+                        Natchathiram / Star (நட்சத்திரம்) <span className="text-red-600 font-bold">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="natchatram"
+                        required
+                        list="natchatram-suggestions"
+                        value={formData.natchatram || ''}
+                        onChange={handleInputChange}
+                        placeholder="Select or enter Natchathiram (e.g. Aswini)"
+                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
+                      />
+                      <datalist id="natchatram-suggestions">
+                        {TAMIL_NATCHATHIRAMS.map((n) => (
+                          <option key={n} value={n} />
+                        ))}
+                      </datalist>
+                    </div>
+
+                    {/* Laknam (லக்னம்) */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
+                        Laknam / Ascendant (லக்னம்) <span className="text-red-600 font-bold">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="laknam"
+                        required
+                        list="laknam-suggestions"
+                        value={formData.laknam || ''}
+                        onChange={handleInputChange}
+                        placeholder="Select or enter Laknam (e.g. Mesha Lagnam)"
+                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
+                      />
+                      <datalist id="laknam-suggestions">
+                        {TAMIL_LAGNAMS.map((l) => (
+                          <option key={l} value={l} />
+                        ))}
+                      </datalist>
                     </div>
                   </div>
                 </motion.div>

@@ -17,6 +17,7 @@ import FinalCTA from './components/FinalCTA';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import FloatingActions from './components/FloatingActions';
+import HelpPromptBanner from './components/HelpPromptBanner';
 import RegistrationPage from './components/RegistrationPage';
 import AdminPortal from './components/AdminPortal';
 import { AppPage, getPageFromPath, navigateToPage } from './utils/navigation';
@@ -128,6 +129,9 @@ export default function App() {
 
       {/* Always Visible Bottom Floating Action Buttons */}
       <FloatingActions onOpenCallModal={handleOpenCallModal} />
+
+      {/* Timed Help Prompt Banner (Appears after 5 seconds) */}
+      <HelpPromptBanner onOpenCallModal={handleOpenCallModal} />
     </div>
   );
 }

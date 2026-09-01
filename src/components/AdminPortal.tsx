@@ -29,9 +29,11 @@ import {
   Check,
   Building2,
   Calendar,
+  MessageSquare,
 } from 'lucide-react';
-import { RegistrationRecord, AdminUser } from '../types';
+import { RegistrationRecord, AdminUser, EnquiryRecord, EnquiryStatus } from '../types';
 import RegistrationDetailModal from './RegistrationDetailModal';
+import AdminEnquiriesTab from './AdminEnquiriesTab';
 import { getSupabase } from '../lib/supabase';
 import logoImg from '../assets/images/Logo1.PNG';
 
@@ -40,6 +42,9 @@ interface AdminPortalProps {
 }
 
 export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
+  // Navigation Tabs State
+  const [activeTab, setActiveTab] = useState<'registrations' | 'enquiries'>('registrations');
+
   // Authentication State
   const [token, setToken] = useState<string | null>(() => {
     return sessionStorage.getItem('vivaaha_admin_token');
@@ -56,7 +61,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Registrations Data State with instant local caching for zero-wait load
+  // Registrations Data State
   const [registrations, setRegistrations] = useState<RegistrationRecord[]>(() => {
     try {
       const cached = sessionStorage.getItem('vivaaha_cached_admin_records');
@@ -65,12 +70,23 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       return [];
     }
   });
+
+  // Enquiries Data State
+  const [enquiries, setEnquiries] = useState<EnquiryRecord[]>(() => {
+    try {
+      const cached = localStorage.getItem('vivaaha_enquiries');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [loadingData, setLoadingData] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<RegistrationRecord | null>(null);
 
-  // Filter & Search State
+  // Filter & Search State for Registrations
   const [searchTerm, setSearchTerm] = useState('');
   const [genderFilter, setGenderFilter] = useState<'all' | 'Female' | 'Male'>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -86,7 +102,6 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
 
   const verifyAndFetch = async (authToken: string, force = false) => {
     try {
-      // Only show full loading spinner if we don't have any cached data to display
       if (registrations.length === 0 || force) {
         setLoadingData(true);
       } else {
@@ -95,11 +110,13 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       setDataError(null);
 
       let records: RegistrationRecord[] | null = null;
+      let enqRecords: EnquiryRecord[] | null = null;
 
-      // 1. Fetch directly from Supabase database (works on both static hosting and full-stack servers)
+      // 1. Fetch from Supabase database
       const supabase = getSupabase();
       if (supabase) {
         try {
+          // Fetch Registrations
           const { data: dbData, error: dbError } = await supabase
             .from('registrations')
             .select('*')
@@ -107,15 +124,23 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
 
           if (!dbError && dbData) {
             records = dbData as RegistrationRecord[];
-          } else if (dbError) {
-            console.warn('Direct database fetch notice:', dbError.message);
+          }
+
+          // Fetch Enquiries
+          const { data: enqData, error: enqError } = await supabase
+            .from('enquiries')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (!enqError && enqData) {
+            enqRecords = enqData as EnquiryRecord[];
           }
         } catch (dbErr) {
           console.warn('Direct Supabase fetch caught:', dbErr);
         }
       }
 
-      // 2. If Supabase direct fetch didn't return records, try server endpoint if available
+      // 2. Server API fallback for Registrations & Enquiries
       if (!records) {
         try {
           const url = force ? '/api/admin/registrations?force=true' : '/api/admin/registrations';
@@ -131,12 +156,28 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
               records = data.registrations;
             }
           }
-        } catch (networkErr) {
-          // Ignore network errors on static hosting
-        }
+        } catch {}
       }
 
-      // 3. Fallback to local storage if both remote queries yielded nothing
+      if (!enqRecords) {
+        try {
+          const url = force ? '/api/admin/enquiries?force=true' : '/api/admin/enquiries';
+          const res = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+
+          if (res.ok) {
+            const data = await res.json().catch(() => null);
+            if (data?.success && Array.isArray(data.enquiries)) {
+              enqRecords = data.enquiries;
+            }
+          }
+        } catch {}
+      }
+
+      // 3. Local storage fallback
       if (!records) {
         try {
           const localData = JSON.parse(localStorage.getItem('vivaaha_registrations') || '[]');
@@ -146,15 +187,27 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
         } catch {}
       }
 
+      if (!enqRecords) {
+        try {
+          const localEnq = JSON.parse(localStorage.getItem('vivaaha_enquiries') || '[]');
+          if (Array.isArray(localEnq) && localEnq.length > 0) {
+            enqRecords = localEnq;
+          }
+        } catch {}
+      }
+
       if (records) {
         setRegistrations(records);
         try {
           sessionStorage.setItem('vivaaha_cached_admin_records', JSON.stringify(records));
-        } catch (e) {
-          console.warn('Could not cache admin records in sessionStorage', e);
-        }
-      } else {
-        setDataError('Unable to load registrations. Please verify database connection.');
+        } catch {}
+      }
+
+      if (enqRecords) {
+        setEnquiries(enqRecords);
+        try {
+          localStorage.setItem('vivaaha_enquiries', JSON.stringify(enqRecords));
+        } catch {}
       }
     } catch (err: any) {
       if (registrations.length === 0) {
@@ -163,6 +216,67 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
     } finally {
       setLoadingData(false);
       setIsSyncing(false);
+    }
+  };
+
+  // Enquiry Update Status Handler
+  const handleUpdateEnquiryStatus = async (id: string, newStatus: EnquiryStatus, notes?: string) => {
+    try {
+      // Optimistic update
+      setEnquiries((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, status: newStatus, notes: notes !== undefined ? notes : e.notes } : e))
+      );
+
+      // Direct Supabase
+      const supabase = getSupabase();
+      if (supabase) {
+        const updatePayload: any = { status: newStatus };
+        if (notes !== undefined) updatePayload.notes = notes;
+        await supabase.from('enquiries').update(updatePayload).eq('id', id);
+      }
+
+      // Server endpoint
+      if (token) {
+        await fetch(`/api/admin/enquiries/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus, notes }),
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.error('Error updating enquiry:', err);
+    }
+  };
+
+  // Enquiry Delete Handler
+  const handleDeleteEnquiry = async (id: string) => {
+    try {
+      setEnquiries((prev) => {
+        const next = prev.filter((e) => e.id !== id);
+        try {
+          localStorage.setItem('vivaaha_enquiries', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      const supabase = getSupabase();
+      if (supabase) {
+        await supabase.from('enquiries').delete().eq('id', id);
+      }
+
+      if (token) {
+        await fetch(`/api/admin/enquiries/${id}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.error('Error deleting enquiry:', err);
     }
   };
 
@@ -651,17 +765,84 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-4 sm:space-y-6 flex-1 min-w-0">
+      <main className="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 flex-1 min-w-0">
         
-        {/* Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-4">
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-sm">
-            <span className="text-stone-400 text-[11px] sm:text-xs block font-medium">Total Registrations</span>
-            <div className="flex items-baseline justify-between mt-1">
-              <span className="text-xl sm:text-3xl font-heading font-bold text-[#6A1E2C]">{totalCount}</span>
-              <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-stone-300" />
-            </div>
+        {/* Navigation Tabs Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 pb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Registrations Tab */}
+            <button
+              onClick={() => setActiveTab('registrations')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer ${
+                activeTab === 'registrations'
+                  ? 'bg-[#6A1E2C] text-white shadow-md'
+                  : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Registrations & Profiles</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                  activeTab === 'registrations' ? 'bg-[#FAF3EB] text-[#6A1E2C]' : 'bg-stone-100 text-stone-600'
+                }`}
+              >
+                {totalCount}
+              </span>
+            </button>
+
+            {/* Enquiries & Callbacks Tab */}
+            <button
+              onClick={() => setActiveTab('enquiries')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer relative ${
+                activeTab === 'enquiries'
+                  ? 'bg-[#6A1E2C] text-white shadow-md'
+                  : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Enquiries & Callbacks</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                  activeTab === 'enquiries' ? 'bg-[#FAF3EB] text-[#6A1E2C]' : 'bg-stone-100 text-stone-600'
+                }`}
+              >
+                {enquiries.length}
+              </span>
+              {enquiries.filter((e) => e.status === 'New').length > 0 && (
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />
+              )}
+            </button>
           </div>
+
+          <div className="text-[11px] text-stone-400 font-medium">
+            {activeTab === 'registrations' && `${filteredRegistrations.length} of ${totalCount} records`}
+            {activeTab === 'enquiries' && `${enquiries.length} customer enquiries logged`}
+          </div>
+        </div>
+
+        {/* Tab 2: Enquiries View */}
+        {activeTab === 'enquiries' && (
+          <AdminEnquiriesTab
+            enquiries={enquiries}
+            onUpdateStatus={handleUpdateEnquiryStatus}
+            onDelete={handleDeleteEnquiry}
+            onRefresh={() => verifyAndFetch(token, true)}
+            loading={loadingData || isSyncing}
+          />
+        )}
+
+        {/* Tab 1: Registrations View */}
+        {activeTab === 'registrations' && (
+          <>
+            {/* Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-4">
+              <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-sm">
+                <span className="text-stone-400 text-[11px] sm:text-xs block font-medium">Total Registrations</span>
+                <div className="flex items-baseline justify-between mt-1">
+                  <span className="text-xl sm:text-3xl font-heading font-bold text-[#6A1E2C]">{totalCount}</span>
+                  <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-stone-300" />
+                </div>
+              </div>
 
           <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-sm">
             <span className="text-rose-700 text-[11px] sm:text-xs block font-medium">Brides (Female)</span>
@@ -1116,6 +1297,8 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
               </table>
             </div>
           </div>
+        )}
+          </>
         )}
       </main>
 

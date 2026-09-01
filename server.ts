@@ -363,6 +363,125 @@ app.delete('/api/admin/registrations/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// Cache for admin enquiries
+let cachedAdminEnquiries: { timestamp: number; data: any[] } | null = null;
+
+// Public Enquiry Submission (Callbacks, WhatsApp clicks, Contact form)
+app.post('/api/enquiries', async (req, res) => {
+  try {
+    const payload = req.body;
+    const enquiryId = payload?.id || `ENQ-${Date.now().toString(36).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+    const recordPayload = {
+      id: enquiryId,
+      created_at: payload?.created_at || new Date().toISOString(),
+      type: payload?.type || 'general_enquiry',
+      name: payload?.name || null,
+      phone: payload?.phone || null,
+      email: payload?.email || null,
+      community: payload?.community || null,
+      source: payload?.source || 'Website',
+      message: payload?.message || null,
+      status: payload?.status || 'New',
+      notes: payload?.notes || null,
+    };
+
+    const { error } = await supabase.from('enquiries').insert([recordPayload]);
+    if (error) {
+      console.warn('Server Supabase enquiry insert notice:', error.message);
+    }
+
+    cachedAdminEnquiries = null;
+    return res.json({ success: true, id: enquiryId });
+  } catch (err: any) {
+    console.error('Error in /api/enquiries:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
+});
+
+// Fetch All Enquiries (Protected)
+app.get('/api/admin/enquiries', requireAdmin, async (req, res) => {
+  try {
+    const now = Date.now();
+    if (cachedAdminEnquiries && now - cachedAdminEnquiries.timestamp < CACHE_TTL_MS && !req.query.force) {
+      return res.json({
+        success: true,
+        count: cachedAdminEnquiries.data.length,
+        enquiries: cachedAdminEnquiries.data,
+        cached: true,
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('enquiries')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching enquiries from database:', error);
+      if (cachedAdminEnquiries) {
+        return res.json({
+          success: true,
+          count: cachedAdminEnquiries.data.length,
+          enquiries: cachedAdminEnquiries.data,
+          stale: true,
+        });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+
+    const list = data || [];
+    cachedAdminEnquiries = { timestamp: now, data: list };
+    return res.json({ success: true, count: list.length, enquiries: list });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
+
+// Update Enquiry (Protected)
+app.patch('/api/admin/enquiries/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, notes } = req.body || {};
+    if (!id) {
+      return res.status(400).json({ error: 'Enquiry ID is required' });
+    }
+
+    const updates: Record<string, any> = {};
+    if (status !== undefined) updates.status = status;
+    if (notes !== undefined) updates.notes = notes;
+
+    const { error } = await supabase.from('enquiries').update(updates).eq('id', id);
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    cachedAdminEnquiries = null;
+    return res.json({ success: true, message: `Enquiry ${id} updated` });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
+
+// Delete Enquiry (Protected)
+app.delete('/api/admin/enquiries/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: 'Enquiry ID is required' });
+    }
+
+    const { error } = await supabase.from('enquiries').delete().eq('id', id);
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    cachedAdminEnquiries = null;
+    return res.json({ success: true, message: `Enquiry ${id} deleted` });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
+
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {

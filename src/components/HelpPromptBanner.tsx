@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Phone, MessageCircle, X, Headphones } from 'lucide-react';
 import { PHONE_NUMBER, PHONE_RAW } from '../types';
+import { submitEnquiryRecord } from '../lib/supabase';
 
 interface HelpPromptBannerProps {
   onOpenCallModal: () => void;
@@ -37,12 +38,26 @@ export default function HelpPromptBanner({ onOpenCallModal }: HelpPromptBannerPr
   };
 
   const handleWhatsApp = () => {
+    // Record WhatsApp interaction in enquiries
+    submitEnquiryRecord({
+      type: 'whatsapp_click',
+      source: '5s Live Support Popup Banner',
+      message: 'User clicked WhatsApp help button on 5-second popup banner',
+    }).catch(() => {});
+
     const textMessage = `Hello Vivaaha Connect,\n\nI need help and guidance regarding Kongu Vellalar Matrimony registration and matchmaking services.`;
     const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleCall = () => {
+    // Record Call Us intent in enquiries
+    submitEnquiryRecord({
+      type: 'phone_call',
+      source: '5s Live Support Popup Banner',
+      message: 'User clicked Call Us on 5-second popup banner',
+    }).catch(() => {});
+
     onOpenCallModal();
   };
 

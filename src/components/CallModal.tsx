@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Phone, Copy, Check, X, ShieldCheck, Clock, Send } from 'lucide-react';
 import { PHONE_NUMBER, PHONE_RAW } from '../types';
+import { submitEnquiryRecord } from '../lib/supabase';
 
 interface CallModalProps {
   isOpen: boolean;
@@ -20,10 +21,29 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleDirectCallClick = () => {
+    // Record direct call intent into enquiries
+    submitEnquiryRecord({
+      type: 'phone_call',
+      source: 'Call Modal Direct Call Button',
+      message: `User clicked direct helpline dial: ${PHONE_NUMBER}`,
+    }).catch(() => {});
+  };
+
   const handleCallbackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneInput || !candidateName) return;
 
+    // 1. Submit to database / Admin enquiries
+    submitEnquiryRecord({
+      type: 'callback_request',
+      name: candidateName.trim(),
+      phone: phoneInput.trim(),
+      source: 'Call Modal Quick Callback Form',
+      message: 'Requested immediate phone callback from matrimony consultant',
+    }).catch(() => {});
+
+    // 2. Also open WhatsApp for instant transmission
     const textMessage = `Hello Vivaaha Connect,\n\nI would like to request a quick callback:\n\n• Name: ${candidateName}\n• Phone: ${phoneInput}`;
     const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;
     window.open(whatsappUrl, '_blank');
@@ -108,6 +128,7 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
                 {/* Immediate Call CTA */}
                 <a
                   href={`tel:${PHONE_RAW}`}
+                  onClick={handleDirectCallClick}
                   className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-[#6A1E2C] via-[#8C283B] to-[#6A1E2C] text-white font-semibold shadow-xl shadow-[#6A1E2C]/25 hover:brightness-110 active:scale-[0.99] transition"
                 >
                   <Phone className="w-4 h-4 animate-bounce" /> Call {PHONE_NUMBER}

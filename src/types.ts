@@ -114,6 +114,23 @@ export interface AdminUser {
   role: string;
 }
 
+export type EnquiryType = 'callback_request' | 'whatsapp_click' | 'phone_call' | 'contact_form' | 'general_enquiry';
+export type EnquiryStatus = 'New' | 'Contacted' | 'In Progress' | 'Converted' | 'Closed';
+
+export interface EnquiryRecord {
+  id: string;
+  created_at: string;
+  type: EnquiryType;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  community?: string | null;
+  source?: string | null;
+  message?: string | null;
+  status: EnquiryStatus;
+  notes?: string | null;
+}
+
 
 export const TESTIMONIALS_DATA: Testimonial[] = [
   {

@@ -426,11 +426,91 @@ export async function submitRegistrationForm(
 }
 
 /**
- * SQL Setup script for the user's Supabase dashboard
+ * Inserts an Enquiry / Callback / WhatsApp interaction into Supabase `enquiries` table,
+ * server API, and local storage fallback.
+ */
+export async function submitEnquiryRecord(
+  enquiry: {
+    type: 'callback_request' | 'whatsapp_click' | 'phone_call' | 'contact_form' | 'general_enquiry';
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    community?: string | null;
+    source?: string | null;
+    message?: string | null;
+    notes?: string | null;
+  }
+): Promise<{ success: boolean; id: string; isCloud: boolean }> {
+  const enquiryId = `ENQ-${Date.now().toString(36).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+  const now = new Date().toISOString();
+  const supabase = getSupabase();
+
+  const recordPayload = {
+    id: enquiryId,
+    created_at: now,
+    type: enquiry.type,
+    name: enquiry.name || null,
+    phone: enquiry.phone || null,
+    email: enquiry.email || null,
+    community: enquiry.community || null,
+    source: enquiry.source || 'Website',
+    message: enquiry.message || null,
+    status: 'New',
+    notes: enquiry.notes || null,
+  };
+
+  // Safe local copy in localStorage
+  try {
+    const existing = JSON.parse(localStorage.getItem('vivaaha_enquiries') || '[]');
+    existing.unshift(recordPayload);
+    localStorage.setItem('vivaaha_enquiries', JSON.stringify(existing.slice(0, 50)));
+  } catch (e) {
+    console.warn('Local enquiry cache warning:', e);
+  }
+
+  // 1. Direct Supabase insert
+  if (supabase && isSupabaseConfigured()) {
+    try {
+      const insertPromise = supabase.from('enquiries').insert([recordPayload]);
+      const timeoutPromise = new Promise<{ error: Error }>((_, reject) =>
+        setTimeout(() => reject(new Error('Enquiry network timeout')), 4000)
+      );
+
+      const result: any = await Promise.race([insertPromise, timeoutPromise]);
+      if (result && !result.error) {
+        return { success: true, id: enquiryId, isCloud: true };
+      }
+    } catch (e) {
+      console.warn('Supabase direct enquiry insert notice:', e);
+    }
+  }
+
+  // 2. Server API fallback
+  try {
+    const res = await fetch('/api/enquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(recordPayload),
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      if (data?.success) {
+        return { success: true, id: enquiryId, isCloud: true };
+      }
+    }
+  } catch (err) {
+    // Ignore server error
+  }
+
+  return { success: true, id: enquiryId, isCloud: false };
+}
+
+/**
+ * SQL Setup script for the user's Supabase dashboard (both registrations and enquiries tables)
  */
 export const SUPABASE_SQL_SETUP_SCRIPT = `-- ==============================================================================
 -- Vivaaha Connect - Supabase Database Schema Setup
--- Run this script in your Supabase Dashboard -> SQL Editor
+-- Run this script in your Supabase Dashboard -> SQL Editor (or New Query)
 -- ==============================================================================
 
 -- 1. Create Registrations Table
@@ -486,20 +566,80 @@ CREATE TABLE IF NOT EXISTS public.registrations (
   status TEXT DEFAULT 'Pending Review'
 );
 
--- 2. Enable Row Level Security (RLS)
-ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
+-- 2. Create Enquiries & Callbacks Table
+CREATE TABLE IF NOT EXISTS public.enquiries (
+  id TEXT PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  type TEXT NOT NULL, -- 'callback_request', 'whatsapp_click', 'phone_call', 'contact_form'
+  name TEXT,
+  phone TEXT,
+  email TEXT,
+  community TEXT,
+  source TEXT, -- 'Help Popup (5s)', 'Call Modal Form', 'Contact Section Form', 'Floating Call', etc.
+  message TEXT,
+  status TEXT DEFAULT 'New', -- 'New', 'Contacted', 'In Progress', 'Converted', 'Closed'
+  notes TEXT
+);
 
--- 3. Policy: Allow public anonymous users to insert new matrimony registrations
+-- 3. Enable Row Level Security (RLS)
+ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.enquiries ENABLE ROW LEVEL SECURITY;
+
+-- 4. Policies for Registrations
+DROP POLICY IF EXISTS "Allow public inserts on registrations" ON public.registrations;
 CREATE POLICY "Allow public inserts on registrations"
   ON public.registrations
   FOR INSERT
   TO anon, authenticated
   WITH CHECK (true);
 
--- 4. Policy: Allow reading registrations
+DROP POLICY IF EXISTS "Allow public read on registrations" ON public.registrations;
 CREATE POLICY "Allow public read on registrations"
   ON public.registrations
   FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
+DROP POLICY IF EXISTS "Allow public updates on registrations" ON public.registrations;
+CREATE POLICY "Allow public updates on registrations"
+  ON public.registrations
+  FOR UPDATE
+  TO authenticated, anon
+  USING (true);
+
+DROP POLICY IF EXISTS "Allow public delete on registrations" ON public.registrations;
+CREATE POLICY "Allow public delete on registrations"
+  ON public.registrations
+  FOR DELETE
+  TO authenticated, anon
+  USING (true);
+
+-- 5. Policies for Enquiries
+DROP POLICY IF EXISTS "Allow public inserts on enquiries" ON public.enquiries;
+CREATE POLICY "Allow public inserts on enquiries"
+  ON public.enquiries
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public read on enquiries" ON public.enquiries;
+CREATE POLICY "Allow public read on enquiries"
+  ON public.enquiries
+  FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
+DROP POLICY IF EXISTS "Allow public updates on enquiries" ON public.enquiries;
+CREATE POLICY "Allow public updates on enquiries"
+  ON public.enquiries
+  FOR UPDATE
+  TO authenticated, anon
+  USING (true);
+
+DROP POLICY IF EXISTS "Allow public delete on enquiries" ON public.enquiries;
+CREATE POLICY "Allow public delete on enquiries"
+  ON public.enquiries
+  FOR DELETE
   TO authenticated, anon
   USING (true);
 `;

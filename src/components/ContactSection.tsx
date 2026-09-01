@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { MapPin, Phone, Clock, Send, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { PHONE_NUMBER, PHONE_RAW, HO_ADDRESS, BRANCH_ADDRESS } from '../types';
+import { submitEnquiryRecord } from '../lib/supabase';
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
@@ -16,6 +17,17 @@ export default function ContactSection() {
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.community || !formData.notes) return;
 
+    // 1. Submit enquiry to database / Admin panel
+    submitEnquiryRecord({
+      type: 'contact_form',
+      name: formData.name.trim(),
+      phone: formData.phone.trim(),
+      community: formData.community.trim(),
+      source: 'Contact Us Callback Form',
+      message: formData.notes.trim(),
+    }).catch(() => {});
+
+    // 2. Open WhatsApp
     const textMessage = `Hello Vivaaha Connect,\n\nI would like to request a callback:\n\n• Name: ${formData.name}\n• Phone / WhatsApp: ${formData.phone}\n• Community: ${formData.community}\n• Details / Preferred Time: ${formData.notes}`;
 
     const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;

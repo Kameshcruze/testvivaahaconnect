@@ -20,9 +20,6 @@ export function getPageFromPath(path: string): AppPage {
   if (clean === '/admin' || clean === '/admin-login' || clean === '/dashboard') {
     return 'admin';
   }
-  if (clean === '/registration' || clean === '/register' || clean === '/testing') {
-    return 'registration';
-  }
   return 'home';
 }
 
@@ -43,8 +40,6 @@ export function navigateToPage(page: AppPage, sectionId?: string, e?: React.Mous
   const targetPath =
     page === 'admin'
       ? '/admin'
-      : page === 'registration'
-      ? '/registration'
       : sectionId && sectionId !== 'home'
       ? `/${sectionId}`
       : '/';
@@ -52,7 +47,7 @@ export function navigateToPage(page: AppPage, sectionId?: string, e?: React.Mous
   window.history.pushState({ page, sectionId }, '', targetPath);
   window.dispatchEvent(new CustomEvent('app-navigation', { detail: { page, sectionId } }));
 
-  if (page === 'registration' || page === 'admin') {
+  if (page === 'admin') {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } else if (sectionId && sectionId !== 'home') {
     setTimeout(() => {
@@ -75,7 +70,7 @@ export function navigateToSection(sectionId: string, e?: React.MouseEvent) {
   }
 
   if (sectionId === 'registration' || sectionId === 'testing' || sectionId === 'register') {
-    navigateToPage('registration', undefined, e);
+    navigateToPage('home', 'registration', e);
     return;
   }
 

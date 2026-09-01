@@ -39,9 +39,33 @@ import { PHONE_NUMBER, PHONE_RAW, KONGU_KULAMS } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
 
 interface RegistrationPageProps {
-  onBackToHome: () => void;
-  onOpenCallModal: () => void;
+  onBackToHome?: () => void;
+  onOpenCallModal?: () => void;
+  embedded?: boolean;
 }
+
+const DRAFT_STORAGE_KEY = 'vivaaha_matrimony_registration_draft_v1';
+
+interface SavedDraft {
+  formData: Partial<RegistrationFormData>;
+  currentStep: number;
+  sameAsMobile: boolean;
+  savedAt: number;
+}
+
+const getStoredDraft = (): SavedDraft | null => {
+  try {
+    const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!saved) return null;
+    const parsed = JSON.parse(saved) as SavedDraft;
+    if (parsed && typeof parsed === 'object' && parsed.formData) {
+      return parsed;
+    }
+  } catch (e) {
+    console.warn('Error reading draft from localStorage:', e);
+  }
+  return null;
+};
 
 const INITIAL_FORM_DATA: RegistrationFormData = {
   name: '',
@@ -91,14 +115,58 @@ const INITIAL_FORM_DATA: RegistrationFormData = {
   partnerOtherExpectations: '',
 };
 
-export default function RegistrationPage({ onBackToHome, onOpenCallModal }: RegistrationPageProps) {
-  const [formData, setFormData] = useState<RegistrationFormData>(INITIAL_FORM_DATA);
-  const [currentStep, setCurrentStep] = useState<number>(1);
+export default function RegistrationPage({
+  onBackToHome,
+  onOpenCallModal,
+  embedded = false,
+}: RegistrationPageProps) {
+  // Initialize state with stored draft if available
+  const [formData, setFormData] = useState<RegistrationFormData>(() => {
+    const draft = getStoredDraft();
+    if (draft?.formData) {
+      return {
+        ...INITIAL_FORM_DATA,
+        ...draft.formData,
+        // Guarantee fixed community constraints
+        community: 'Kongu Vellalar Gounder',
+        partnerCommunityPreference: 'Kongu Vellalar Gounder',
+      };
+    }
+    return INITIAL_FORM_DATA;
+  });
+
+  const [currentStep, setCurrentStep] = useState<number>(() => {
+    const draft = getStoredDraft();
+    if (draft?.currentStep && draft.currentStep >= 1 && draft.currentStep <= 5) {
+      return draft.currentStep;
+    }
+    return 1;
+  });
+
+  const [sameAsMobile, setSameAsMobile] = useState<boolean>(() => {
+    const draft = getStoredDraft();
+    return draft?.sameAsMobile ?? false;
+  });
+
+  const [hasRestoredDraft, setHasRestoredDraft] = useState<boolean>(() => {
+    const draft = getStoredDraft();
+    if (!draft?.formData) return false;
+    const hasValues = Boolean(
+      draft.formData.name ||
+      draft.formData.mobileNumber ||
+      draft.formData.dob ||
+      draft.formData.email ||
+      draft.formData.kulam ||
+      draft.formData.educationQualification ||
+      draft.formData.currentLocation
+    );
+    return hasValues;
+  });
+
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitSuccessId, setSubmitSuccessId] = useState<string | null>(null);
   const [submissionIsCloud, setSubmissionIsCloud] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [sameAsMobile, setSameAsMobile] = useState<boolean>(false);
 
   // File states
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -113,6 +181,57 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
   const jathagamInputRef = useRef<HTMLInputElement>(null);
   const certInputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-save form data and progress to local session whenever user updates fields
+  useEffect(() => {
+    // If successfully submitted, do not save draft
+    if (submitSuccessId) return;
+
+    // Check if there is any user data to save
+    const hasMeaningfulData = Object.entries(formData).some(([k, v]) => {
+      if (k === 'community' || k === 'partnerCommunityPreference') return false;
+      if (k === 'gender' && v === 'Male') return false;
+      if (k === 'brothersMarried' && v === '0') return false;
+      if (k === 'brothersUnmarried' && v === '0') return false;
+      if (k === 'sistersMarried' && v === '0') return false;
+      if (k === 'sistersUnmarried' && v === '0') return false;
+      if (k === 'familyType' && v === 'Nuclear Family') return false;
+      if (k === 'familyStatus' && v === 'Middle Class') return false;
+      return Boolean(v && typeof v === 'string' && v.trim() !== '');
+    });
+
+    if (hasMeaningfulData || currentStep > 1) {
+      try {
+        const draft: SavedDraft = {
+          formData,
+          currentStep,
+          sameAsMobile,
+          savedAt: Date.now(),
+        };
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      } catch (err) {
+        console.warn('Failed to auto-save registration draft to localStorage:', err);
+      }
+    }
+  }, [formData, currentStep, sameAsMobile, submitSuccessId]);
+
+  // Clear draft / reset function
+  const handleClearDraft = () => {
+    if (window.confirm('Clear all entered registration details and start over with a fresh form?')) {
+      try {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      } catch (e) {}
+      setFormData(INITIAL_FORM_DATA);
+      setCurrentStep(1);
+      setSameAsMobile(false);
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      setJathagamFile(null);
+      setCommunityCertFile(null);
+      setHasRestoredDraft(false);
+      setErrorMessage(null);
+    }
+  };
+
   // Auto calculate age from DOB
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const dobValue = e.target.value;
@@ -125,7 +244,9 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--;
       }
-      if (age > 0 && age < 100) {
+      if (age >= 18 && age <= 100) {
+        calculatedAge = age;
+      } else if (age > 0) {
         calculatedAge = age;
       }
     }
@@ -450,6 +571,9 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
       if (response.success) {
         setSubmitSuccessId(response.id);
         setSubmissionIsCloud(response.isCloud);
+        try {
+          localStorage.removeItem(DRAFT_STORAGE_KEY);
+        } catch (e) {}
       } else {
         setErrorMessage(response.error || 'Failed to submit registration. Please check database connection.');
       }
@@ -463,46 +587,48 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
   };
 
   const steps = [
-    { id: 1, title: 'Personal Details', icon: User },
-    { id: 2, title: 'Contact & Community', icon: MapPin },
-    { id: 3, title: 'Career & Family', icon: Briefcase },
-    { id: 4, title: 'Partner Expectations', icon: Heart },
-    { id: 5, title: 'Photos & Documents', icon: Upload },
+    { id: 1, title: 'Personal Details', shortTitle: '1. Personal', icon: User },
+    { id: 2, title: 'Contact & Community', shortTitle: '2. Contact', icon: MapPin },
+    { id: 3, title: 'Career & Family', shortTitle: '3. Career', icon: Briefcase },
+    { id: 4, title: 'Partner Expectations', shortTitle: '4. Partner', icon: Heart },
+    { id: 5, title: 'Photos & Documents', shortTitle: '5. Documents', icon: Upload },
   ];
 
   return (
-    <div className="min-h-screen bg-[#FFF9F5] text-[#222222] pt-6 pb-20 px-4 sm:px-6 lg:px-8">
+    <div className={`text-[#222222] ${embedded ? 'py-8 sm:py-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#FFF9F5] via-[#F8E8DA]/20 to-[#FFF9F5]' : 'min-h-screen bg-[#FFF9F5] pt-6 pb-20 px-4 sm:px-6 lg:px-8'}`}>
       <div className="max-w-4xl mx-auto">
-        {/* Top Bar with Logo & Navigation */}
-        <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#C89B63]/25">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBackToHome}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white border border-[#C89B63]/40 text-[#6A1E2C] text-xs font-bold shadow-sm hover:bg-[#6A1E2C] hover:text-white transition group"
-            >
-              <ArrowLeft className="w-4 h-4 text-[#C89B63] group-hover:text-white transition-colors" />
-              <span>Back to Home</span>
-            </button>
+        {/* Top Bar with Logo & Navigation (Only if not embedded on home page) */}
+        {!embedded && (
+          <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#C89B63]/25">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onBackToHome}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white border border-[#C89B63]/40 text-[#6A1E2C] text-xs font-bold shadow-sm hover:bg-[#6A1E2C] hover:text-white transition group"
+              >
+                <ArrowLeft className="w-4 h-4 text-[#C89B63] group-hover:text-white transition-colors" />
+                <span>Back to Home</span>
+              </button>
 
-            <img
-              src={logoImg}
-              alt="Vivaaha Connect"
-              className="h-10 w-auto object-contain hidden sm:block"
-            />
+              <img
+                src={logoImg}
+                alt="Vivaaha Connect"
+                className="h-10 w-auto object-contain hidden sm:block"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Header Title Banner */}
         {!submitSuccessId && (
           <div className="text-center mb-8 space-y-2">
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#6A1E2C]/10 text-[#6A1E2C] text-xs font-bold uppercase tracking-wider">
-              Matrimony Registration Form
+            <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#6A1E2C]/10 border border-[#6A1E2C]/20 text-[#6A1E2C] text-xs font-bold uppercase tracking-wider">
+              {embedded ? 'Candidate Registration' : 'Matrimony Registration Form'}
             </span>
-            <h1 className="text-2xl sm:text-4xl font-bold font-heading text-[#6A1E2C]">
-              Candidate Profile Registration
-            </h1>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold font-heading text-[#6A1E2C] tracking-tight">
+              Register Candidate Profile
+            </h2>
             <p className="text-xs sm:text-sm text-[#222222]/75 max-w-xl mx-auto">
-              Please enter accurate candidate details and family preferences. All submitted information is kept strictly confidential and shared only with verified prospective matches.
+              Please enter candidate details and family preferences. All submitted information is kept strictly confidential and verified for traditional Kongu Vellalar matchmaking.
             </p>
           </div>
         )}
@@ -629,14 +755,75 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       >
                         {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
                       </div>
-                      <span className="text-[10px] sm:text-xs font-bold line-clamp-1">
-                        {step.title}
+                      <span className="text-[10px] sm:text-xs font-bold truncate max-w-full">
+                        <span className="hidden sm:inline">{step.title}</span>
+                        <span className="inline sm:hidden">{step.shortTitle}</span>
                       </span>
                     </button>
                   );
                 })}
               </div>
             </div>
+
+            {/* Auto-Save & Session Protection Info Bar */}
+            <div className="px-4 sm:px-6 py-2.5 bg-[#FFF9F5] border-b border-[#C89B63]/15 flex flex-wrap items-center justify-between gap-2 text-[11px] sm:text-xs">
+              <div className="flex items-center gap-2 text-emerald-700 font-semibold">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>Auto-saved to local session</span>
+                <span className="hidden sm:inline text-[#222222]/50 font-normal">
+                  (Safe against tab closure or connection drops)
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleClearDraft}
+                className="text-[#6A1E2C] hover:text-red-700 font-medium inline-flex items-center gap-1 transition"
+                title="Clear all entered fields and start over"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Clear Draft</span>
+              </button>
+            </div>
+
+            {/* Restored Draft Alert Banner */}
+            {hasRestoredDraft && (
+              <div className="mx-4 sm:mx-6 mt-4 p-3.5 sm:p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm shadow-sm">
+                <div className="flex items-start sm:items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-amber-800 shrink-0 mt-0.5 sm:mt-0">
+                    <FileCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-[#6A1E2C]">Draft Automatically Restored</p>
+                    <p className="text-[#222222]/75 text-xs">
+                      Resuming your previous registration from Step {currentStep}. All your entered details have been recovered.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleClearDraft}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-red-700 hover:bg-red-50 text-xs font-semibold transition shadow-xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Clear & Start Fresh</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHasRestoredDraft(false)}
+                    className="p-1 text-gray-500 hover:text-gray-800 text-xs rounded-lg hover:bg-amber-100 transition"
+                    aria-label="Dismiss banner"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Error banner */}
             {errorMessage && (
@@ -742,21 +929,24 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       </div>
                     </div>
 
-                    {/* Age */}
+                    {/* Age (Uneditable / Auto-generated from Date of Birth) */}
                     <div>
-                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Age (Years) <span className="text-red-600 font-bold">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider">
+                          Age (Years) <span className="text-red-600 font-bold">*</span>
+                        </label>
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          Auto-generated from DOB
+                        </span>
+                      </div>
                       <input
-                        type="number"
+                        type="text"
                         name="age"
                         required
-                        min="18"
-                        max="80"
-                        value={formData.age}
-                        onChange={handleInputChange}
-                        placeholder="Auto-calculated or enter age"
-                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
+                        readOnly
+                        value={formData.age ? `${formData.age} Years` : ''}
+                        placeholder="Select Date of Birth to auto-calculate"
+                        className="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-gray-100/90 text-gray-800 text-sm font-semibold cursor-not-allowed shadow-inner focus:outline-none"
                       />
                     </div>
 
@@ -923,19 +1113,23 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       />
                     </div>
 
-                    {/* Community / Caste */}
+                    {/* Community / Caste - Uneditable */}
                     <div>
-                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Community / Caste <span className="text-red-600 font-bold">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider">
+                          Community / Caste <span className="text-red-600 font-bold">*</span>
+                        </label>
+                        <span className="text-[10px] font-semibold text-[#6A1E2C] bg-[#F8E8DA] px-2 py-0.5 rounded-full border border-[#C89B63]/30">
+                          Fixed: Kongu Vellalar Gounder
+                        </span>
+                      </div>
                       <input
                         type="text"
                         name="community"
                         required
-                        value={formData.community}
-                        onChange={handleInputChange}
-                        placeholder="Kongu Vellalar Gounder"
-                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
+                        readOnly
+                        value="Kongu Vellalar Gounder"
+                        className="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-gray-100/90 text-gray-800 text-sm font-semibold cursor-not-allowed shadow-inner focus:outline-none"
                       />
                     </div>
 
@@ -1304,19 +1498,23 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
                       />
                     </div>
 
-                    {/* Community Preference */}
+                    {/* Community Preference - Uneditable */}
                     <div>
-                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Community Preference <span className="text-red-600 font-bold">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider">
+                          Community Preference <span className="text-red-600 font-bold">*</span>
+                        </label>
+                        <span className="text-[10px] font-semibold text-[#6A1E2C] bg-[#F8E8DA] px-2 py-0.5 rounded-full border border-[#C89B63]/30">
+                          Kongu Vellalar Gounder
+                        </span>
+                      </div>
                       <input
                         type="text"
                         name="partnerCommunityPreference"
                         required
-                        value={formData.partnerCommunityPreference}
-                        onChange={handleInputChange}
-                        placeholder="e.g. Kongu Vellalar Gounder"
-                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
+                        readOnly
+                        value="Kongu Vellalar Gounder"
+                        className="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-gray-100/90 text-gray-800 text-sm font-semibold cursor-not-allowed shadow-inner focus:outline-none"
                       />
                     </div>
 
@@ -1554,25 +1752,37 @@ export default function RegistrationPage({ onBackToHome, onOpenCallModal }: Regi
               )}
 
               {/* Form Navigation Buttons */}
-              <div className="pt-6 border-t border-[#C89B63]/20 flex items-center justify-between">
-                {currentStep > 1 ? (
+              <div className="pt-6 border-t border-[#C89B63]/20 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  {currentStep > 1 ? (
+                    <button
+                      type="button"
+                      onClick={handlePrevStep}
+                      disabled={isSubmitting}
+                      className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-[#C89B63]/40 bg-white text-[#6A1E2C] font-bold text-xs sm:text-sm hover:bg-[#FAF3EB] transition shadow-sm"
+                    >
+                      <ArrowLeft className="w-4 h-4" /> Previous
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={onBackToHome}
+                      className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-gray-300 bg-white text-gray-700 font-bold text-xs sm:text-sm hover:bg-gray-50 transition"
+                    >
+                      Cancel
+                    </button>
+                  )}
+
                   <button
                     type="button"
-                    onClick={handlePrevStep}
-                    disabled={isSubmitting}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-[#C89B63]/40 bg-white text-[#6A1E2C] font-bold text-xs sm:text-sm hover:bg-[#FAF3EB] transition shadow-sm"
+                    onClick={handleClearDraft}
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-gray-600 hover:text-red-700 hover:bg-red-50 text-xs font-semibold transition"
+                    title="Reset all entered values"
                   >
-                    <ArrowLeft className="w-4 h-4" /> Previous
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Clear Form</span>
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={onBackToHome}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-gray-300 bg-white text-gray-700 font-bold text-xs sm:text-sm hover:bg-gray-50 transition"
-                  >
-                    Cancel
-                  </button>
-                )}
+                </div>
 
                 {currentStep < 5 ? (
                   <button

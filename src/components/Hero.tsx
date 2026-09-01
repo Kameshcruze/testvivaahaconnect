@@ -19,7 +19,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
   ];
 
   return (
-    <section id="home" className="relative pt-24 sm:pt-26 lg:pt-26 pb-8 sm:pb-10 lg:pb-12 flex items-center justify-center overflow-hidden">
+    <section id="home" className="relative pt-24 sm:pt-28 pb-8 sm:pb-12 flex items-center justify-center overflow-hidden">
       {/* Background Radial Glow & Soft Ambient Lighting */}
       <div className="hidden sm:block absolute top-1/4 left-1/6 w-[550px] h-[550px] bg-[#C89B63]/15 rounded-full blur-[100px] pointer-events-none animate-pulse-glow" />
       <div className="hidden sm:block absolute bottom-10 right-10 w-[500px] h-[500px] bg-[#6A1E2C]/10 rounded-full blur-[100px] pointer-events-none" />
@@ -48,7 +48,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.4 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#C89B63]/30 shadow-sm backdrop-blur-md self-center mb-3"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#C89B63]/30 shadow-sm backdrop-blur-md self-center lg:self-start mb-3"
             >
               <span className="text-xs sm:text-sm font-semibold text-[#6A1E2C]">
                 Trusted Matrimony Service
@@ -163,9 +163,9 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
             {/* Quick Registration Cards (Matching Image 1 Aesthetic) */}
             <div className="rounded-3xl bg-white/95 border border-[#C89B63]/30 shadow-xl p-5 sm:p-6 backdrop-blur-lg relative overflow-hidden">
               {/* Card Header & Tab Switcher */}
-              <div className="flex items-center justify-between mb-4 border-b border-[#C89B63]/15 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-[#C89B63]/15 pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[#6A1E2C] text-[#C89B63] flex items-center justify-center shadow-md">
+                  <div className="w-10 h-10 rounded-2xl bg-[#6A1E2C] text-[#C89B63] flex items-center justify-center shadow-md shrink-0">
                     <Heart className="w-5 h-5 fill-[#C89B63]" />
                   </div>
                   <div>
@@ -179,10 +179,10 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
                 </div>
 
                 {/* Tab Switcher */}
-                <div className="inline-flex p-1 rounded-xl bg-[#6A1E2C]/10 border border-[#C89B63]/20">
+                <div className="inline-flex p-1 rounded-xl bg-[#6A1E2C]/10 border border-[#C89B63]/20 self-start sm:self-auto shrink-0">
                   <button
                     onClick={() => setActiveTab('bride')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                       activeTab === 'bride'
                         ? 'bg-[#6A1E2C] text-white shadow-sm'
                         : 'text-[#6A1E2C] hover:bg-white/50'
@@ -192,7 +192,7 @@ export default function Hero({ onOpenCallModal }: HeroProps) {
                   </button>
                   <button
                     onClick={() => setActiveTab('groom')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                       activeTab === 'groom'
                         ? 'bg-[#6A1E2C] text-white shadow-sm'
                         : 'text-[#6A1E2C] hover:bg-white/50'

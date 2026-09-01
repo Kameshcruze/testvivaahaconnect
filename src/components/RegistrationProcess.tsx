@@ -37,7 +37,7 @@ export default function RegistrationProcess() {
   ];
 
   return (
-    <section id="registration" className="relative py-8 sm:py-12 lg:py-14 bg-[#FFF9F5] overflow-hidden">
+    <section id="process" className="relative py-8 sm:py-12 lg:py-14 bg-[#FFF9F5] overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}

@@ -631,14 +631,16 @@ export default function AdminDraftsTab({
                   <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider">Candidate Contact</span>
                   <div className="flex items-center gap-3 mt-1">
                     <p className="text-base font-bold text-stone-900">
-                      {selectedDraft.mobile_number || selectedDraft.whatsapp_number || 'No phone entered'}
+                      {selectedDraft.mobile_number || selectedDraft.whatsapp_number || (selectedDraft.form_data as any)?.mobileNumber || (selectedDraft.form_data as any)?.whatsappNumber || 'No phone entered'}
                     </p>
-                    {selectedDraft.email && <span className="text-stone-500">({selectedDraft.email})</span>}
+                    {(selectedDraft.email || (selectedDraft.form_data as any)?.email) && (
+                      <span className="text-stone-500">({selectedDraft.email || (selectedDraft.form_data as any)?.email})</span>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {(selectedDraft.mobile_number || selectedDraft.whatsapp_number) && (
+                  {(selectedDraft.mobile_number || selectedDraft.whatsapp_number || (selectedDraft.form_data as any)?.mobileNumber || (selectedDraft.form_data as any)?.whatsappNumber) && (
                     <>
                       <a
                         href={getWhatsAppLink(selectedDraft)}
@@ -650,7 +652,7 @@ export default function AdminDraftsTab({
                         <span>WhatsApp Candidate</span>
                       </a>
                       <a
-                        href={`tel:${selectedDraft.mobile_number || selectedDraft.whatsapp_number}`}
+                        href={`tel:${selectedDraft.mobile_number || selectedDraft.whatsapp_number || (selectedDraft.form_data as any)?.mobileNumber || (selectedDraft.form_data as any)?.whatsappNumber}`}
                         className="px-3 py-1.5 rounded-xl bg-[#6A1E2C] hover:bg-[#531722] text-white font-bold text-xs flex items-center gap-1.5 transition shadow-xs"
                       >
                         <Phone className="w-4 h-4" />
@@ -670,69 +672,70 @@ export default function AdminDraftsTab({
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
                     <span className="text-stone-400 text-[10px] block">Gender</span>
-                    <strong className="text-stone-800">{selectedDraft.gender || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.gender || (selectedDraft.form_data as any)?.gender || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Date of Birth</span>
-                    <strong className="text-stone-800">{selectedDraft.dob || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.dob || (selectedDraft.form_data as any)?.dob || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Age</span>
-                    <strong className="text-stone-800">{selectedDraft.age ? `${selectedDraft.age} yrs` : '—'}</strong>
+                    <strong className="text-stone-800">
+                      {selectedDraft.age || (selectedDraft.form_data as any)?.age ? `${selectedDraft.age || (selectedDraft.form_data as any)?.age} yrs` : '—'}
+                    </strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Height</span>
-                    <strong className="text-stone-800">{selectedDraft.height || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.height || (selectedDraft.form_data as any)?.height || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Weight</span>
-                    <strong className="text-stone-800">{selectedDraft.weight || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.weight || (selectedDraft.form_data as any)?.weight || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Marital Status</span>
-                    <strong className="text-stone-800">{selectedDraft.marital_status || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.marital_status || (selectedDraft.form_data as any)?.maritalStatus || (selectedDraft.form_data as any)?.marital_status || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Current Location</span>
-                    <strong className="text-stone-800">{selectedDraft.current_location || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.current_location || (selectedDraft.form_data as any)?.currentLocation || (selectedDraft.form_data as any)?.current_location || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Native Place</span>
-                    <strong className="text-stone-800">{selectedDraft.native_place || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.native_place || (selectedDraft.form_data as any)?.nativePlace || (selectedDraft.form_data as any)?.native_place || '—'}</strong>
                   </div>
                 </div>
               </div>
 
               {/* Step 2: Community & Astrological Details */}
               <div className="border border-stone-200 rounded-2xl p-4 space-y-3 bg-orange-50/20">
-                <h4 className="font-bold text-stone-900 flex items-center gap-2 text-sm border-b pb-2">
-                  <Sparkles className="w-4 h-4 text-[#8B4513]" />
+                <h4 className="font-bold text-stone-900 text-sm border-b pb-2">
                   <span>Step 2: Community & Astrological Details (ஜாதக விபரங்கள்)</span>
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
                     <span className="text-stone-400 text-[10px] block">Community</span>
-                    <strong className="text-stone-800">{selectedDraft.community || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.community || (selectedDraft.form_data as any)?.community || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Kulam (கூட்டம்)</span>
-                    <strong className="text-amber-900 font-bold">{selectedDraft.kulam || '—'}</strong>
+                    <strong className="text-amber-900 font-bold">{selectedDraft.kulam || (selectedDraft.form_data as any)?.kulam || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Kula Deivam (குலதெய்வம்)</span>
-                    <strong className="text-stone-800">{selectedDraft.kuladeivam || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.kuladeivam || (selectedDraft.form_data as any)?.kuladeivam || (selectedDraft.form_data as any)?.kulaDeivam || '—'}</strong>
                   </div>
                   <div className="p-2 rounded-xl bg-orange-50 border border-orange-200">
                     <span className="text-orange-900 text-[10px] block font-semibold">Rasi (ராசி)</span>
-                    <p className="font-bold text-orange-950 mt-0.5">{selectedDraft.rasi || '—'}</p>
+                    <p className="font-bold text-orange-950 mt-0.5">{selectedDraft.rasi || (selectedDraft.form_data as any)?.rasi || '—'}</p>
                   </div>
                   <div className="p-2 rounded-xl bg-orange-50 border border-orange-200">
                     <span className="text-orange-900 text-[10px] block font-semibold">Natchathiram (நட்சத்திரம்)</span>
-                    <p className="font-bold text-orange-950 mt-0.5">{selectedDraft.natchatram || '—'}</p>
+                    <p className="font-bold text-orange-950 mt-0.5">{selectedDraft.natchatram || (selectedDraft.form_data as any)?.natchatram || (selectedDraft.form_data as any)?.natchathiram || '—'}</p>
                   </div>
                   <div className="p-2 rounded-xl bg-orange-50 border border-orange-200">
                     <span className="text-orange-900 text-[10px] block font-semibold">Laknam (லக்னம்)</span>
-                    <p className="font-bold text-orange-950 mt-0.5">{selectedDraft.laknam || '—'}</p>
+                    <p className="font-bold text-orange-950 mt-0.5">{selectedDraft.laknam || (selectedDraft.form_data as any)?.laknam || '—'}</p>
                   </div>
                 </div>
               </div>
@@ -746,23 +749,23 @@ export default function AdminDraftsTab({
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
                     <span className="text-stone-400 text-[10px] block">Qualification</span>
-                    <strong className="text-stone-800">{selectedDraft.education_qualification || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.education_qualification || (selectedDraft.form_data as any)?.educationQualification || (selectedDraft.form_data as any)?.education_qualification || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Profession / Role</span>
-                    <strong className="text-stone-800">{selectedDraft.profession || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.profession || (selectedDraft.form_data as any)?.profession || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Company Name</span>
-                    <strong className="text-stone-800">{selectedDraft.company_name || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.company_name || (selectedDraft.form_data as any)?.companyName || (selectedDraft.form_data as any)?.company_name || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Work Location</span>
-                    <strong className="text-stone-800">{selectedDraft.work_location || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.work_location || (selectedDraft.form_data as any)?.workLocation || (selectedDraft.form_data as any)?.work_location || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Annual Income</span>
-                    <strong className="text-stone-800">{selectedDraft.income || '—'}</strong>
+                    <strong className="text-stone-800">{selectedDraft.income || (selectedDraft.form_data as any)?.income || '—'}</strong>
                   </div>
                 </div>
               </div>
@@ -776,28 +779,36 @@ export default function AdminDraftsTab({
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
                     <span className="text-stone-400 text-[10px] block">Father's Name & Occupation</span>
-                    <strong className="text-stone-800">{selectedDraft.father_name || '—'} {selectedDraft.father_occupation ? `(${selectedDraft.father_occupation})` : ''}</strong>
+                    <strong className="text-stone-800">
+                      {selectedDraft.father_name || (selectedDraft.form_data as any)?.fatherName || '—'}{' '}
+                      {selectedDraft.father_occupation || (selectedDraft.form_data as any)?.fatherOccupation ? `(${selectedDraft.father_occupation || (selectedDraft.form_data as any)?.fatherOccupation})` : ''}
+                    </strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Mother's Name & Occupation</span>
-                    <strong className="text-stone-800">{selectedDraft.mother_name || '—'} {selectedDraft.mother_occupation ? `(${selectedDraft.mother_occupation})` : ''}</strong>
+                    <strong className="text-stone-800">
+                      {selectedDraft.mother_name || (selectedDraft.form_data as any)?.motherName || '—'}{' '}
+                      {selectedDraft.mother_occupation || (selectedDraft.form_data as any)?.motherOccupation ? `(${selectedDraft.mother_occupation || (selectedDraft.form_data as any)?.motherOccupation})` : ''}
+                    </strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Brothers / Sisters</span>
                     <strong className="text-stone-800">
-                      Brothers: {selectedDraft.brothers_count || '0'} • Sisters: {selectedDraft.sisters_count || '0'}
+                      Brothers: {selectedDraft.brothers_count || (selectedDraft.form_data as any)?.brothersCount || (Number((selectedDraft.form_data as any)?.brothersMarried || 0) + Number((selectedDraft.form_data as any)?.brothersUnmarried || 0)) || '0'} • Sisters: {selectedDraft.sisters_count || (selectedDraft.form_data as any)?.sistersCount || (Number((selectedDraft.form_data as any)?.sistersMarried || 0) + Number((selectedDraft.form_data as any)?.sistersUnmarried || 0)) || '0'}
                     </strong>
                   </div>
                   <div>
                     <span className="text-stone-400 text-[10px] block">Family Type / Status</span>
-                    <strong className="text-stone-800">{selectedDraft.family_type || '—'} • {selectedDraft.family_status || '—'}</strong>
+                    <strong className="text-stone-800">
+                      {selectedDraft.family_type || (selectedDraft.form_data as any)?.familyType || '—'} • {selectedDraft.family_status || (selectedDraft.form_data as any)?.familyStatus || '—'}
+                    </strong>
                   </div>
                   <div className="col-span-2">
                     <span className="text-stone-400 text-[10px] block">Partner Preferences</span>
                     <strong className="text-stone-800">
-                      {selectedDraft.partner_age_range ? `Age: ${selectedDraft.partner_age_range}` : ''}
-                      {selectedDraft.partner_education ? ` • Edu: ${selectedDraft.partner_education}` : ''}
-                      {selectedDraft.partner_profession ? ` • Prof: ${selectedDraft.partner_profession}` : ''}
+                      {(selectedDraft.partner_age_range || (selectedDraft.form_data as any)?.partnerAgeRange) ? `Age: ${selectedDraft.partner_age_range || (selectedDraft.form_data as any)?.partnerAgeRange}` : ''}
+                      {(selectedDraft.partner_education || (selectedDraft.form_data as any)?.partnerEducation) ? ` • Edu: ${selectedDraft.partner_education || (selectedDraft.form_data as any)?.partnerEducation}` : ''}
+                      {(selectedDraft.partner_profession || (selectedDraft.form_data as any)?.partnerProfession) ? ` • Prof: ${selectedDraft.partner_profession || (selectedDraft.form_data as any)?.partnerProfession}` : ''}
                     </strong>
                   </div>
                 </div>
@@ -805,7 +816,7 @@ export default function AdminDraftsTab({
 
               {/* Technical / DB Identifiers */}
               <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex items-center justify-between font-mono text-[11px] text-stone-500">
-                <span>Database Draft ID: {selectedDraft.id}</span>
+                <span>Draft ID: {selectedDraft.id}</span>
                 <button
                   onClick={() => handleCopy(selectedDraft.id, 'draft_id')}
                   className="flex items-center gap-1 text-stone-700 hover:text-stone-900 font-sans text-xs font-semibold"
@@ -817,13 +828,10 @@ export default function AdminDraftsTab({
             </div>
 
             {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-stone-50 border-t border-stone-200 px-6 py-3.5 flex items-center justify-between rounded-b-3xl">
-              <span className="text-xs text-stone-500 font-medium">
-                Saved in Supabase <code className="text-stone-700 font-bold">registration_drafts</code> table
-              </span>
+            <div className="sticky bottom-0 bg-stone-50 border-t border-stone-200 px-6 py-3.5 flex items-center justify-end rounded-b-3xl">
               <button
                 onClick={() => setSelectedDraft(null)}
-                className="px-4 py-2 rounded-xl bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-bold transition"
+                className="px-5 py-2 rounded-xl bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-bold transition"
               >
                 Close
               </button>

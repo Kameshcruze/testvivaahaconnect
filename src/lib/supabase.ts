@@ -603,61 +603,97 @@ export function normalizeRegistrationDraftRecord(raw: any): RegistrationDraftRec
     };
   }
 
+  // Parse form_data if string or nested
+  let fd: Record<string, any> = {};
+  if (raw.form_data) {
+    if (typeof raw.form_data === 'string') {
+      try {
+        fd = JSON.parse(raw.form_data);
+      } catch (e) {
+        fd = {};
+      }
+    } else if (typeof raw.form_data === 'object') {
+      fd = raw.form_data;
+    }
+  } else if (raw.formData) {
+    if (typeof raw.formData === 'string') {
+      try {
+        fd = JSON.parse(raw.formData);
+      } catch (e) {
+        fd = {};
+      }
+    } else if (typeof raw.formData === 'object') {
+      fd = raw.formData;
+    }
+  }
+
+  const get = (...keys: string[]): any => {
+    for (const k of keys) {
+      if (raw[k] !== undefined && raw[k] !== null && String(raw[k]).trim() !== '') {
+        return raw[k];
+      }
+      if (fd[k] !== undefined && fd[k] !== null && String(fd[k]).trim() !== '') {
+        return fd[k];
+      }
+    }
+    return null;
+  };
+
   return {
     id: String(raw.id || `DRAFT-${Date.now()}`),
     created_at: raw.created_at || raw.createdAt || new Date().toISOString(),
     updated_at: raw.updated_at || raw.updatedAt || raw.created_at || new Date().toISOString(),
-    session_token: raw.session_token || raw.sessionToken || null,
-    current_step: Number(raw.current_step || raw.currentStep || 1),
-    name: raw.name || null,
-    gender: raw.gender || null,
-    dob: raw.dob || null,
-    age: raw.age || null,
-    height: raw.height || null,
-    weight: raw.weight || null,
-    marital_status: raw.marital_status || raw.maritalStatus || null,
-    mobile_number: raw.mobile_number || raw.mobileNumber || raw.mobile || null,
-    email: raw.email || null,
-    whatsapp_number: raw.whatsapp_number || raw.whatsappNumber || null,
-    current_location: raw.current_location || raw.currentLocation || null,
-    native_place: raw.native_place || raw.nativePlace || null,
-    community: raw.community || null,
-    kulam: raw.kulam || null,
-    kuladeivam: raw.kuladeivam || null,
-    rasi: raw.rasi || null,
-    natchatram: raw.natchatram || null,
-    laknam: raw.laknam || null,
-    education_qualification: raw.education_qualification || raw.educationQualification || null,
-    profession: raw.profession || null,
-    company_name: raw.company_name || raw.companyName || null,
-    work_location: raw.work_location || raw.workLocation || null,
-    income: raw.income || null,
-    father_name: raw.father_name || raw.fatherName || null,
-    father_occupation: raw.father_occupation || raw.fatherOccupation || null,
-    mother_name: raw.mother_name || raw.motherName || null,
-    mother_occupation: raw.mother_occupation || raw.motherOccupation || null,
-    brothers_count: raw.brothers_count || raw.brothersCount || null,
-    brothers_married: raw.brothers_married || raw.brothersMarried || null,
-    brothers_unmarried: raw.brothers_unmarried || raw.brothersUnmarried || null,
-    sisters_count: raw.sisters_count || raw.sistersCount || null,
-    sisters_married: raw.sisters_married || raw.sistersMarried || null,
-    sisters_unmarried: raw.sisters_unmarried || raw.sistersUnmarried || null,
-    family_type: raw.family_type || raw.familyType || null,
-    family_status: raw.family_status || raw.familyStatus || null,
-    family_background: raw.family_background || raw.familyBackground || null,
-    partner_age_range: raw.partner_age_range || raw.partnerAgeRange || null,
-    partner_education: raw.partner_education || raw.partnerEducation || null,
-    partner_profession: raw.partner_profession || raw.partnerProfession || null,
-    partner_income_preference: raw.partner_income_preference || raw.partnerIncomePreference || null,
-    partner_community_preference: raw.partner_community_preference || raw.partnerCommunityPreference || null,
-    partner_location_preference: raw.partner_location_preference || raw.partnerLocationPreference || null,
-    partner_other_expectations: raw.partner_other_expectations || raw.partnerOtherExpectations || null,
-    photo_file_name: raw.photo_file_name || raw.photoFileName || null,
-    jathagam_file_name: raw.jathagam_file_name || raw.jathagamFileName || null,
-    community_certificate_file_name: raw.community_certificate_file_name || raw.communityCertificateFileName || null,
-    form_data: raw.form_data || raw.formData || null,
+    session_token: get('session_token', 'sessionToken'),
+    current_step: Number(get('current_step', 'currentStep') || 1),
+    name: get('name', 'candidate_name', 'candidateName'),
+    gender: get('gender'),
+    dob: get('dob', 'dateOfBirth'),
+    age: get('age') ? Number(get('age')) : null,
+    height: get('height'),
+    weight: get('weight'),
+    marital_status: get('marital_status', 'maritalStatus'),
+    mobile_number: get('mobile_number', 'mobileNumber', 'mobile'),
+    email: get('email'),
+    whatsapp_number: get('whatsapp_number', 'whatsappNumber'),
+    current_location: get('current_location', 'currentLocation'),
+    native_place: get('native_place', 'nativePlace'),
+    community: get('community'),
+    kulam: get('kulam'),
+    kuladeivam: get('kuladeivam', 'kula_deivam', 'kulaDeivam'),
+    rasi: get('rasi'),
+    natchatram: get('natchatram', 'natchathiram', 'natchathram'),
+    laknam: get('laknam'),
+    education_qualification: get('education_qualification', 'educationQualification', 'education'),
+    profession: get('profession', 'occupation'),
+    company_name: get('company_name', 'companyName', 'company'),
+    work_location: get('work_location', 'workLocation'),
+    income: get('income', 'annualIncome'),
+    father_name: get('father_name', 'fatherName'),
+    father_occupation: get('father_occupation', 'fatherOccupation'),
+    mother_name: get('mother_name', 'motherName'),
+    mother_occupation: get('mother_occupation', 'motherOccupation'),
+    brothers_count: get('brothers_count', 'brothersCount') || (get('brothersMarried') !== null || get('brothersUnmarried') !== null ? String(Number(get('brothersMarried') || 0) + Number(get('brothersUnmarried') || 0)) : null),
+    brothers_married: get('brothers_married', 'brothersMarried'),
+    brothers_unmarried: get('brothers_unmarried', 'brothersUnmarried'),
+    sisters_count: get('sisters_count', 'sistersCount') || (get('sistersMarried') !== null || get('sistersUnmarried') !== null ? String(Number(get('sistersMarried') || 0) + Number(get('sistersUnmarried') || 0)) : null),
+    sisters_married: get('sisters_married', 'sistersMarried'),
+    sisters_unmarried: get('sisters_unmarried', 'sistersUnmarried'),
+    family_type: get('family_type', 'familyType'),
+    family_status: get('family_status', 'familyStatus'),
+    family_background: get('family_background', 'familyBackground'),
+    partner_age_range: get('partner_age_range', 'partnerAgeRange'),
+    partner_education: get('partner_education', 'partnerEducation'),
+    partner_profession: get('partner_profession', 'partnerProfession'),
+    partner_income_preference: get('partner_income_preference', 'partnerIncomePreference'),
+    partner_community_preference: get('partner_community_preference', 'partnerCommunityPreference'),
+    partner_location_preference: get('partner_location_preference', 'partnerLocationPreference'),
+    partner_other_expectations: get('partner_other_expectations', 'partnerOtherExpectations'),
+    photo_file_name: get('photo_file_name', 'photoFileName'),
+    jathagam_file_name: get('jathagam_file_name', 'jathagamFileName'),
+    community_certificate_file_name: get('community_certificate_file_name', 'communityCertificateFileName'),
+    form_data: raw.form_data || raw.formData || fd,
     status: (raw.status || 'Incomplete') as DraftStatus,
-    completed_registration_id: raw.completed_registration_id || raw.completedRegistrationId || null,
+    completed_registration_id: get('completed_registration_id', 'completedRegistrationId'),
   };
 }
 

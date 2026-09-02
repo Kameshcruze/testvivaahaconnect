@@ -264,22 +264,27 @@ export default function RegistrationPage({
     }
   };
 
+  // Helper to test if user has entered any data across all form fields
+  const hasEnteredData = useCallback(() => {
+    return Object.entries(formData).some(([key, val]) => {
+      if (key === 'community' || key === 'partnerCommunityPreference') return false;
+      if (key === 'gender' && val === 'Male') return false;
+      if (key === 'brothersMarried' && val === '0') return false;
+      if (key === 'brothersUnmarried' && val === '0') return false;
+      if (key === 'sistersMarried' && val === '0') return false;
+      if (key === 'sistersUnmarried' && val === '0') return false;
+      if (key === 'familyType' && val === 'Nuclear Family') return false;
+      if (key === 'familyStatus' && val === 'Middle Class') return false;
+      return Boolean(val !== null && val !== undefined && String(val).trim() !== '');
+    });
+  }, [formData]);
+
   // Immediate synchronous draft save (used on step transitions, page exit, and unmount)
   const flushSaveDraft = useCallback((stepToSave?: number) => {
     if (submitSuccessId) return;
     const targetStep = stepToSave !== undefined ? stepToSave : currentStep;
 
-    // Check if user has entered any info
-    const hasData =
-      Boolean(formData.name?.trim()) ||
-      Boolean(formData.mobileNumber?.trim()) ||
-      Boolean(formData.email?.trim()) ||
-      Boolean(formData.dob) ||
-      Boolean(formData.kulam?.trim()) ||
-      Boolean(formData.nativePlace?.trim()) ||
-      Boolean(formData.currentLocation?.trim()) ||
-      targetStep > 1;
-
+    const hasData = hasEnteredData() || targetStep > 1;
     if (!hasData) return;
 
     try {
@@ -302,7 +307,7 @@ export default function RegistrationPage({
         setCloudSyncStatus('saved');
       }
     }).catch(() => {});
-  }, [formData, currentStep, sameAsMobile, submitSuccessId, draftId, sessionToken]);
+  }, [formData, currentStep, sameAsMobile, submitSuccessId, draftId, sessionToken, hasEnteredData]);
 
   // Handle sudden page exit / tab close / switching tabs to immediately save progress to DB
   useEffect(() => {
@@ -331,17 +336,7 @@ export default function RegistrationPage({
   useEffect(() => {
     if (submitSuccessId) return;
 
-    const hasData =
-      Boolean(formData.name?.trim()) ||
-      Boolean(formData.mobileNumber?.trim()) ||
-      Boolean(formData.email?.trim()) ||
-      Boolean(formData.dob) ||
-      Boolean(formData.kulam?.trim()) ||
-      Boolean(formData.nativePlace?.trim()) ||
-      Boolean(formData.currentLocation?.trim()) ||
-      Boolean(formData.fatherName?.trim()) ||
-      Boolean(formData.profession?.trim()) ||
-      currentStep > 1;
+    const hasData = hasEnteredData() || currentStep > 1;
 
     if (hasData) {
       try {
@@ -373,7 +368,7 @@ export default function RegistrationPage({
 
       return () => clearTimeout(timer);
     }
-  }, [formData, currentStep, sameAsMobile, submitSuccessId, draftId, sessionToken]);
+  }, [formData, currentStep, sameAsMobile, submitSuccessId, draftId, sessionToken, hasEnteredData]);
 
   // Clear draft / reset function
   const handleClearDraft = () => {

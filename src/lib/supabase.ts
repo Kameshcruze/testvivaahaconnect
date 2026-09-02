@@ -780,76 +780,61 @@ export async function saveRegistrationDraft(params: {
   draftPayload.form_data = sanitizedFormData;
   draftPayload.candidate_name = formData.name || null; // supports tables with candidate_name
 
+  // Exact column schema matching Supabase table `registration_drafts`
+  const exactDbPayload = {
+    id: draftId,
+    session_token: sessionToken,
+    current_step: currentStep,
+    candidate_name: formData.name || null,
+    gender: formData.gender || null,
+    mobile_number: formData.mobileNumber || null,
+    whatsapp_number: formData.whatsappNumber || null,
+    email: formData.email || null,
+    community: formData.community || null,
+    kulam: formData.kulam || null,
+    rasi: formData.rasi || null,
+    natchatram: formData.natchatram || null,
+    laknam: formData.laknam || null,
+    current_location: formData.currentLocation || null,
+    form_data: sanitizedFormData,
+    status: params.status || 'Incomplete',
+    updated_at: now,
+    created_at: now,
+  };
+
   let savedSuccessfully = false;
 
-  // 1. Direct Supabase Upsert with progressive schema resilience
+  // 1. Direct Supabase Upsert
   if (supabase && isSupabaseConfigured()) {
     try {
-      // Attempt 1: Full payload with all specific column mappings
-      const { error: fullError } = await supabase.from('registration_drafts').upsert(
-        {
-          ...draftPayload,
-          created_at: now,
-        },
+      // Primary: exact database column payload
+      const { error: dbError } = await supabase.from('registration_drafts').upsert(
+        exactDbPayload,
         { onConflict: 'id' }
       );
 
-      if (!fullError) {
+      if (!dbError) {
         savedSuccessfully = true;
       } else {
-        console.warn('Supabase full draft upsert notice, trying compact schema:', fullError.message);
+        console.warn('Supabase exact draft upsert notice, trying minimal schema:', dbError.message);
 
-        // Attempt 2: Compact/Standard schema (essential columns)
-        const compactPayload = {
+        // Fallback: minimal schema
+        const minimalPayload = {
           id: draftId,
           session_token: sessionToken,
           current_step: currentStep,
-          candidate_name: formData.name || null,
-          name: formData.name || null,
-          gender: formData.gender || null,
-          mobile_number: formData.mobileNumber || null,
-          whatsapp_number: formData.whatsappNumber || null,
-          email: formData.email || null,
-          community: formData.community || null,
-          kulam: formData.kulam || null,
-          rasi: formData.rasi || null,
-          natchatram: formData.natchatram || null,
-          laknam: formData.laknam || null,
-          current_location: formData.currentLocation || null,
           form_data: sanitizedFormData,
           status: params.status || 'Incomplete',
           updated_at: now,
-          created_at: now,
         };
 
-        const { error: compactError } = await supabase.from('registration_drafts').upsert(
-          compactPayload,
+        const { error: minError } = await supabase.from('registration_drafts').upsert(
+          minimalPayload,
           { onConflict: 'id' }
         );
 
-        if (!compactError) {
+        if (!minError) {
           savedSuccessfully = true;
-        } else {
-          console.warn('Supabase compact draft upsert notice, trying minimal schema:', compactError.message);
-
-          // Attempt 3: Minimal universal schema
-          const minimalPayload = {
-            id: draftId,
-            session_token: sessionToken,
-            current_step: currentStep,
-            form_data: sanitizedFormData,
-            status: params.status || 'Incomplete',
-            updated_at: now,
-          };
-
-          const { error: minError } = await supabase.from('registration_drafts').upsert(
-            minimalPayload,
-            { onConflict: 'id' }
-          );
-
-          if (!minError) {
-            savedSuccessfully = true;
-          }
         }
       }
     } catch (e) {

@@ -406,57 +406,50 @@ app.post('/api/registration-drafts', async (req, res) => {
     // Invalidate admin cache
     cachedAdminDrafts = null;
 
-    // 2. Upsert to Supabase `registration_drafts` table with progressive schema fallback
+    // 2. Upsert to Supabase `registration_drafts` table
     try {
-      standardDraft.candidate_name = standardDraft.candidate_name || standardDraft.name || standardDraft.form_data?.name || null;
-      standardDraft.name = standardDraft.name || standardDraft.candidate_name || null;
+      const fd = standardDraft.form_data || {};
+      const candidateName = standardDraft.candidate_name || standardDraft.name || fd.name || null;
+      const exactDraft = {
+        id: draftId,
+        session_token: payload.session_token || null,
+        current_step: Number(payload.current_step || standardDraft.current_step || 1),
+        candidate_name: candidateName,
+        gender: standardDraft.gender || fd.gender || null,
+        mobile_number: standardDraft.mobile_number || standardDraft.mobile || fd.mobileNumber || fd.mobile_number || null,
+        whatsapp_number: standardDraft.whatsapp_number || fd.whatsappNumber || fd.whatsapp_number || null,
+        email: standardDraft.email || fd.email || null,
+        community: standardDraft.community || fd.community || null,
+        kulam: standardDraft.kulam || fd.kulam || null,
+        rasi: standardDraft.rasi || fd.rasi || null,
+        natchatram: standardDraft.natchatram || fd.natchatram || fd.natchathiram || null,
+        laknam: standardDraft.laknam || fd.laknam || null,
+        current_location: standardDraft.current_location || fd.currentLocation || fd.current_location || null,
+        form_data: fd,
+        status: standardDraft.status || 'Incomplete',
+        updated_at: now,
+        created_at: standardDraft.created_at || now,
+      };
 
       const { error } = await supabase
         .from('registration_drafts')
-        .upsert(standardDraft, { onConflict: 'id' });
+        .upsert(exactDraft, { onConflict: 'id' });
 
       if (error) {
-        console.warn('Notice upserting full draft to Supabase, trying compact schema:', error.message);
+        console.warn('Notice upserting exact draft to Supabase, trying minimal schema:', error.message);
 
-        const compactDraft = {
+        const minimalDraft = {
           id: draftId,
-          session_token: payload.session_token,
+          session_token: payload.session_token || null,
           current_step: payload.current_step || 1,
-          candidate_name: standardDraft.candidate_name,
-          name: standardDraft.name,
-          gender: standardDraft.gender || null,
-          mobile_number: standardDraft.mobile_number || null,
-          whatsapp_number: standardDraft.whatsapp_number || null,
-          email: standardDraft.email || null,
-          community: standardDraft.community || null,
-          kulam: standardDraft.kulam || null,
-          current_location: standardDraft.current_location || null,
-          form_data: standardDraft.form_data || {},
+          form_data: fd,
           status: standardDraft.status || 'Incomplete',
           updated_at: now,
-          created_at: standardDraft.created_at || now,
         };
 
-        const { error: compactErr } = await supabase
+        await supabase
           .from('registration_drafts')
-          .upsert(compactDraft, { onConflict: 'id' });
-
-        if (compactErr) {
-          console.warn('Notice upserting compact draft to Supabase, trying minimal schema:', compactErr.message);
-
-          const minimalDraft = {
-            id: draftId,
-            session_token: payload.session_token,
-            current_step: payload.current_step || 1,
-            form_data: standardDraft.form_data || {},
-            status: standardDraft.status || 'Incomplete',
-            updated_at: now,
-          };
-
-          await supabase
-            .from('registration_drafts')
-            .upsert(minimalDraft, { onConflict: 'id' });
-        }
+          .upsert(minimalDraft, { onConflict: 'id' });
       }
     } catch (e: any) {
       console.warn('Error connecting to Supabase for drafts:', e?.message);

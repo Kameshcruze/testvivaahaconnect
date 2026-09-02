@@ -742,33 +742,92 @@ export async function saveRegistrationDraft(params: {
     }
   }
   draftPayload.form_data = sanitizedFormData;
+  draftPayload.candidate_name = formData.name || null; // supports tables with candidate_name
 
-  // 1. Direct Supabase Upsert
+  let savedSuccessfully = false;
+
+  // 1. Direct Supabase Upsert with progressive schema resilience
   if (supabase && isSupabaseConfigured()) {
     try {
-      const { error } = await supabase.from('registration_drafts').upsert(
+      // Attempt 1: Full payload with all specific column mappings
+      const { error: fullError } = await supabase.from('registration_drafts').upsert(
         {
           ...draftPayload,
-          created_at: now, // on insert, sets created_at
+          created_at: now,
         },
         { onConflict: 'id' }
       );
 
-      if (!error) {
-        return { success: true, id: draftId, isCloud: true };
+      if (!fullError) {
+        savedSuccessfully = true;
+      } else {
+        console.warn('Supabase full draft upsert notice, trying compact schema:', fullError.message);
+
+        // Attempt 2: Compact/Standard schema (essential columns)
+        const compactPayload = {
+          id: draftId,
+          session_token: sessionToken,
+          current_step: currentStep,
+          candidate_name: formData.name || null,
+          name: formData.name || null,
+          gender: formData.gender || null,
+          mobile_number: formData.mobileNumber || null,
+          whatsapp_number: formData.whatsappNumber || null,
+          email: formData.email || null,
+          community: formData.community || null,
+          kulam: formData.kulam || null,
+          rasi: formData.rasi || null,
+          natchatram: formData.natchatram || null,
+          laknam: formData.laknam || null,
+          current_location: formData.currentLocation || null,
+          form_data: sanitizedFormData,
+          status: params.status || 'Incomplete',
+          updated_at: now,
+          created_at: now,
+        };
+
+        const { error: compactError } = await supabase.from('registration_drafts').upsert(
+          compactPayload,
+          { onConflict: 'id' }
+        );
+
+        if (!compactError) {
+          savedSuccessfully = true;
+        } else {
+          console.warn('Supabase compact draft upsert notice, trying minimal schema:', compactError.message);
+
+          // Attempt 3: Minimal universal schema
+          const minimalPayload = {
+            id: draftId,
+            session_token: sessionToken,
+            current_step: currentStep,
+            form_data: sanitizedFormData,
+            status: params.status || 'Incomplete',
+            updated_at: now,
+          };
+
+          const { error: minError } = await supabase.from('registration_drafts').upsert(
+            minimalPayload,
+            { onConflict: 'id' }
+          );
+
+          if (!minError) {
+            savedSuccessfully = true;
+          }
+        }
       }
-      console.warn('Supabase direct draft upsert notice:', error.message);
     } catch (e) {
       console.warn('Supabase direct draft save notice:', e);
     }
   }
 
-  // 2. Server API Fallback
+  // 2. Server API Fallback (always sync with server as well for resilient persistence)
   try {
     const res = await fetch('/api/registration-drafts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(draftPayload),
+      keepalive: true,
     });
     if (res.ok) {
       const data = await res.json().catch(() => null);
@@ -780,7 +839,7 @@ export async function saveRegistrationDraft(params: {
     // ignore
   }
 
-  return { success: true, id: draftId, isCloud: false };
+  return { success: true, id: draftId, isCloud: savedSuccessfully };
 }
 
 /**

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   User,
@@ -254,26 +254,96 @@ export default function RegistrationPage({
   const jathagamInputRef = useRef<HTMLInputElement>(null);
   const certInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-save form data and progress to Supabase and local session whenever user updates fields
+  // Helper to scroll smoothly to top of registration card without jumping to whole website hero
+  const scrollToFormTop = () => {
+    const card = document.getElementById('registration-form-card') || document.getElementById('registration');
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Immediate synchronous draft save (used on step transitions, page exit, and unmount)
+  const flushSaveDraft = useCallback((stepToSave?: number) => {
+    if (submitSuccessId) return;
+    const targetStep = stepToSave !== undefined ? stepToSave : currentStep;
+
+    // Check if user has entered any info
+    const hasData =
+      Boolean(formData.name?.trim()) ||
+      Boolean(formData.mobileNumber?.trim()) ||
+      Boolean(formData.email?.trim()) ||
+      Boolean(formData.dob) ||
+      Boolean(formData.kulam?.trim()) ||
+      Boolean(formData.nativePlace?.trim()) ||
+      Boolean(formData.currentLocation?.trim()) ||
+      targetStep > 1;
+
+    if (!hasData) return;
+
+    try {
+      const draft: SavedDraft = {
+        formData,
+        currentStep: targetStep,
+        sameAsMobile,
+        savedAt: Date.now(),
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    } catch (e) {}
+
+    saveRegistrationDraft({
+      draftId,
+      sessionToken,
+      currentStep: targetStep,
+      formData,
+    }).then((res) => {
+      if (res.success) {
+        setCloudSyncStatus('saved');
+      }
+    }).catch(() => {});
+  }, [formData, currentStep, sameAsMobile, submitSuccessId, draftId, sessionToken]);
+
+  // Handle sudden page exit / tab close / switching tabs to immediately save progress to DB
   useEffect(() => {
-    // If successfully submitted, do not save draft
+    const handleExit = () => {
+      flushSaveDraft();
+    };
+
+    window.addEventListener('beforeunload', handleExit);
+    window.addEventListener('pagehide', handleExit);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        flushSaveDraft();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleExit);
+      window.removeEventListener('pagehide', handleExit);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      flushSaveDraft();
+    };
+  }, [flushSaveDraft]);
+
+  // Real-time debounced auto-save whenever user types or changes any input
+  useEffect(() => {
     if (submitSuccessId) return;
 
-    // Check if there is any user data to save
-    const hasMeaningfulData = Object.entries(formData).some(([k, v]) => {
-      if (k === 'community' || k === 'partnerCommunityPreference') return false;
-      if (k === 'gender' && v === 'Male') return false;
-      if (k === 'brothersMarried' && v === '0') return false;
-      if (k === 'brothersUnmarried' && v === '0') return false;
-      if (k === 'sistersMarried' && v === '0') return false;
-      if (k === 'sistersUnmarried' && v === '0') return false;
-      if (k === 'familyType' && v === 'Nuclear Family') return false;
-      if (k === 'familyStatus' && v === 'Middle Class') return false;
-      return Boolean(v && typeof v === 'string' && v.trim() !== '');
-    });
+    const hasData =
+      Boolean(formData.name?.trim()) ||
+      Boolean(formData.mobileNumber?.trim()) ||
+      Boolean(formData.email?.trim()) ||
+      Boolean(formData.dob) ||
+      Boolean(formData.kulam?.trim()) ||
+      Boolean(formData.nativePlace?.trim()) ||
+      Boolean(formData.currentLocation?.trim()) ||
+      Boolean(formData.fatherName?.trim()) ||
+      Boolean(formData.profession?.trim()) ||
+      currentStep > 1;
 
-    if (hasMeaningfulData || currentStep > 1) {
-      // 1. Local backup
+    if (hasData) {
       try {
         const draft: SavedDraft = {
           formData,
@@ -282,11 +352,8 @@ export default function RegistrationPage({
           savedAt: Date.now(),
         };
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
-      } catch (err) {
-        console.warn('Failed to auto-save registration draft to localStorage:', err);
-      }
+      } catch (err) {}
 
-      // 2. Debounced save to Supabase registration_drafts table
       setCloudSyncStatus('saving');
       const timer = setTimeout(async () => {
         try {
@@ -298,13 +365,11 @@ export default function RegistrationPage({
           });
           if (res.success) {
             setCloudSyncStatus('saved');
-          } else {
-            setCloudSyncStatus('saved'); // Still saved locally
           }
         } catch (e) {
           setCloudSyncStatus('saved');
         }
-      }, 750);
+      }, 400);
 
       return () => clearTimeout(timer);
     }
@@ -597,15 +662,19 @@ export default function RegistrationPage({
 
   const handleNextStep = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep((prev) => Math.min(prev + 1, 5));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const nextStep = Math.min(currentStep + 1, 5);
+      setCurrentStep(nextStep);
+      flushSaveDraft(nextStep);
+      scrollToFormTop();
     }
   };
 
   const handlePrevStep = () => {
     setErrorMessage(null);
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const prevStep = Math.max(currentStep - 1, 1);
+    setCurrentStep(prevStep);
+    flushSaveDraft(prevStep);
+    scrollToFormTop();
   };
 
   // Comprehensive validation across all steps: ALL fields are mandatory
@@ -613,22 +682,26 @@ export default function RegistrationPage({
     for (let s = 1; s <= 4; s++) {
       if (!validateStep(s)) {
         setCurrentStep(s);
+        scrollToFormTop();
         return false;
       }
     }
 
     if (!photoFile) {
       setCurrentStep(5);
+      scrollToFormTop();
       setErrorMessage('Please upload candidate photograph (mandatory).');
       return false;
     }
     if (!jathagamFile) {
       setCurrentStep(5);
+      scrollToFormTop();
       setErrorMessage('Please upload horoscope (Jathagam) document or photo (mandatory).');
       return false;
     }
     if (!communityCertFile) {
       setCurrentStep(5);
+      scrollToFormTop();
       setErrorMessage('Please upload community certificate document or photo (mandatory).');
       return false;
     }
@@ -835,7 +908,7 @@ export default function RegistrationPage({
           </motion.div>
         ) : (
           /* Multi-step Registration Form */
-          <div className="bg-white rounded-3xl border border-[#C89B63]/30 shadow-xl overflow-hidden">
+          <div id="registration-form-card" className="bg-white rounded-3xl border border-[#C89B63]/30 shadow-xl overflow-hidden scroll-mt-24">
             {/* Step Progress Bar Header */}
             <div className="bg-[#FAF3EB] p-4 sm:p-5 border-b border-[#C89B63]/20">
               <div className="grid grid-cols-5 gap-2">
@@ -851,9 +924,13 @@ export default function RegistrationPage({
                         if (step.id <= currentStep) {
                           setCurrentStep(step.id);
                           setErrorMessage(null);
+                          flushSaveDraft(step.id);
+                          scrollToFormTop();
                         } else {
                           if (validateStep(currentStep)) {
                             setCurrentStep(step.id);
+                            flushSaveDraft(step.id);
+                            scrollToFormTop();
                           }
                         }
                       }}

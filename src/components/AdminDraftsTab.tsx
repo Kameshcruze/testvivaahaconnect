@@ -239,12 +239,7 @@ export default function AdminDraftsTab({
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-stone-900 text-sm sm:text-base">Incomplete Registration Drafts & Abandoned Leads</h3>
-              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300">
-                Live Supabase Synced
-              </span>
-            </div>
+            <h3 className="font-bold text-stone-900 text-sm sm:text-base">Incomplete Registration Drafts & Abandoned Leads</h3>
             <p className="text-xs text-stone-600 mt-1 max-w-2xl">
               When candidates begin filling out their registration and exit mid-way, their progress is automatically saved to the database. Follow up via WhatsApp or phone to assist them in completing their profile.
             </p>

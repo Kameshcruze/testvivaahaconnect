@@ -31,10 +31,17 @@ import {
   Calendar,
   MessageSquare,
 } from 'lucide-react';
-import { RegistrationRecord, AdminUser, EnquiryRecord, EnquiryStatus } from '../types';
+import { RegistrationRecord, AdminUser, EnquiryRecord, EnquiryStatus, RegistrationDraftRecord, DraftStatus } from '../types';
 import RegistrationDetailModal from './RegistrationDetailModal';
 import AdminEnquiriesTab from './AdminEnquiriesTab';
-import { getSupabase, normalizeEnquiryRecord } from '../lib/supabase';
+import AdminDraftsTab from './AdminDraftsTab';
+import {
+  getSupabase,
+  normalizeEnquiryRecord,
+  fetchAdminRegistrationDrafts,
+  updateRegistrationDraftStatus,
+  deleteRegistrationDraft,
+} from '../lib/supabase';
 import logoImg from '../assets/images/Logo1.PNG';
 
 interface AdminPortalProps {
@@ -43,7 +50,7 @@ interface AdminPortalProps {
 
 export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
   // Navigation Tabs State
-  const [activeTab, setActiveTab] = useState<'registrations' | 'enquiries'>('registrations');
+  const [activeTab, setActiveTab] = useState<'registrations' | 'drafts' | 'enquiries'>('registrations');
 
   // Authentication State
   const [token, setToken] = useState<string | null>(() => {
@@ -65,6 +72,16 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
   const [registrations, setRegistrations] = useState<RegistrationRecord[]>(() => {
     try {
       const cached = sessionStorage.getItem('vivaaha_cached_admin_records');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Drafts Data State (Incomplete Registrations)
+  const [drafts, setDrafts] = useState<RegistrationDraftRecord[]>(() => {
+    try {
+      const cached = localStorage.getItem('vivaaha_cached_drafts');
       return cached ? JSON.parse(cached) : [];
     } catch {
       return [];
@@ -287,6 +304,19 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
           localStorage.setItem('vivaaha_registrations', JSON.stringify(finalRegistrations));
         } catch {}
       }
+
+      // 5. Fetch Incomplete Registration Drafts from Supabase & API
+      try {
+        const draftList = await fetchAdminRegistrationDrafts(authToken);
+        if (Array.isArray(draftList)) {
+          setDrafts(draftList);
+          try {
+            localStorage.setItem('vivaaha_cached_drafts', JSON.stringify(draftList));
+          } catch {}
+        }
+      } catch (dErr) {
+        console.warn('Error fetching registration drafts:', dErr);
+      }
     } catch (err: any) {
       if (registrations.length === 0) {
         setDataError(err.message || 'Network error fetching data');
@@ -294,6 +324,38 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
     } finally {
       setLoadingData(false);
       setIsSyncing(false);
+    }
+  };
+
+  // Registration Draft Status Update Handler
+  const handleUpdateDraftStatus = async (id: string, newStatus: DraftStatus) => {
+    try {
+      setDrafts((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, status: newStatus, updated_at: new Date().toISOString() } : d))
+      );
+      const res = await updateRegistrationDraftStatus(id, newStatus, token || undefined);
+      return res;
+    } catch (err) {
+      console.error('Error updating draft status:', err);
+      return false;
+    }
+  };
+
+  // Registration Draft Delete Handler
+  const handleDeleteDraft = async (id: string) => {
+    try {
+      setDrafts((prev) => {
+        const next = prev.filter((d) => d.id !== id);
+        try {
+          localStorage.setItem('vivaaha_cached_drafts', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+      const res = await deleteRegistrationDraft(id, token || undefined);
+      return res;
+    } catch (err) {
+      console.error('Error deleting draft:', err);
+      return false;
     }
   };
 
@@ -634,7 +696,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
     return true;
   });
 
-  // Extract unique Kulams for Kongu Vellalar Gounder matching
+  // Extract unique Kulams for Kongu Vellala Gounder matching
   const uniqueKulams = Array.from(
     new Set(registrations.map((r) => r.kulam).filter(Boolean))
   ) as string[];
@@ -875,6 +937,31 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
               </span>
             </button>
 
+            {/* Incomplete Registration Drafts Tab */}
+            <button
+              onClick={() => setActiveTab('drafts')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer relative ${
+                activeTab === 'drafts'
+                  ? 'bg-[#6A1E2C] text-white shadow-md'
+                  : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              <span>Incomplete Drafts</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                  activeTab === 'drafts'
+                    ? 'bg-[#FAF3EB] text-[#6A1E2C]'
+                    : 'bg-amber-100 text-amber-900 border border-amber-300'
+                }`}
+              >
+                {drafts.length}
+              </span>
+              {drafts.filter((d) => d.status === 'Incomplete' || d.status === 'Draft').length > 0 && (
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
+              )}
+            </button>
+
             {/* Enquiries & Callbacks Tab */}
             <button
               onClick={() => setActiveTab('enquiries')}
@@ -901,9 +988,21 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
 
           <div className="text-[11px] text-stone-400 font-medium">
             {activeTab === 'registrations' && `${filteredRegistrations.length} of ${totalCount} records`}
+            {activeTab === 'drafts' && `${drafts.length} incomplete drafts logged in Supabase`}
             {activeTab === 'enquiries' && `${enquiries.length} customer enquiries logged`}
           </div>
         </div>
+
+        {/* Tab 3: Incomplete Registration Drafts View */}
+        {activeTab === 'drafts' && (
+          <AdminDraftsTab
+            drafts={drafts}
+            onUpdateStatus={handleUpdateDraftStatus}
+            onDelete={handleDeleteDraft}
+            onRefresh={() => verifyAndFetch(token, true)}
+            loading={loadingData || isSyncing}
+          />
+        )}
 
         {/* Tab 2: Enquiries View */}
         {activeTab === 'enquiries' && (
@@ -1040,7 +1139,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                   onChange={(e) => setKulamFilter(e.target.value)}
                   className="bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-stone-700 outline-none cursor-pointer max-w-[170px] sm:max-w-[210px] truncate"
                 >
-                  <option value="all">All Kulams (Kongu Vellalar Gounder)</option>
+                  <option value="all">All Kulams (Kongu Vellala Gounder)</option>
                   {uniqueKulams.map((k) => (
                     <option key={k} value={k}>
                       {k}

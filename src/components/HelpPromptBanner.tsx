@@ -45,7 +45,7 @@ export default function HelpPromptBanner({ onOpenCallModal }: HelpPromptBannerPr
       message: 'User clicked WhatsApp help button on 5-second popup banner',
     }).catch(() => {});
 
-    const textMessage = `Hello Vivaaha Connect,\n\nI need help and guidance regarding Kongu Vellalar Gounder Matrimony registration and matchmaking services.`;
+    const textMessage = `Hello Vivaaha Connect,\n\nI need help and guidance regarding Kongu Vellala Gounder Matrimony registration and matchmaking services.`;
     const whatsappUrl = `https://wa.me/919486955380?text=${encodeURIComponent(textMessage)}`;
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };

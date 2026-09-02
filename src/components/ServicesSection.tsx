@@ -28,7 +28,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
             viewport={{ once: true }}
             className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#6A1E2C] tracking-tight"
           >
-            Dedicated Matrimony Solutions for <span className="text-[#C89B63] italic pr-2 inline-block">Kongu Vellalar Gounder Families</span>
+            Dedicated Matrimony Solutions for <span className="text-[#C89B63] italic pr-2 inline-block">Kongu Vellala Gounder Families</span>
           </motion.h2>
 
           <motion.p
@@ -37,7 +37,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
             viewport={{ once: true }}
             className="mt-3 text-sm sm:text-base text-[#222222]/75"
           >
-            Choose your registration path or connect directly with our dedicated Kongu Vellalar Gounder matrimony consultants.
+            Choose your registration path or connect directly with our dedicated Kongu Vellala Gounder matrimony consultants.
           </motion.p>
         </div>
 
@@ -70,7 +70,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
               </h3>
 
               <p className="text-xs sm:text-sm text-[#222222]/80 leading-relaxed mb-5">
-                Register Kongu Vellalar Gounder bride profiles with complete confidentiality. Connect with educated, well-settled grooms from compatible Kulams across Tamil Nadu & worldwide.
+                Register Kongu Vellala Gounder bride profiles with complete confidentiality. Connect with educated, well-settled grooms from compatible Kulams across Tamil Nadu & worldwide.
               </p>
 
               <ul className="space-y-2 mb-6 text-xs font-medium text-[#222222]">
@@ -84,7 +84,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Kongu Vellalar Gounder Kulam Compatibility</span>
+                  <span>Kongu Vellala Gounder Kulam Compatibility</span>
                 </li>
               </ul>
             </div>
@@ -124,7 +124,7 @@ export default function ServicesSection({ onOpenCallModal }: ServicesSectionProp
               </h3>
 
               <p className="text-xs sm:text-sm text-[#222222]/80 leading-relaxed mb-5">
-                Register Kongu Vellalar Gounder groom profiles to discover compatible, cultured brides. Tailored matchmaking based on educational, professional, and traditional family values.
+                Register Kongu Vellala Gounder groom profiles to discover compatible, cultured brides. Tailored matchmaking based on educational, professional, and traditional family values.
               </p>
 
               <ul className="space-y-2 mb-6 text-xs font-medium text-[#222222]">

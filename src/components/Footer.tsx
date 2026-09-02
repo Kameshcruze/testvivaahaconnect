@@ -38,7 +38,7 @@ export default function Footer() {
             </a>
 
             <p className="text-xs text-[#FAF3EB]/70 leading-relaxed">
-              Dedicated exclusively to the Kongu Vellalar Gounder community across Tamil Nadu and worldwide with trusted matrimonial connections and personalized matchmaking services.
+              Dedicated exclusively to the Kongu Vellala Gounder community across Tamil Nadu and worldwide with trusted matrimonial connections and personalized matchmaking services.
             </p>
 
             <p className="text-xs font-tamil text-[#C89B63]">

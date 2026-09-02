@@ -21,7 +21,7 @@ export default function StatisticsSection() {
       number: 1000,
       suffix: "+",
       label: "Happy Registrations",
-      description: "Kongu Vellalar Gounder brides & grooms",
+      description: "Kongu Vellala Gounder brides & grooms",
       icon: Users
     },
     {

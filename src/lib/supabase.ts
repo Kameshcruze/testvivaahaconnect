@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { optimizeImageFile, validateFileSize } from './fileOptimizer';
-import { EnquiryRecord, EnquiryType, EnquiryStatus } from '../types';
+import { EnquiryRecord, EnquiryType, EnquiryStatus, RegistrationDraftRecord, DraftStatus } from '../types';
 
 // Auto-clean any stale invalid localStorage configs
 if (typeof window !== 'undefined') {
@@ -591,14 +591,371 @@ export async function submitEnquiryRecord(
 }
 
 /**
- * SQL Setup script for the user's Supabase dashboard (both registrations and enquiries tables)
+ * Normalizes raw Supabase or Server DB draft records into standard RegistrationDraftRecord
+ */
+export function normalizeRegistrationDraftRecord(raw: any): RegistrationDraftRecord {
+  if (!raw) {
+    return {
+      id: `DRAFT-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      current_step: 1,
+      status: 'Incomplete',
+    };
+  }
+
+  return {
+    id: String(raw.id || `DRAFT-${Date.now()}`),
+    created_at: raw.created_at || raw.createdAt || new Date().toISOString(),
+    updated_at: raw.updated_at || raw.updatedAt || raw.created_at || new Date().toISOString(),
+    session_token: raw.session_token || raw.sessionToken || null,
+    current_step: Number(raw.current_step || raw.currentStep || 1),
+    name: raw.name || null,
+    gender: raw.gender || null,
+    dob: raw.dob || null,
+    age: raw.age || null,
+    height: raw.height || null,
+    weight: raw.weight || null,
+    marital_status: raw.marital_status || raw.maritalStatus || null,
+    mobile_number: raw.mobile_number || raw.mobileNumber || raw.mobile || null,
+    email: raw.email || null,
+    whatsapp_number: raw.whatsapp_number || raw.whatsappNumber || null,
+    current_location: raw.current_location || raw.currentLocation || null,
+    native_place: raw.native_place || raw.nativePlace || null,
+    community: raw.community || null,
+    kulam: raw.kulam || null,
+    kuladeivam: raw.kuladeivam || null,
+    rasi: raw.rasi || null,
+    natchatram: raw.natchatram || null,
+    laknam: raw.laknam || null,
+    education_qualification: raw.education_qualification || raw.educationQualification || null,
+    profession: raw.profession || null,
+    company_name: raw.company_name || raw.companyName || null,
+    work_location: raw.work_location || raw.workLocation || null,
+    income: raw.income || null,
+    father_name: raw.father_name || raw.fatherName || null,
+    father_occupation: raw.father_occupation || raw.fatherOccupation || null,
+    mother_name: raw.mother_name || raw.motherName || null,
+    mother_occupation: raw.mother_occupation || raw.motherOccupation || null,
+    brothers_count: raw.brothers_count || raw.brothersCount || null,
+    brothers_married: raw.brothers_married || raw.brothersMarried || null,
+    brothers_unmarried: raw.brothers_unmarried || raw.brothersUnmarried || null,
+    sisters_count: raw.sisters_count || raw.sistersCount || null,
+    sisters_married: raw.sisters_married || raw.sistersMarried || null,
+    sisters_unmarried: raw.sisters_unmarried || raw.sistersUnmarried || null,
+    family_type: raw.family_type || raw.familyType || null,
+    family_status: raw.family_status || raw.familyStatus || null,
+    family_background: raw.family_background || raw.familyBackground || null,
+    partner_age_range: raw.partner_age_range || raw.partnerAgeRange || null,
+    partner_education: raw.partner_education || raw.partnerEducation || null,
+    partner_profession: raw.partner_profession || raw.partnerProfession || null,
+    partner_income_preference: raw.partner_income_preference || raw.partnerIncomePreference || null,
+    partner_community_preference: raw.partner_community_preference || raw.partnerCommunityPreference || null,
+    partner_location_preference: raw.partner_location_preference || raw.partnerLocationPreference || null,
+    partner_other_expectations: raw.partner_other_expectations || raw.partnerOtherExpectations || null,
+    photo_file_name: raw.photo_file_name || raw.photoFileName || null,
+    jathagam_file_name: raw.jathagam_file_name || raw.jathagamFileName || null,
+    community_certificate_file_name: raw.community_certificate_file_name || raw.communityCertificateFileName || null,
+    form_data: raw.form_data || raw.formData || null,
+    status: (raw.status || 'Incomplete') as DraftStatus,
+    completed_registration_id: raw.completed_registration_id || raw.completedRegistrationId || null,
+  };
+}
+
+/**
+ * Saves or updates an in-progress registration draft in Supabase `registration_drafts` table
+ * and server fallback.
+ */
+export async function saveRegistrationDraft(params: {
+  draftId?: string | null;
+  sessionToken: string;
+  currentStep: number;
+  formData: Record<string, any>;
+  status?: DraftStatus;
+}): Promise<{ success: boolean; id: string; isCloud: boolean }> {
+  const { sessionToken, currentStep, formData } = params;
+  const draftId = params.draftId || `DRAFT-${sessionToken.slice(0, 10)}`;
+  const now = new Date().toISOString();
+  const supabase = getSupabase();
+
+  // Create standardized payload
+  const draftPayload: Record<string, any> = {
+    id: draftId,
+    session_token: sessionToken,
+    current_step: currentStep,
+    updated_at: now,
+    status: params.status || 'Incomplete',
+    name: formData.name || null,
+    gender: formData.gender || null,
+    dob: formData.dob || null,
+    age: formData.age ? Number(formData.age) || null : null,
+    height: formData.height || null,
+    weight: formData.weight || null,
+    marital_status: formData.maritalStatus || null,
+    mobile_number: formData.mobileNumber || null,
+    email: formData.email || null,
+    whatsapp_number: formData.whatsappNumber || null,
+    current_location: formData.currentLocation || null,
+    native_place: formData.nativePlace || null,
+    community: formData.community || null,
+    kulam: formData.kulam || null,
+    kuladeivam: formData.kuladeivam || null,
+    rasi: formData.rasi || null,
+    natchatram: formData.natchatram || null,
+    laknam: formData.laknam || null,
+    education_qualification: formData.educationQualification || null,
+    profession: formData.profession || null,
+    company_name: formData.companyName || null,
+    work_location: formData.workLocation || null,
+    income: formData.income || null,
+    father_name: formData.fatherName || null,
+    father_occupation: formData.fatherOccupation || null,
+    mother_name: formData.motherName || null,
+    mother_occupation: formData.motherOccupation || null,
+    brothers_count: formData.brothersCount || null,
+    brothers_married: formData.brothersMarried || null,
+    brothers_unmarried: formData.brothersUnmarried || null,
+    sisters_count: formData.sistersCount || null,
+    sisters_married: formData.sistersMarried || null,
+    sisters_unmarried: formData.sistersUnmarried || null,
+    family_type: formData.familyType || null,
+    family_status: formData.familyStatus || null,
+    family_background: formData.familyBackground || null,
+    partner_age_range: formData.partnerAgeRange || null,
+    partner_education: formData.partnerEducation || null,
+    partner_profession: formData.partnerProfession || null,
+    partner_income_preference: formData.partnerIncomePreference || null,
+    partner_community_preference: formData.partnerCommunityPreference || null,
+    partner_location_preference: formData.partnerLocationPreference || null,
+    partner_other_expectations: formData.partnerOtherExpectations || null,
+    photo_file_name: formData.photoFileName || null,
+    jathagam_file_name: formData.jathagamFileName || null,
+    community_certificate_file_name: formData.communityCertificateFileName || null,
+  };
+
+  // Strip huge base64 strings if present in form_data clone
+  const sanitizedFormData: Record<string, any> = {};
+  for (const [k, v] of Object.entries(formData)) {
+    if (typeof v === 'string' && v.startsWith('data:')) {
+      sanitizedFormData[k] = '[File Attached]';
+    } else {
+      sanitizedFormData[k] = v;
+    }
+  }
+  draftPayload.form_data = sanitizedFormData;
+
+  // 1. Direct Supabase Upsert
+  if (supabase && isSupabaseConfigured()) {
+    try {
+      const { error } = await supabase.from('registration_drafts').upsert(
+        {
+          ...draftPayload,
+          created_at: now, // on insert, sets created_at
+        },
+        { onConflict: 'id' }
+      );
+
+      if (!error) {
+        return { success: true, id: draftId, isCloud: true };
+      }
+      console.warn('Supabase direct draft upsert notice:', error.message);
+    } catch (e) {
+      console.warn('Supabase direct draft save notice:', e);
+    }
+  }
+
+  // 2. Server API Fallback
+  try {
+    const res = await fetch('/api/registration-drafts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(draftPayload),
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      if (data?.success) {
+        return { success: true, id: draftId, isCloud: true };
+      }
+    }
+  } catch (err) {
+    // ignore
+  }
+
+  return { success: true, id: draftId, isCloud: false };
+}
+
+/**
+ * Fetches an existing in-progress registration draft from Supabase or server
+ */
+export async function fetchRegistrationDraft(
+  sessionTokenOrId: string
+): Promise<RegistrationDraftRecord | null> {
+  if (!sessionTokenOrId) return null;
+
+  const supabase = getSupabase();
+  if (supabase && isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('registration_drafts')
+        .select('*')
+        .or(`id.eq.${sessionTokenOrId},session_token.eq.${sessionTokenOrId}`)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        return normalizeRegistrationDraftRecord(data);
+      }
+    } catch (err) {
+      console.warn('Fetch draft direct notice:', err);
+    }
+  }
+
+  // Fallback to server endpoint
+  try {
+    const res = await fetch(`/api/registration-drafts/${encodeURIComponent(sessionTokenOrId)}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.draft) {
+        return normalizeRegistrationDraftRecord(json.draft);
+      }
+    }
+  } catch {}
+
+  return null;
+}
+
+/**
+ * Marks a registration draft as completed once the final registration is submitted
+ */
+export async function markRegistrationDraftCompleted(
+  draftId: string,
+  completedRegistrationId: string
+): Promise<void> {
+  if (!draftId) return;
+  const now = new Date().toISOString();
+  const supabase = getSupabase();
+
+  if (supabase && isSupabaseConfigured()) {
+    try {
+      await supabase
+        .from('registration_drafts')
+        .update({
+          status: 'Completed',
+          completed_registration_id: completedRegistrationId,
+          updated_at: now,
+        })
+        .eq('id', draftId);
+    } catch {}
+  }
+
+  try {
+    await fetch(`/api/registration-drafts/${encodeURIComponent(draftId)}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completedRegistrationId, status: 'Completed' }),
+    });
+  } catch {}
+}
+
+/**
+ * Fetches all registration drafts for the Admin Portal
+ */
+export async function fetchAdminRegistrationDrafts(authToken?: string | null): Promise<RegistrationDraftRecord[]> {
+  const supabase = getSupabase();
+  if (supabase && isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('registration_drafts')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        return data.map(normalizeRegistrationDraftRecord);
+      }
+    } catch (e) {
+      console.warn('Admin fetch drafts direct notice:', e);
+    }
+  }
+
+  // Server API fallback
+  try {
+    const res = await fetch('/api/admin/registration-drafts', {
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.drafts && Array.isArray(json.drafts)) {
+        return json.drafts.map(normalizeRegistrationDraftRecord);
+      }
+    }
+  } catch {}
+
+  return [];
+}
+
+/**
+ * Deletes a draft in Supabase & Server
+ */
+export async function deleteRegistrationDraft(id: string, authToken?: string | null): Promise<boolean> {
+  const supabase = getSupabase();
+  if (supabase && isSupabaseConfigured()) {
+    try {
+      await supabase.from('registration_drafts').delete().eq('id', id);
+    } catch {}
+  }
+
+  if (authToken) {
+    try {
+      await fetch(`/api/admin/registration-drafts/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+    } catch {}
+  }
+  return true;
+}
+
+/**
+ * Updates draft status in Supabase & Server
+ */
+export async function updateRegistrationDraftStatus(
+  id: string,
+  status: DraftStatus,
+  authToken?: string | null
+): Promise<boolean> {
+  const now = new Date().toISOString();
+  const supabase = getSupabase();
+
+  if (supabase && isSupabaseConfigured()) {
+    try {
+      await supabase.from('registration_drafts').update({ status, updated_at: now }).eq('id', id);
+    } catch {}
+  }
+
+  if (authToken) {
+    try {
+      await fetch(`/api/admin/registration-drafts/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+    } catch {}
+  }
+  return true;
+}
+
+/**
+ * SQL Setup script for the user's Supabase dashboard (registrations, registration_drafts, and enquiries tables)
  */
 export const SUPABASE_SQL_SETUP_SCRIPT = `-- ==============================================================================
 -- Vivaaha Connect - Supabase Database Schema Setup
 -- Run this script in your Supabase Dashboard -> SQL Editor (or New Query)
 -- ==============================================================================
 
--- 1. Create Registrations Table
+-- 1. Create Regular Registrations Table
 CREATE TABLE IF NOT EXISTS public.registrations (
   id TEXT PRIMARY KEY,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -617,6 +974,9 @@ CREATE TABLE IF NOT EXISTS public.registrations (
   community TEXT,
   kulam TEXT,
   kuladeivam TEXT,
+  rasi TEXT,
+  natchatram TEXT,
+  laknam TEXT,
   education_qualification TEXT,
   profession TEXT,
   company_name TEXT,
@@ -651,7 +1011,76 @@ CREATE TABLE IF NOT EXISTS public.registrations (
   status TEXT DEFAULT 'Pending Review'
 );
 
--- 2. Create Enquiries & Callbacks Table
+-- Ensure astrological columns exist in registrations
+ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS rasi TEXT;
+ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS natchatram TEXT;
+ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS laknam TEXT;
+
+-- 2. Create Incomplete Registration Drafts Table (Auto-saved mid-way progress)
+CREATE TABLE IF NOT EXISTS public.registration_drafts (
+  id TEXT PRIMARY KEY,
+  session_token TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  current_step INTEGER DEFAULT 1,
+  name TEXT,
+  gender TEXT,
+  dob TEXT,
+  age INTEGER,
+  height TEXT,
+  weight TEXT,
+  marital_status TEXT,
+  mobile_number TEXT,
+  email TEXT,
+  whatsapp_number TEXT,
+  current_location TEXT,
+  native_place TEXT,
+  community TEXT,
+  kulam TEXT,
+  kuladeivam TEXT,
+  rasi TEXT,
+  natchatram TEXT,
+  laknam TEXT,
+  education_qualification TEXT,
+  profession TEXT,
+  company_name TEXT,
+  work_location TEXT,
+  income TEXT,
+  father_name TEXT,
+  father_occupation TEXT,
+  mother_name TEXT,
+  mother_occupation TEXT,
+  brothers_count TEXT,
+  brothers_married TEXT,
+  brothers_unmarried TEXT,
+  sisters_count TEXT,
+  sisters_married TEXT,
+  sisters_unmarried TEXT,
+  family_type TEXT,
+  family_status TEXT,
+  family_background TEXT,
+  partner_age_range TEXT,
+  partner_education TEXT,
+  partner_profession TEXT,
+  partner_income_preference TEXT,
+  partner_community_preference TEXT,
+  partner_location_preference TEXT,
+  partner_other_expectations TEXT,
+  photo_file_name TEXT,
+  jathagam_file_name TEXT,
+  community_certificate_file_name TEXT,
+  form_data JSONB,
+  status TEXT DEFAULT 'Incomplete', -- 'Incomplete', 'Draft', 'Followed Up', 'Completed', 'Abandoned'
+  completed_registration_id TEXT
+);
+
+-- Create Indexes for faster lookups on drafts
+CREATE INDEX IF NOT EXISTS idx_drafts_session_token ON public.registration_drafts(session_token);
+CREATE INDEX IF NOT EXISTS idx_drafts_mobile ON public.registration_drafts(mobile_number);
+CREATE INDEX IF NOT EXISTS idx_drafts_status ON public.registration_drafts(status);
+CREATE INDEX IF NOT EXISTS idx_drafts_updated_at ON public.registration_drafts(updated_at DESC);
+
+-- 3. Create Enquiries & Callbacks Table
 CREATE TABLE IF NOT EXISTS public.enquiries (
   id TEXT PRIMARY KEY,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -685,65 +1114,83 @@ ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS message TEXT;
 ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'New';
 ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS notes TEXT;
 
--- 3. Enable Row Level Security (RLS)
+-- 4. Enable Row Level Security (RLS) on all tables
 ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.registration_drafts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.enquiries ENABLE ROW LEVEL SECURITY;
 
--- 4. Policies for Registrations
+-- 5. Policies for Registrations
 DROP POLICY IF EXISTS "Allow public inserts on registrations" ON public.registrations;
 CREATE POLICY "Allow public inserts on registrations"
-  ON public.registrations
-  FOR INSERT
+  ON public.registrations FOR INSERT
   TO anon, authenticated
   WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow public read on registrations" ON public.registrations;
 CREATE POLICY "Allow public read on registrations"
-  ON public.registrations
-  FOR SELECT
+  ON public.registrations FOR SELECT
   TO authenticated, anon
   USING (true);
 
 DROP POLICY IF EXISTS "Allow public updates on registrations" ON public.registrations;
 CREATE POLICY "Allow public updates on registrations"
-  ON public.registrations
-  FOR UPDATE
+  ON public.registrations FOR UPDATE
   TO authenticated, anon
   USING (true);
 
 DROP POLICY IF EXISTS "Allow public delete on registrations" ON public.registrations;
 CREATE POLICY "Allow public delete on registrations"
-  ON public.registrations
-  FOR DELETE
+  ON public.registrations FOR DELETE
   TO authenticated, anon
   USING (true);
 
--- 5. Policies for Enquiries
+-- 6. Policies for Registration Drafts (Public Insert, Select & Update for smooth auto-saving)
+DROP POLICY IF EXISTS "Allow public inserts on registration_drafts" ON public.registration_drafts;
+CREATE POLICY "Allow public inserts on registration_drafts"
+  ON public.registration_drafts FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public read on registration_drafts" ON public.registration_drafts;
+CREATE POLICY "Allow public read on registration_drafts"
+  ON public.registration_drafts FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
+DROP POLICY IF EXISTS "Allow public updates on registration_drafts" ON public.registration_drafts;
+CREATE POLICY "Allow public updates on registration_drafts"
+  ON public.registration_drafts FOR UPDATE
+  TO authenticated, anon
+  USING (true);
+
+DROP POLICY IF EXISTS "Allow public delete on registration_drafts" ON public.registration_drafts;
+CREATE POLICY "Allow public delete on registration_drafts"
+  ON public.registration_drafts FOR DELETE
+  TO authenticated, anon
+  USING (true);
+
+-- 7. Policies for Enquiries
 DROP POLICY IF EXISTS "Allow public inserts on enquiries" ON public.enquiries;
 CREATE POLICY "Allow public inserts on enquiries"
-  ON public.enquiries
-  FOR INSERT
+  ON public.enquiries FOR INSERT
   TO anon, authenticated
   WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow public read on enquiries" ON public.enquiries;
 CREATE POLICY "Allow public read on enquiries"
-  ON public.enquiries
-  FOR SELECT
+  ON public.enquiries FOR SELECT
   TO authenticated, anon
   USING (true);
 
 DROP POLICY IF EXISTS "Allow public updates on enquiries" ON public.enquiries;
 CREATE POLICY "Allow public updates on enquiries"
-  ON public.enquiries
-  FOR UPDATE
+  ON public.enquiries FOR UPDATE
   TO authenticated, anon
   USING (true);
 
 DROP POLICY IF EXISTS "Allow public delete on enquiries" ON public.enquiries;
 CREATE POLICY "Allow public delete on enquiries"
-  ON public.enquiries
-  FOR DELETE
+  ON public.enquiries FOR DELETE
   TO authenticated, anon
   USING (true);
 `;

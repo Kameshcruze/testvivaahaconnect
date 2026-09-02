@@ -209,7 +209,7 @@ export default function ContactSection() {
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Kongu Vellalar Gounder / Any"
+                        placeholder="e.g. Kongu Vellala Gounder / Any"
                         value={formData.community}
                         onChange={(e) => setFormData({ ...formData, community: e.target.value })}
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5] text-sm focus:outline-none focus:border-[#6A1E2C] transition"

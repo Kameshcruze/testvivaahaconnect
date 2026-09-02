@@ -112,6 +112,65 @@ export interface RegistrationRecord {
   status?: string | null;
 }
 
+export interface RegistrationDraftRecord {
+  id: string;
+  created_at: string;
+  updated_at?: string;
+  session_token?: string | null;
+  current_step: number;
+  name?: string | null;
+  gender?: string | null;
+  dob?: string | null;
+  age?: number | string | null;
+  height?: string | null;
+  weight?: string | null;
+  marital_status?: string | null;
+  mobile_number?: string | null;
+  email?: string | null;
+  whatsapp_number?: string | null;
+  current_location?: string | null;
+  native_place?: string | null;
+  community?: string | null;
+  kulam?: string | null;
+  kuladeivam?: string | null;
+  rasi?: string | null;
+  natchatram?: string | null;
+  laknam?: string | null;
+  education_qualification?: string | null;
+  profession?: string | null;
+  company_name?: string | null;
+  work_location?: string | null;
+  income?: string | null;
+  father_name?: string | null;
+  father_occupation?: string | null;
+  mother_name?: string | null;
+  mother_occupation?: string | null;
+  brothers_count?: string | number | null;
+  brothers_married?: string | number | null;
+  brothers_unmarried?: string | number | null;
+  sisters_count?: string | number | null;
+  sisters_married?: string | number | null;
+  sisters_unmarried?: string | number | null;
+  family_type?: string | null;
+  family_status?: string | null;
+  family_background?: string | null;
+  partner_age_range?: string | null;
+  partner_education?: string | null;
+  partner_profession?: string | null;
+  partner_income_preference?: string | null;
+  partner_community_preference?: string | null;
+  partner_location_preference?: string | null;
+  partner_other_expectations?: string | null;
+  photo_file_name?: string | null;
+  jathagam_file_name?: string | null;
+  community_certificate_file_name?: string | null;
+  form_data?: Record<string, any> | null;
+  status: 'Incomplete' | 'Draft' | 'Completed' | 'Followed Up' | 'Abandoned';
+  completed_registration_id?: string | null;
+}
+
+export type DraftStatus = 'Incomplete' | 'Draft' | 'Completed' | 'Followed Up' | 'Abandoned';
+
 export interface AdminUser {
   username: string;
   role: string;
@@ -295,20 +354,20 @@ export const FAQ_DATA: FAQItem[] = [
   },
   {
     id: "faq-2",
-    question: "Is this service exclusively for the Kongu Vellalar Gounder community?",
-    answer: "Yes, Vivaaha Connect is an exclusive matrimony platform dedicated solely to the Kongu Vellalar Gounder (கொங்கு வேளாளர் கவுண்டர்) community across Kongu Nadu, Tamil Nadu, and worldwide.",
+    question: "Is this service exclusively for the Kongu Vellala Gounder community?",
+    answer: "Yes, Vivaaha Connect is an exclusive matrimony platform dedicated solely to the Kongu Vellala Gounder (கொங்கு வேளாளர் கவுண்டர்) community across Kongu Nadu, Tamil Nadu, and worldwide.",
     category: "General"
   },
   {
     id: "faq-3",
     question: "How is Kulam / Gotram compatibility handled?",
-    answer: "We strictly uphold traditional Kongu Vellalar Gounder matrimonial customs, ensuring Thayadhi Kulam (தாயாதி குலம்) exclusions and compatible Kulam alliances are respected during matchmaking.",
+    answer: "We strictly uphold traditional Kongu Vellala Gounder matrimonial customs, ensuring Thayadhi Kulam (தாயாதி குலம்) exclusions and compatible Kulam alliances are respected during matchmaking.",
     category: "Matchmaking"
   },
   {
     id: "faq-4",
     question: "Is personal and contact information kept strictly private?",
-    answer: "Yes, 100% privacy protection is guaranteed. Candidate contact numbers and photographs are never made public. Profiles are shared only with verified Kongu Vellalar Gounder families after mutual consent.",
+    answer: "Yes, 100% privacy protection is guaranteed. Candidate contact numbers and photographs are never made public. Profiles are shared only with verified Kongu Vellala Gounder families after mutual consent.",
     category: "Privacy"
   },
   {

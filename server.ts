@@ -369,6 +369,226 @@ app.delete('/api/admin/registrations/:id', requireAdmin, async (req, res) => {
 // In-memory persistent stores for resilient fallback
 let memoryEnquiriesStore: any[] = [];
 let cachedAdminEnquiries: { timestamp: number; data: any[] } | null = null;
+let memoryDraftsStore: any[] = [];
+let cachedAdminDrafts: { timestamp: number; data: any[] } | null = null;
+
+// ==========================================
+// REGISTRATION DRAFTS (INCOMPLETE REGISTRATIONS)
+// ==========================================
+
+// Public Save / Upsert Registration Draft (auto-saved mid-way progress)
+app.post('/api/registration-drafts', async (req, res) => {
+  try {
+    const payload = req.body;
+    if (!payload || !payload.id) {
+      return res.status(400).json({ error: 'Draft ID is required' });
+    }
+
+    const draftId = payload.id;
+    const now = payload.updated_at || new Date().toISOString();
+
+    const standardDraft = {
+      ...payload,
+      id: draftId,
+      updated_at: now,
+      created_at: payload.created_at || now,
+      status: payload.status || 'Incomplete',
+    };
+
+    // 1. Update resilient server memory store
+    const existingIdx = memoryDraftsStore.findIndex((d) => d.id === draftId || (d.session_token && d.session_token === payload.session_token));
+    if (existingIdx >= 0) {
+      memoryDraftsStore[existingIdx] = { ...memoryDraftsStore[existingIdx], ...standardDraft };
+    } else {
+      memoryDraftsStore.unshift(standardDraft);
+    }
+
+    // Invalidate admin cache
+    cachedAdminDrafts = null;
+
+    // 2. Upsert to Supabase `registration_drafts` table
+    try {
+      const { error } = await supabase
+        .from('registration_drafts')
+        .upsert(standardDraft, { onConflict: 'id' });
+
+      if (error) {
+        console.warn('Notice upserting draft to Supabase:', error.message);
+      }
+    } catch (e: any) {
+      console.warn('Error connecting to Supabase for drafts:', e?.message);
+    }
+
+    return res.json({ success: true, id: draftId });
+  } catch (err: any) {
+    console.error('Error in /api/registration-drafts:', err);
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
+
+// Public Retrieve Registration Draft by ID or Session Token
+app.get('/api/registration-drafts/:tokenOrId', async (req, res) => {
+  try {
+    const { tokenOrId } = req.params;
+    if (!tokenOrId) {
+      return res.status(400).json({ error: 'Token or ID is required' });
+    }
+
+    // 1. Check in Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('registration_drafts')
+        .select('*')
+        .or(`id.eq.${tokenOrId},session_token.eq.${tokenOrId}`)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        return res.json({ success: true, draft: data });
+      }
+    } catch (e) {}
+
+    // 2. Check memory store
+    const memoryDraft = memoryDraftsStore.find(
+      (d) => d.id === tokenOrId || d.session_token === tokenOrId
+    );
+
+    if (memoryDraft) {
+      return res.json({ success: true, draft: memoryDraft });
+    }
+
+    return res.status(404).json({ error: 'Draft not found' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
+
+// Mark Draft Completed
+app.post('/api/registration-drafts/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { completedRegistrationId } = req.body || {};
+    const now = new Date().toISOString();
+
+    const existingIdx = memoryDraftsStore.findIndex((d) => d.id === id);
+    if (existingIdx >= 0) {
+      memoryDraftsStore[existingIdx] = {
+        ...memoryDraftsStore[existingIdx],
+        status: 'Completed',
+        completed_registration_id: completedRegistrationId || null,
+        updated_at: now,
+      };
+    }
+
+    try {
+      await supabase
+        .from('registration_drafts')
+        .update({
+          status: 'Completed',
+          completed_registration_id: completedRegistrationId || null,
+          updated_at: now,
+        })
+        .eq('id', id);
+    } catch (e) {}
+
+    cachedAdminDrafts = null;
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
+
+// Fetch All Incomplete Drafts (Admin Protected)
+app.get('/api/admin/registration-drafts', requireAdmin, async (req, res) => {
+  try {
+    const now = Date.now();
+    if (cachedAdminDrafts && now - cachedAdminDrafts.timestamp < CACHE_TTL_MS && !req.query.force) {
+      return res.json({
+        success: true,
+        count: cachedAdminDrafts.data.length,
+        drafts: cachedAdminDrafts.data,
+        cached: true,
+      });
+    }
+
+    let cloudList: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('registration_drafts')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        cloudList = data;
+      }
+    } catch (e: any) {
+      console.warn('Error fetching drafts from Supabase:', e?.message);
+    }
+
+    // Merge cloud list with memory store
+    const mergedMap = new Map<string, any>();
+    memoryDraftsStore.forEach((d) => { if (d && d.id) mergedMap.set(d.id, d); });
+    cloudList.forEach((d) => { if (d && d.id) mergedMap.set(d.id, d); });
+
+    const combinedList = Array.from(mergedMap.values()).sort(
+      (a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime()
+    );
+
+    memoryDraftsStore = combinedList;
+    cachedAdminDrafts = { timestamp: now, data: combinedList };
+
+    return res.json({ success: true, count: combinedList.length, drafts: combinedList });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
+
+// Update Draft Status or Notes (Admin Protected)
+app.patch('/api/admin/registration-drafts/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, notes } = req.body || {};
+    const now = new Date().toISOString();
+
+    const existingIdx = memoryDraftsStore.findIndex((d) => d.id === id);
+    if (existingIdx >= 0) {
+      if (status !== undefined) memoryDraftsStore[existingIdx].status = status;
+      if (notes !== undefined) memoryDraftsStore[existingIdx].notes = notes;
+      memoryDraftsStore[existingIdx].updated_at = now;
+    }
+
+    const updates: Record<string, any> = { updated_at: now };
+    if (status !== undefined) updates.status = status;
+    if (notes !== undefined) updates.notes = notes;
+
+    try {
+      await supabase.from('registration_drafts').update(updates).eq('id', id);
+    } catch (e) {}
+
+    cachedAdminDrafts = null;
+    return res.json({ success: true, message: `Draft ${id} updated` });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
+
+// Delete Draft (Admin Protected)
+app.delete('/api/admin/registration-drafts/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    memoryDraftsStore = memoryDraftsStore.filter((d) => d.id !== id);
+
+    try {
+      await supabase.from('registration_drafts').delete().eq('id', id);
+    } catch (e) {}
+
+    cachedAdminDrafts = null;
+    return res.json({ success: true, message: `Draft ${id} deleted` });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
 
 // Public Enquiry Submission (Callbacks, WhatsApp clicks, Contact form)
 app.post('/api/enquiries', async (req, res) => {

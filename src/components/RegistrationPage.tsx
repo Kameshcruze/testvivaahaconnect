@@ -33,6 +33,9 @@ import {
   RegistrationFormData,
   submitRegistrationForm,
   uploadRegistrationDocument,
+  saveRegistrationDraft,
+  fetchRegistrationDraft,
+  markRegistrationDraftCompleted,
 } from '../lib/supabase';
 import { validateFileSize, MAX_FILE_SIZE_MB } from '../lib/fileOptimizer';
 import { PHONE_NUMBER, PHONE_RAW, KONGU_KULAMS, TAMIL_RASIS, TAMIL_NATCHATHIRAMS, TAMIL_LAGNAMS } from '../types';
@@ -45,6 +48,34 @@ interface RegistrationPageProps {
 }
 
 const DRAFT_STORAGE_KEY = 'vivaaha_matrimony_registration_draft_v1';
+const DRAFT_SESSION_KEY = 'vivaaha_matrimony_draft_session_token_v2';
+const DRAFT_ID_KEY = 'vivaaha_matrimony_draft_id_v2';
+
+const getOrCreateSessionToken = (): string => {
+  try {
+    let token = localStorage.getItem(DRAFT_SESSION_KEY);
+    if (!token) {
+      token = `ses_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+      localStorage.setItem(DRAFT_SESSION_KEY, token);
+    }
+    return token;
+  } catch {
+    return `ses_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+  }
+};
+
+const getOrCreateDraftId = (): string => {
+  try {
+    let draftId = localStorage.getItem(DRAFT_ID_KEY);
+    if (!draftId) {
+      draftId = `DRF-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      localStorage.setItem(DRAFT_ID_KEY, draftId);
+    }
+    return draftId;
+  } catch {
+    return `DRF-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+};
 
 interface SavedDraft {
   formData: Partial<RegistrationFormData>;
@@ -82,7 +113,7 @@ const INITIAL_FORM_DATA: RegistrationFormData = {
   currentLocation: '',
   nativePlace: '',
 
-  community: 'Kongu Vellalar Gounder',
+  community: 'Kongu Vellala Gounder',
   kulam: '',
   kuladeivam: '',
 
@@ -114,7 +145,7 @@ const INITIAL_FORM_DATA: RegistrationFormData = {
   partnerEducation: '',
   partnerProfession: '',
   partnerIncomePreference: '',
-  partnerCommunityPreference: 'Kongu Vellalar Gounder',
+  partnerCommunityPreference: 'Kongu Vellala Gounder',
   partnerLocationPreference: '',
   partnerOtherExpectations: '',
 };
@@ -124,6 +155,11 @@ export default function RegistrationPage({
   onOpenCallModal,
   embedded = false,
 }: RegistrationPageProps) {
+  // Draft identity & cloud synchronization
+  const [sessionToken] = useState<string>(() => getOrCreateSessionToken());
+  const [draftId, setDraftId] = useState<string>(() => getOrCreateDraftId());
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
   // Initialize state with stored draft if available
   const [formData, setFormData] = useState<RegistrationFormData>(() => {
     const draft = getStoredDraft();
@@ -131,9 +167,8 @@ export default function RegistrationPage({
       return {
         ...INITIAL_FORM_DATA,
         ...draft.formData,
-        // Guarantee fixed community constraints
-        community: 'Kongu Vellalar Gounder',
-        partnerCommunityPreference: 'Kongu Vellalar Gounder',
+        community: draft.formData.community || 'Kongu Vellala Gounder',
+        partnerCommunityPreference: draft.formData.partnerCommunityPreference || 'Kongu Vellala Gounder',
       };
     }
     return INITIAL_FORM_DATA;
@@ -167,6 +202,40 @@ export default function RegistrationPage({
     return hasValues;
   });
 
+  // On mount: Fetch any in-progress draft from Supabase directly to restore progress
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCloudDraft() {
+      try {
+        const cloudDraft = await fetchRegistrationDraft(sessionToken);
+        if (isMounted && cloudDraft && cloudDraft.status !== 'Completed') {
+          if (cloudDraft.id) setDraftId(cloudDraft.id);
+          if (cloudDraft.form_data && typeof cloudDraft.form_data === 'object') {
+            setFormData((prev) => ({
+              ...prev,
+              ...cloudDraft.form_data,
+              community: cloudDraft.form_data.community || 'Kongu Vellala Gounder',
+              partnerCommunityPreference: cloudDraft.form_data.partnerCommunityPreference || 'Kongu Vellala Gounder',
+            }));
+            if (cloudDraft.current_step && cloudDraft.current_step >= 1 && cloudDraft.current_step <= 5) {
+              setCurrentStep(cloudDraft.current_step);
+            }
+            setHasRestoredDraft(true);
+            setCloudSyncStatus('saved');
+          }
+        }
+      } catch (e) {
+        console.warn('Notice checking cloud draft:', e);
+      }
+    }
+
+    loadCloudDraft();
+    return () => {
+      isMounted = false;
+    };
+  }, [sessionToken]);
+
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitSuccessId, setSubmitSuccessId] = useState<string | null>(null);
   const [submissionIsCloud, setSubmissionIsCloud] = useState<boolean>(false);
@@ -185,7 +254,7 @@ export default function RegistrationPage({
   const jathagamInputRef = useRef<HTMLInputElement>(null);
   const certInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-save form data and progress to local session whenever user updates fields
+  // Auto-save form data and progress to Supabase and local session whenever user updates fields
   useEffect(() => {
     // If successfully submitted, do not save draft
     if (submitSuccessId) return;
@@ -204,6 +273,7 @@ export default function RegistrationPage({
     });
 
     if (hasMeaningfulData || currentStep > 1) {
+      // 1. Local backup
       try {
         const draft: SavedDraft = {
           formData,
@@ -215,14 +285,38 @@ export default function RegistrationPage({
       } catch (err) {
         console.warn('Failed to auto-save registration draft to localStorage:', err);
       }
+
+      // 2. Debounced save to Supabase registration_drafts table
+      setCloudSyncStatus('saving');
+      const timer = setTimeout(async () => {
+        try {
+          const res = await saveRegistrationDraft({
+            draftId,
+            sessionToken,
+            currentStep,
+            formData,
+          });
+          if (res.success) {
+            setCloudSyncStatus('saved');
+          } else {
+            setCloudSyncStatus('saved'); // Still saved locally
+          }
+        } catch (e) {
+          setCloudSyncStatus('saved');
+        }
+      }, 750);
+
+      return () => clearTimeout(timer);
     }
-  }, [formData, currentStep, sameAsMobile, submitSuccessId]);
+  }, [formData, currentStep, sameAsMobile, submitSuccessId, draftId, sessionToken]);
 
   // Clear draft / reset function
   const handleClearDraft = () => {
     if (window.confirm('Clear all entered registration details and start over with a fresh form?')) {
       try {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
+        localStorage.removeItem(DRAFT_SESSION_KEY);
+        localStorage.removeItem(DRAFT_ID_KEY);
       } catch (e) {}
       setFormData(INITIAL_FORM_DATA);
       setCurrentStep(1);
@@ -233,6 +327,10 @@ export default function RegistrationPage({
       setCommunityCertFile(null);
       setHasRestoredDraft(false);
       setErrorMessage(null);
+      setCloudSyncStatus('idle');
+      // Generate fresh draft ID
+      const newId = `DRF-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      setDraftId(newId);
     }
   };
 
@@ -379,7 +477,7 @@ export default function RegistrationPage({
         return false;
       }
       if (!formData.community.trim()) {
-        setErrorMessage('Please enter community (Kongu Vellalar Gounder) (mandatory).');
+        setErrorMessage('Please enter community (mandatory).');
         return false;
       }
       if (!formData.kulam.trim()) {
@@ -587,8 +685,15 @@ export default function RegistrationPage({
       if (response.success) {
         setSubmitSuccessId(response.id);
         setSubmissionIsCloud(response.isCloud);
+        // Mark draft completed in Supabase
+        try {
+          await markRegistrationDraftCompleted(draftId, response.id);
+        } catch (e) {}
+
         try {
           localStorage.removeItem(DRAFT_STORAGE_KEY);
+          localStorage.removeItem(DRAFT_SESSION_KEY);
+          localStorage.removeItem(DRAFT_ID_KEY);
         } catch (e) {}
       } else {
         setErrorMessage(response.error || 'Failed to submit registration. Please check database connection.');
@@ -644,7 +749,7 @@ export default function RegistrationPage({
               Register Candidate Profile
             </h2>
             <p className="text-xs sm:text-sm text-[#222222]/75 max-w-xl mx-auto">
-              Please enter candidate details and family preferences. All submitted information is kept strictly confidential and verified for traditional Kongu Vellalar matchmaking.
+              Please enter candidate details and family preferences. All submitted information is kept strictly confidential and verified for traditional Kongu Vellala matchmaking.
             </p>
           </div>
         )}
@@ -778,6 +883,31 @@ export default function RegistrationPage({
                     </button>
                   );
                 })}
+              </div>
+
+              {/* Real-time Cloud Auto-save Status Indicator */}
+              <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[#C89B63]/15 text-[11px] text-[#222222]/70 px-1">
+                <div className="flex items-center gap-1.5 font-medium">
+                  {cloudSyncStatus === 'saving' ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 text-amber-600 animate-spin" />
+                      <span className="text-amber-700">Auto-saving progress to database...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <span className="text-stone-600">
+                        Progress automatically saved to database • Resume anytime
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline text-stone-400 font-mono text-[10px]">
+                    Draft Session: {draftId.slice(0, 12)}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1106,23 +1236,19 @@ export default function RegistrationPage({
                       />
                     </div>
 
-                    {/* Community / Caste - Uneditable */}
+                    {/* Community / Caste - Editable */}
                     <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider">
-                          Community / Caste <span className="text-red-600 font-bold">*</span>
-                        </label>
-                        <span className="text-[10px] font-semibold text-[#6A1E2C] bg-[#F8E8DA] px-2 py-0.5 rounded-full border border-[#C89B63]/30">
-                          Fixed: Kongu Vellalar Gounder
-                        </span>
-                      </div>
+                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
+                        Community / Caste <span className="text-red-600 font-bold">*</span>
+                      </label>
                       <input
                         type="text"
                         name="community"
                         required
-                        readOnly
-                        value="Kongu Vellalar Gounder"
-                        className="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-gray-100/90 text-gray-800 text-sm font-semibold cursor-not-allowed shadow-inner focus:outline-none"
+                        value={formData.community}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Kongu Vellala Gounder"
+                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
 
@@ -1567,23 +1693,19 @@ export default function RegistrationPage({
                       />
                     </div>
 
-                    {/* Community Preference - Uneditable */}
+                    {/* Community Preference - Editable */}
                     <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider">
-                          Community Preference <span className="text-red-600 font-bold">*</span>
-                        </label>
-                        <span className="text-[10px] font-semibold text-[#6A1E2C] bg-[#F8E8DA] px-2 py-0.5 rounded-full border border-[#C89B63]/30">
-                          Kongu Vellalar Gounder
-                        </span>
-                      </div>
+                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
+                        Community Preference <span className="text-red-600 font-bold">*</span>
+                      </label>
                       <input
                         type="text"
                         name="partnerCommunityPreference"
                         required
-                        readOnly
-                        value="Kongu Vellalar Gounder"
-                        className="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-gray-100/90 text-gray-800 text-sm font-semibold cursor-not-allowed shadow-inner focus:outline-none"
+                        value={formData.partnerCommunityPreference}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Kongu Vellala Gounder / Any"
+                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
 

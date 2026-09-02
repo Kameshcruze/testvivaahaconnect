@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
-  Sparkles,
   ChevronDown,
   RefreshCw,
   ExternalLink,

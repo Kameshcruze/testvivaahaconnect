@@ -8,7 +8,6 @@ import {
   Trash2,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
   ChevronDown,
   RefreshCw,
   ExternalLink,
@@ -284,7 +283,7 @@ export default function AdminDraftsTab({
         <div className="bg-white rounded-2xl p-4 border border-emerald-200/80 bg-emerald-50/20 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">High Intent (Step 3-5)</span>
-            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <FileText className="w-4 h-4 text-emerald-600" />
           </div>
           <p className="text-2xl sm:text-3xl font-black text-emerald-950 mt-2">{metrics.step4or5 + metrics.step2or3}</p>
           <span className="text-[11px] text-emerald-700 font-medium mt-1 block">

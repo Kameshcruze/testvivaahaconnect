@@ -182,7 +182,7 @@ export default function RegistrationPage({
     return 1;
   });
 
-  const [sameAsMobile, setSameAsMobile] = useState<boolean>(() => {
+  const [sameAsWhatsapp, setSameAsWhatsapp] = useState<boolean>(() => {
     const draft = getStoredDraft();
     return draft?.sameAsMobile ?? false;
   });
@@ -192,6 +192,7 @@ export default function RegistrationPage({
     if (!draft?.formData) return false;
     const hasValues = Boolean(
       draft.formData.name ||
+      draft.formData.whatsappNumber ||
       draft.formData.mobileNumber ||
       draft.formData.dob ||
       draft.formData.email ||
@@ -291,7 +292,7 @@ export default function RegistrationPage({
       const draft: SavedDraft = {
         formData,
         currentStep: targetStep,
-        sameAsMobile,
+        sameAsMobile: sameAsWhatsapp,
         savedAt: Date.now(),
       };
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
@@ -307,7 +308,7 @@ export default function RegistrationPage({
         setCloudSyncStatus('saved');
       }
     }).catch(() => {});
-  }, [formData, currentStep, sameAsMobile, submitSuccessId, draftId, sessionToken, hasEnteredData]);
+  }, [formData, currentStep, sameAsWhatsapp, submitSuccessId, draftId, sessionToken, hasEnteredData]);
 
   // Handle sudden page exit / tab close / switching tabs to immediately save progress to DB
   useEffect(() => {
@@ -343,7 +344,7 @@ export default function RegistrationPage({
         const draft: SavedDraft = {
           formData,
           currentStep,
-          sameAsMobile,
+          sameAsMobile: sameAsWhatsapp,
           savedAt: Date.now(),
         };
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
@@ -368,7 +369,7 @@ export default function RegistrationPage({
 
       return () => clearTimeout(timer);
     }
-  }, [formData, currentStep, sameAsMobile, submitSuccessId, draftId, sessionToken, hasEnteredData]);
+  }, [formData, currentStep, sameAsWhatsapp, submitSuccessId, draftId, sessionToken, hasEnteredData]);
 
   // Clear draft / reset function
   const handleClearDraft = () => {
@@ -380,7 +381,7 @@ export default function RegistrationPage({
       } catch (e) {}
       setFormData(INITIAL_FORM_DATA);
       setCurrentStep(1);
-      setSameAsMobile(false);
+      setSameAsWhatsapp(false);
       setPhotoFile(null);
       setPhotoPreview(null);
       setJathagamFile(null);
@@ -425,20 +426,20 @@ export default function RegistrationPage({
     const { name, value } = e.target;
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
-      if (name === 'mobileNumber' && sameAsMobile) {
-        updated.whatsappNumber = value;
+      if (name === 'whatsappNumber' && sameAsWhatsapp) {
+        updated.mobileNumber = value;
       }
       return updated;
     });
   };
 
-  const handleSameAsMobileToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSameAsWhatsappToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
-    setSameAsMobile(checked);
+    setSameAsWhatsapp(checked);
     if (checked) {
       setFormData((prev) => ({
         ...prev,
-        whatsappNumber: prev.mobileNumber,
+        mobileNumber: prev.whatsappNumber || prev.mobileNumber,
       }));
     }
   };
@@ -489,6 +490,10 @@ export default function RegistrationPage({
         setErrorMessage('Please enter candidate full name (mandatory).');
         return false;
       }
+      if (!formData.whatsappNumber.trim()) {
+        setErrorMessage('Please enter WhatsApp contact number (mandatory).');
+        return false;
+      }
       if (!formData.gender) {
         setErrorMessage('Please select candidate gender (Male or Female).');
         return false;
@@ -517,11 +522,7 @@ export default function RegistrationPage({
 
     if (step === 2) {
       if (!formData.mobileNumber.trim()) {
-        setErrorMessage('Please enter primary mobile number (mandatory).');
-        return false;
-      }
-      if (!formData.whatsappNumber.trim()) {
-        setErrorMessage('Please enter WhatsApp contact number (mandatory).');
+        setErrorMessage('Please enter primary mobile calling number (mandatory).');
         return false;
       }
       if (!formData.email.trim()) {
@@ -1047,8 +1048,8 @@ export default function RegistrationPage({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                    {/* Full Name */}
-                    <div className="sm:col-span-2">
+                    {/* Full Name (Left) */}
+                    <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
                         Candidate Full Name <span className="text-red-600 font-bold">*</span>
                       </label>
@@ -1059,6 +1060,22 @@ export default function RegistrationPage({
                         value={formData.name}
                         onChange={handleInputChange}
                         placeholder="Enter bride or groom's full name"
+                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
+                      />
+                    </div>
+
+                    {/* WhatsApp Number (Right side of Name) */}
+                    <div>
+                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
+                        WhatsApp Number <span className="text-red-600 font-bold">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        name="whatsappNumber"
+                        required
+                        value={formData.whatsappNumber}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 9876543210 (WhatsApp active)"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                     </div>
@@ -1216,11 +1233,24 @@ export default function RegistrationPage({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                    {/* Mobile Number */}
+                    {/* Primary Mobile Calling Number */}
                     <div>
-                      <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
-                        Mobile Number <span className="text-red-600 font-bold">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider">
+                          Primary Mobile Number <span className="text-red-600 font-bold">*</span>
+                        </label>
+                        {formData.whatsappNumber && (
+                          <label className="text-[11px] text-[#6A1E2C] font-semibold flex items-center gap-1 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={sameAsWhatsapp}
+                              onChange={handleSameAsWhatsappToggle}
+                              className="rounded text-[#6A1E2C]"
+                            />
+                            Same as WhatsApp
+                          </label>
+                        )}
+                      </div>
                       <input
                         type="tel"
                         name="mobileNumber"
@@ -1228,40 +1258,13 @@ export default function RegistrationPage({
                         value={formData.mobileNumber}
                         onChange={handleInputChange}
                         placeholder="e.g. 9876543210"
-                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
-                      />
-                    </div>
-
-                    {/* WhatsApp Number */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider">
-                          WhatsApp Number <span className="text-red-600 font-bold">*</span>
-                        </label>
-                        <label className="text-[11px] text-[#6A1E2C] font-semibold flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={sameAsMobile}
-                            onChange={handleSameAsMobileToggle}
-                            className="rounded text-[#6A1E2C]"
-                          />
-                          Same as Mobile
-                        </label>
-                      </div>
-                      <input
-                        type="tel"
-                        name="whatsappNumber"
-                        required
-                        value={formData.whatsappNumber}
-                        onChange={handleInputChange}
-                        placeholder="WhatsApp contact number"
-                        disabled={sameAsMobile}
+                        disabled={sameAsWhatsapp}
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm disabled:opacity-75"
                       />
                     </div>
 
-                    {/* Email ID */}
-                    <div className="sm:col-span-2">
+                    {/* Email ID (Right side of Mobile Number) */}
+                    <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
                         Email Address <span className="text-red-600 font-bold">*</span>
                       </label>
@@ -1366,7 +1369,7 @@ export default function RegistrationPage({
                     <div className="sm:col-span-2 pt-2 border-t border-[#C89B63]/20">
                       <div className="bg-[#FFF6ED] p-3 rounded-xl border border-[#C89B63]/30 flex items-center justify-between">
                         <span className="text-xs font-bold font-heading text-[#6A1E2C] uppercase tracking-wider flex items-center gap-1.5">
-                          ✨ Astrological Details (ஜாதக விபரங்கள்)
+                          Astrological Details (ஜாதக விபரங்கள்)
                         </span>
                         <span className="text-[10px] font-semibold text-[#8B4513]">Rasi, Natchathiram & Laknam</span>
                       </div>

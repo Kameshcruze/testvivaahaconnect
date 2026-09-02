@@ -23,7 +23,6 @@ import {
   ArrowLeft,
   Users,
   Heart,
-  Sparkles,
   FileSpreadsheet,
   Layers,
   Check,

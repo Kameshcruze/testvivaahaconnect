@@ -371,7 +371,7 @@ export default function AdminDraftsTab({
             <h4 className="font-bold text-stone-800 text-base">No Drafts Found</h4>
             <p className="text-xs text-stone-500 max-w-sm mx-auto mt-1">
               {drafts.length === 0
-                ? 'No incomplete registration drafts have been recorded yet in Supabase.'
+                ? 'No incomplete registration drafts have been recorded yet.'
                 : 'No drafts match the selected filters or search keywords.'}
             </p>
           </div>

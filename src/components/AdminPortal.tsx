@@ -987,7 +987,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
 
           <div className="text-[11px] text-stone-400 font-medium">
             {activeTab === 'registrations' && `${filteredRegistrations.length} of ${totalCount} records`}
-            {activeTab === 'drafts' && `${drafts.length} incomplete drafts logged in Supabase`}
+            {activeTab === 'drafts' && `${drafts.length} incomplete drafts logged`}
             {activeTab === 'enquiries' && `${enquiries.length} customer enquiries logged`}
           </div>
         </div>

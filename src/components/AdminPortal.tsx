@@ -604,6 +604,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       'Rasi',
       'Natchathiram',
       'Laknam',
+      'Dhosham',
       'Qualification',
       'Profession',
       'Income',
@@ -626,7 +627,8 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       `"${r.kulam || ''}"`,
       `"${r.rasi || ''}"`,
       `"${r.natchatram || ''}"`,
-      `"${r.laknam || ''}"`,
+      `"${r.lagnam || r.laknam || ''}"`,
+      `"${r.dhosham || ''}"`,
       `"${r.education_qualification || ''}"`,
       `"${r.profession || ''}"`,
       `"${r.income || ''}"`,
@@ -658,7 +660,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       const matchPhone = r.mobile_number?.includes(q) || r.whatsapp_number?.includes(q);
       const matchCity = r.current_location?.toLowerCase().includes(q) || r.native_place?.toLowerCase().includes(q);
       const matchCommunity = r.community?.toLowerCase().includes(q) || r.kulam?.toLowerCase().includes(q);
-      const matchAstrology = r.rasi?.toLowerCase().includes(q) || r.natchatram?.toLowerCase().includes(q) || r.laknam?.toLowerCase().includes(q);
+      const matchAstrology = r.rasi?.toLowerCase().includes(q) || r.natchatram?.toLowerCase().includes(q) || r.lagnam?.toLowerCase().includes(q) || r.laknam?.toLowerCase().includes(q) || r.dhosham?.toLowerCase().includes(q);
       const matchProf = r.profession?.toLowerCase().includes(q) || r.education_qualification?.toLowerCase().includes(q);
 
       if (!matchName && !matchId && !matchPhone && !matchCity && !matchCommunity && !matchAstrology && !matchProf) {

@@ -78,6 +78,8 @@ export interface RegistrationRecord {
   rasi?: string | null;
   natchatram?: string | null;
   laknam?: string | null;
+  lagnam?: string | null;
+  dhosham?: string | null;
   education_qualification?: string | null;
   profession?: string | null;
   company_name?: string | null;
@@ -136,6 +138,8 @@ export interface RegistrationDraftRecord {
   rasi?: string | null;
   natchatram?: string | null;
   laknam?: string | null;
+  lagnam?: string | null;
+  dhosham?: string | null;
   education_qualification?: string | null;
   profession?: string | null;
   company_name?: string | null;
@@ -343,6 +347,16 @@ export const TAMIL_LAGNAMS: string[] = [
   "Makara Lagnam (மகர லக்னம்)",
   "Kumba Lagnam (கும்ப லக்னம்)",
   "Meena Lagnam (மீன லக்னம்)",
+];
+
+export const TAMIL_DHOSHAMS: string[] = [
+  "No Dhosham (தோஷம் இல்லை)",
+  "Sevvai Dhosham (செவ்வாய் தோஷம்)",
+  "Rahu - Kethu / Sarpa Dhosham (ராகு - கேது தோஷம்)",
+  "Sevvai & Rahu-Kethu (செவ்வாய் & ராகு கேது)",
+  "Kalathira Dhosham (களத்திர தோஷம்)",
+  "Parigara Dhosham (பரிகார தோஷம்)",
+  "Not Known (தெரியவில்லை)",
 ];
 
 export const FAQ_DATA: FAQItem[] = [

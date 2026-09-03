@@ -38,7 +38,7 @@ import {
   markRegistrationDraftCompleted,
 } from '../lib/supabase';
 import { validateFileSize, MAX_FILE_SIZE_MB } from '../lib/fileOptimizer';
-import { PHONE_NUMBER, PHONE_RAW, KONGU_KULAMS, TAMIL_RASIS, TAMIL_NATCHATHIRAMS, TAMIL_LAGNAMS } from '../types';
+import { PHONE_NUMBER, PHONE_RAW, KONGU_KULAMS, TAMIL_RASIS, TAMIL_NATCHATHIRAMS, TAMIL_LAGNAMS, TAMIL_DHOSHAMS } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
 
 interface RegistrationPageProps {
@@ -120,6 +120,8 @@ const INITIAL_FORM_DATA: RegistrationFormData = {
   rasi: '',
   natchatram: '',
   laknam: '',
+  lagnam: '',
+  dhosham: '',
 
   educationQualification: '',
   profession: '',
@@ -241,6 +243,7 @@ export default function RegistrationPage({
   const [submitSuccessId, setSubmitSuccessId] = useState<string | null>(null);
   const [submissionIsCloud, setSubmissionIsCloud] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [customDhoshamMode, setCustomDhoshamMode] = useState<boolean>(false);
 
   // File states
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -429,6 +432,13 @@ export default function RegistrationPage({
       if (name === 'whatsappNumber' && sameAsWhatsapp) {
         updated.mobileNumber = value;
       }
+      if (name === 'laknam' || name === 'lagnam') {
+        updated.laknam = value;
+        updated.lagnam = value;
+      }
+      if (name === 'dhosham') {
+        updated.dhosham = value;
+      }
       return updated;
     });
   };
@@ -557,8 +567,13 @@ export default function RegistrationPage({
         setErrorMessage('Please select or enter candidate Natchathiram (நட்சத்திரம்) (mandatory).');
         return false;
       }
-      if (!formData.laknam?.trim()) {
+      const lagnamValue = formData.lagnam?.trim() || formData.laknam?.trim();
+      if (!lagnamValue) {
         setErrorMessage('Please select or enter candidate Laknam (லக்னம்) (mandatory).');
+        return false;
+      }
+      if (!formData.dhosham?.trim()) {
+        setErrorMessage('Please select candidate Dhosham / தோஷம் (mandatory). Select "No Dhosham" if candidate has no dosham.');
         return false;
       }
     }
@@ -1371,7 +1386,7 @@ export default function RegistrationPage({
                         <span className="text-xs font-bold font-heading text-[#6A1E2C] uppercase tracking-wider flex items-center gap-1.5">
                           Astrological Details (ஜாதக விபரங்கள்)
                         </span>
-                        <span className="text-[10px] font-semibold text-[#8B4513]">Rasi, Natchathiram & Laknam</span>
+                        <span className="text-[10px] font-semibold text-[#8B4513]">Rasi, Star, Laknam & Dhosham</span>
                       </div>
                     </div>
 
@@ -1419,19 +1434,27 @@ export default function RegistrationPage({
                       </datalist>
                     </div>
 
-                    {/* Laknam (லக்னம்) */}
-                    <div className="sm:col-span-2">
+                    {/* Laknam / Ascendant (லக்னம்) */}
+                    <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
                         Laknam / Ascendant (லக்னம்) <span className="text-red-600 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         name="laknam"
+                        id="registration-laknam-input"
                         required
                         list="laknam-suggestions"
-                        value={formData.laknam || ''}
-                        onChange={handleInputChange}
-                        placeholder="Select or enter Laknam (e.g. Mesha Lagnam)"
+                        value={formData.laknam || formData.lagnam || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData((prev) => ({
+                            ...prev,
+                            laknam: val,
+                            lagnam: val,
+                          }));
+                        }}
+                        placeholder="Select or enter Laknam (e.g. Mesham)"
                         className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
                       />
                       <datalist id="laknam-suggestions">
@@ -1439,6 +1462,76 @@ export default function RegistrationPage({
                           <option key={l} value={l} />
                         ))}
                       </datalist>
+                    </div>
+
+                    {/* Dhosham / தோஷம் */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider">
+                          Dhosham (தோஷம்) <span className="text-red-600 font-bold">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setCustomDhoshamMode(!customDhoshamMode)}
+                          className="text-[11px] text-[#6A1E2C] hover:underline font-semibold"
+                        >
+                          {customDhoshamMode ? '← Choose from list' : 'Type custom'}
+                        </button>
+                      </div>
+
+                      {!customDhoshamMode ? (
+                        <select
+                          name="dhosham"
+                          id="registration-dhosham-select"
+                          required
+                          value={formData.dhosham || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '__custom__') {
+                              setCustomDhoshamMode(true);
+                              return;
+                            }
+                            setFormData((prev) => ({
+                              ...prev,
+                              dhosham: val,
+                            }));
+                          }}
+                          className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm font-medium text-[#222222]"
+                        >
+                          <option value="">-- Select Dhosham / தோஷம் தேர்ந்தெடுக்கவும் * --</option>
+                          {TAMIL_DHOSHAMS.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                          <option value="__custom__">✍️ Other / Type manually (மற்றவை)...</option>
+                        </select>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <input
+                            type="text"
+                            name="dhosham"
+                            id="registration-dhosham-input"
+                            required
+                            list="dhosham-suggestions"
+                            value={formData.dhosham || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setFormData((prev) => ({
+                                ...prev,
+                                dhosham: val,
+                              }));
+                            }}
+                            placeholder="Type Dhosham (e.g. Sevvai Dosham / No Dosham)"
+                            className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
+                          />
+                          <datalist id="dhosham-suggestions">
+                            {TAMIL_DHOSHAMS.map((d) => (
+                              <option key={d} value={d} />
+                            ))}
+                          </datalist>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>

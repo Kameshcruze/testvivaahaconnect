@@ -103,7 +103,7 @@ export default function AdminDraftsTab({
         const matchEmail = d.email?.toLowerCase().includes(q);
         const matchCity = d.current_location?.toLowerCase().includes(q) || d.native_place?.toLowerCase().includes(q);
         const matchKulam = d.kulam?.toLowerCase().includes(q) || d.community?.toLowerCase().includes(q);
-        const matchAstro = d.rasi?.toLowerCase().includes(q) || d.natchatram?.toLowerCase().includes(q) || d.laknam?.toLowerCase().includes(q);
+        const matchAstro = d.rasi?.toLowerCase().includes(q) || d.natchatram?.toLowerCase().includes(q) || d.lagnam?.toLowerCase().includes(q) || d.laknam?.toLowerCase().includes(q) || d.dhosham?.toLowerCase().includes(q);
         const matchProf = d.profession?.toLowerCase().includes(q) || d.education_qualification?.toLowerCase().includes(q);
         const matchId = d.id?.toLowerCase().includes(q);
 
@@ -152,6 +152,7 @@ export default function AdminDraftsTab({
       'Rasi',
       'Natchathiram',
       'Laknam',
+      'Dhosham',
       'Current Location',
       'Native Place',
       'Qualification',
@@ -182,7 +183,8 @@ export default function AdminDraftsTab({
       `"${d.kuladeivam || ''}"`,
       `"${d.rasi || ''}"`,
       `"${d.natchatram || ''}"`,
-      `"${d.laknam || ''}"`,
+      `"${d.lagnam || d.laknam || ''}"`,
+      `"${d.dhosham || ''}"`,
       `"${d.current_location || ''}"`,
       `"${d.native_place || ''}"`,
       `"${d.education_qualification || ''}"`,
@@ -477,9 +479,9 @@ export default function AdminDraftsTab({
                         <span className="font-semibold text-stone-900 block">
                           {draft.kulam ? `Kulam: ${draft.kulam}` : draft.community || '—'}
                         </span>
-                        {(draft.rasi || draft.natchatram || draft.laknam) && (
+                        {(draft.rasi || draft.natchatram || draft.lagnam || draft.laknam || draft.dhosham) && (
                           <span className="text-[10px] text-[#8B4513] font-semibold block mt-0.5">
-                            {draft.rasi || ''} {draft.natchatram ? `• ${draft.natchatram}` : ''}
+                            {[draft.rasi, draft.natchatram, draft.lagnam || draft.laknam, draft.dhosham].filter(Boolean).join(' • ')}
                           </span>
                         )}
                         {draft.kuladeivam && (
@@ -734,7 +736,11 @@ export default function AdminDraftsTab({
                   </div>
                   <div className="p-2 rounded-xl bg-orange-50 border border-orange-200">
                     <span className="text-orange-900 text-[10px] block font-semibold">Laknam (லக்னம்)</span>
-                    <p className="font-bold text-orange-950 mt-0.5">{selectedDraft.laknam || (selectedDraft.form_data as any)?.laknam || '—'}</p>
+                    <p className="font-bold text-orange-950 mt-0.5">{selectedDraft.lagnam || selectedDraft.laknam || (selectedDraft.form_data as any)?.lagnam || (selectedDraft.form_data as any)?.laknam || '—'}</p>
+                  </div>
+                  <div className="p-2 rounded-xl bg-orange-50 border border-orange-200">
+                    <span className="text-orange-900 text-[10px] block font-semibold">Dhosham (தோஷம்)</span>
+                    <p className="font-bold text-orange-950 mt-0.5">{selectedDraft.dhosham || (selectedDraft.form_data as any)?.dhosham || (selectedDraft.form_data as any)?.dosham || '—'}</p>
                   </div>
                 </div>
               </div>

@@ -362,7 +362,11 @@ export default function RegistrationDetailModal({
                     </div>
                     <div>
                       <span className="text-stone-400 block text-[10px]">Laknam / Ascendant</span>
-                      <strong className="text-[#6A1E2C] font-bold">{registration.laknam || '—'}</strong>
+                      <strong className="text-[#6A1E2C] font-bold">{registration.lagnam || registration.laknam || '—'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-stone-400 block text-[10px]">Dhosham / தோஷம்</span>
+                      <strong className="text-rose-900 font-bold">{registration.dhosham || '—'}</strong>
                     </div>
                     <div>
                       <span className="text-stone-400 block text-[10px]">Qualification</span>
@@ -469,7 +473,11 @@ export default function RegistrationDetailModal({
                 </div>
                 <div className="p-3 rounded-xl bg-orange-50/60 border border-orange-200/60">
                   <span className="text-orange-800 text-[10px] block font-semibold">Laknam / Ascendant (லக்னம்)</span>
-                  <p className="font-bold text-orange-950 mt-0.5">{registration.laknam || '—'}</p>
+                  <p className="font-bold text-orange-950 mt-0.5">{registration.lagnam || registration.laknam || '—'}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-orange-50/60 border border-orange-200/60">
+                  <span className="text-orange-800 text-[10px] block font-semibold">Dhosham / தோஷம்</span>
+                  <p className="font-bold text-orange-950 mt-0.5">{registration.dhosham || '—'}</p>
                 </div>
               </div>
             </div>

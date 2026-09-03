@@ -164,6 +164,8 @@ export interface RegistrationFormData {
   rasi?: string;
   natchatram?: string;
   laknam?: string;
+  lagnam?: string;
+  dhosham?: string;
 
   // Education & Profession
   educationQualification: string;
@@ -325,7 +327,9 @@ export async function submitRegistrationForm(
     kuladeivam: formData.kuladeivam,
     rasi: formData.rasi || null,
     natchatram: formData.natchatram || null,
-    laknam: formData.laknam || null,
+    laknam: formData.lagnam || formData.laknam || null,
+    lagnam: formData.lagnam || formData.laknam || null,
+    dhosham: formData.dhosham || null,
     education_qualification: formData.educationQualification,
     profession: formData.profession,
     company_name: formData.companyName,
@@ -398,6 +402,25 @@ export async function submitRegistrationForm(
       }
       if (result?.error) {
         console.warn('Direct database insert notice:', result.error.message);
+        if (result.error.message?.includes('dhosham')) {
+          const { dhosham, ...withoutDhosham } = recordPayload;
+          const retryRes = await supabase.from('registrations').insert([withoutDhosham]);
+          if (!retryRes.error) {
+            return { success: true, id: registrationId, isCloud: true };
+          }
+        } else if (result.error.message?.includes('lagnam')) {
+          const { lagnam, ...withoutLagnam } = recordPayload;
+          const retryRes = await supabase.from('registrations').insert([withoutLagnam]);
+          if (!retryRes.error) {
+            return { success: true, id: registrationId, isCloud: true };
+          }
+        } else if (result.error.message?.includes('laknam')) {
+          const { laknam, ...withoutLaknam } = recordPayload;
+          const retryRes = await supabase.from('registrations').insert([withoutLaknam]);
+          if (!retryRes.error) {
+            return { success: true, id: registrationId, isCloud: true };
+          }
+        }
       }
     } catch (directErr: any) {
       console.warn('Direct database insert attempt:', directErr?.message);
@@ -662,7 +685,9 @@ export function normalizeRegistrationDraftRecord(raw: any): RegistrationDraftRec
     kuladeivam: get('kuladeivam', 'kula_deivam', 'kulaDeivam'),
     rasi: get('rasi'),
     natchatram: get('natchatram', 'natchathiram', 'natchathram'),
-    laknam: get('laknam'),
+    laknam: get('lagnam', 'laknam'),
+    lagnam: get('lagnam', 'laknam'),
+    dhosham: get('dhosham', 'dosham'),
     education_qualification: get('education_qualification', 'educationQualification', 'education'),
     profession: get('profession', 'occupation'),
     company_name: get('company_name', 'companyName', 'company'),
@@ -794,7 +819,9 @@ export async function saveRegistrationDraft(params: {
     kulam: formData.kulam || null,
     rasi: formData.rasi || null,
     natchatram: formData.natchatram || null,
-    laknam: formData.laknam || null,
+    laknam: formData.lagnam || formData.laknam || null,
+    lagnam: formData.lagnam || formData.laknam || null,
+    dhosham: formData.dhosham || null,
     current_location: formData.currentLocation || null,
     form_data: sanitizedFormData,
     status: params.status || 'Incomplete',
@@ -1095,6 +1122,7 @@ CREATE TABLE IF NOT EXISTS public.registrations (
 ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS rasi TEXT;
 ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS natchatram TEXT;
 ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS laknam TEXT;
+ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS dhosham TEXT;
 
 -- 2. Create Incomplete Registration Drafts Table (Auto-saved mid-way progress)
 CREATE TABLE IF NOT EXISTS public.registration_drafts (
@@ -1153,6 +1181,12 @@ CREATE TABLE IF NOT EXISTS public.registration_drafts (
   status TEXT DEFAULT 'Incomplete', -- 'Incomplete', 'Draft', 'Followed Up', 'Completed', 'Abandoned'
   completed_registration_id TEXT
 );
+
+-- Ensure astrological columns exist in registration_drafts
+ALTER TABLE public.registration_drafts ADD COLUMN IF NOT EXISTS rasi TEXT;
+ALTER TABLE public.registration_drafts ADD COLUMN IF NOT EXISTS natchatram TEXT;
+ALTER TABLE public.registration_drafts ADD COLUMN IF NOT EXISTS laknam TEXT;
+ALTER TABLE public.registration_drafts ADD COLUMN IF NOT EXISTS dhosham TEXT;
 
 -- Create Indexes for faster lookups on drafts
 CREATE INDEX IF NOT EXISTS idx_drafts_session_token ON public.registration_drafts(session_token);

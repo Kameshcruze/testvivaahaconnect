@@ -213,11 +213,30 @@ app.post('/api/registrations', async (req, res) => {
       status: payload.status || 'Pending Review',
     };
 
+    let insertError = null;
     const { error } = await supabase.from('registrations').insert([recordPayload]);
 
     if (error) {
       console.warn('Server Supabase insert error:', error.message);
-      return res.status(500).json({ error: error.message });
+      if (error.message?.includes('dhosham')) {
+        const { dhosham, ...withoutDhosham } = recordPayload;
+        const retry = await supabase.from('registrations').insert([withoutDhosham]);
+        insertError = retry.error;
+      } else if (error.message?.includes('lagnam')) {
+        const { lagnam, ...withoutLagnam } = recordPayload;
+        const retry = await supabase.from('registrations').insert([withoutLagnam]);
+        insertError = retry.error;
+      } else if (error.message?.includes('laknam')) {
+        const { laknam, ...withoutLaknam } = recordPayload;
+        const retry = await supabase.from('registrations').insert([withoutLaknam]);
+        insertError = retry.error;
+      } else {
+        insertError = error;
+      }
+    }
+
+    if (insertError) {
+      return res.status(500).json({ error: insertError.message });
     }
 
     // Invalidate admin cache so fresh record shows up immediately
@@ -307,6 +326,8 @@ app.patch('/api/admin/registrations/:id', requireAdmin, async (req, res) => {
       'rasi',
       'natchatram',
       'laknam',
+      'lagnam',
+      'dhosham',
       'education_qualification',
       'profession',
       'income',
@@ -423,7 +444,9 @@ app.post('/api/registration-drafts', async (req, res) => {
         kulam: standardDraft.kulam || fd.kulam || null,
         rasi: standardDraft.rasi || fd.rasi || null,
         natchatram: standardDraft.natchatram || fd.natchatram || fd.natchathiram || null,
-        laknam: standardDraft.laknam || fd.laknam || null,
+        laknam: standardDraft.lagnam || standardDraft.laknam || fd.lagnam || fd.laknam || null,
+        lagnam: standardDraft.lagnam || standardDraft.laknam || fd.lagnam || fd.laknam || null,
+        dhosham: standardDraft.dhosham || fd.dhosham || fd.dosham || null,
         current_location: standardDraft.current_location || fd.currentLocation || fd.current_location || null,
         form_data: fd,
         status: standardDraft.status || 'Incomplete',

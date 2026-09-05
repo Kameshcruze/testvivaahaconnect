@@ -21,21 +21,30 @@ import HelpPromptBanner from './components/HelpPromptBanner';
 import RegistrationPage from './components/RegistrationPage';
 import AdminPortal from './components/AdminPortal';
 import { AppPage, getPageFromPath, navigateToPage } from './utils/navigation';
+import { trackPageView, trackEvent } from './lib/analytics';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<AppPage>(() => getPageFromPath(window.location.pathname));
   const [callModalOpen, setCallModalOpen] = useState(false);
 
   useEffect(() => {
+    trackPageView(window.location.pathname + window.location.hash);
+  }, [currentPage]);
+
+  useEffect(() => {
     const handleNavigationEvent = (e: Event) => {
       const customEvent = e as CustomEvent<{ page: AppPage; sectionId?: string }>;
       if (customEvent.detail && customEvent.detail.page) {
         setCurrentPage(customEvent.detail.page);
+        if (customEvent.detail.sectionId) {
+          trackPageView(`/${customEvent.detail.sectionId}`);
+        }
       }
     };
 
     const handlePopState = () => {
       setCurrentPage(getPageFromPath(window.location.pathname));
+      trackPageView(window.location.pathname);
     };
 
     window.addEventListener('app-navigation', handleNavigationEvent);
@@ -57,6 +66,7 @@ export default function App() {
   }, []);
 
   const handleOpenCallModal = () => {
+    trackEvent('open_call_modal', { source_page: currentPage });
     setCallModalOpen(true);
   };
 

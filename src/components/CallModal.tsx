@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Phone, Copy, Check, X, ShieldCheck, Clock, Send } from 'lucide-react';
 import { PHONE_NUMBER, PHONE_RAW } from '../types';
 import { submitEnquiryRecord } from '../lib/supabase';
+import { trackEvent } from '../lib/analytics';
 
 interface CallModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
   };
 
   const handleDirectCallClick = () => {
+    trackEvent('helpline_call_click', { phone: PHONE_NUMBER });
     // Record direct call intent into enquiries
     submitEnquiryRecord({
       type: 'phone_call',
@@ -36,6 +38,7 @@ export default function CallModal({ isOpen, onClose }: CallModalProps) {
     if (!phoneInput.trim() || !candidateName.trim()) return;
 
     setIsSubmitting(true);
+    trackEvent('callback_requested', { source: 'Call Modal' });
 
     try {
       // 1. Submit to database / Admin enquiries

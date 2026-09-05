@@ -40,6 +40,7 @@ import {
 import { validateFileSize, MAX_FILE_SIZE_MB } from '../lib/fileOptimizer';
 import { PHONE_NUMBER, PHONE_RAW, KONGU_KULAMS, TAMIL_RASIS, TAMIL_NATCHATHIRAMS, TAMIL_LAGNAMS, TAMIL_DHOSHAMS } from '../types';
 import logoImg from '../assets/images/Logo1.PNG';
+import { trackEvent } from '../lib/analytics';
 
 interface RegistrationPageProps {
   onBackToHome?: () => void;
@@ -674,6 +675,10 @@ export default function RegistrationPage({
   const handleNextStep = () => {
     if (validateStep(currentStep)) {
       const nextStep = Math.min(currentStep + 1, 5);
+      trackEvent('registration_step_progress', {
+        from_step: currentStep,
+        to_step: nextStep,
+      });
       setCurrentStep(nextStep);
       flushSaveDraft(nextStep);
       scrollToFormTop();
@@ -769,6 +774,13 @@ export default function RegistrationPage({
       if (response.success) {
         setSubmitSuccessId(response.id);
         setSubmissionIsCloud(response.isCloud);
+        trackEvent('registration_completed', {
+          registration_id: response.id,
+          gender: finalData.gender,
+          community: finalData.community,
+          kulam: finalData.kulam,
+          is_cloud: response.isCloud,
+        });
         // Mark draft completed in Supabase
         try {
           await markRegistrationDraftCompleted(draftId, response.id);

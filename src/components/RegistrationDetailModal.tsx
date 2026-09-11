@@ -29,6 +29,7 @@ interface RegistrationDetailModalProps {
   onClose: () => void;
   onStatusChange: (id: string, newStatus: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onEdit?: (record: RegistrationRecord) => void;
 }
 
 export default function RegistrationDetailModal({
@@ -36,6 +37,7 @@ export default function RegistrationDetailModal({
   onClose,
   onStatusChange,
   onDelete,
+  onEdit,
 }: RegistrationDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'personal' | 'family' | 'partner' | 'docs'>('overview');
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -98,6 +100,17 @@ export default function RegistrationDetailModal({
             </button>
 
             <div className="flex items-center gap-2">
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(registration)}
+                  className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-[#C89B63] hover:bg-[#D4A972] active:bg-[#B88A52] text-[#2D0A11] text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                  title="Edit Candidate Profile & Sync to Database"
+                >
+                  <Edit3 className="w-4 h-4 text-[#2D0A11]" />
+                  <span>Edit Profile</span>
+                </button>
+              )}
+
               <button
                 onClick={handlePrint}
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/30 text-[#FAF3EB] text-xs font-semibold flex items-center gap-1.5 transition border border-white/20"
@@ -199,6 +212,16 @@ export default function RegistrationDetailModal({
                 Registered: {registration.created_at ? new Date(registration.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
               </span>
             </div>
+
+            {onEdit && (
+              <button
+                onClick={() => onEdit(registration)}
+                className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#6A1E2C] font-bold text-[11px] sm:text-xs flex items-center gap-1 transition border border-[#C89B63]/40 shrink-0 cursor-pointer shadow-sm"
+                title="Edit this registered profile"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-[#6A1E2C]" /> Edit Profile
+              </button>
+            )}
 
             <button
               onClick={async () => {

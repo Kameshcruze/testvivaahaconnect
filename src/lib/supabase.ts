@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { optimizeImageFile, validateFileSize } from './fileOptimizer';
-import { EnquiryRecord, EnquiryType, EnquiryStatus, RegistrationDraftRecord, DraftStatus } from '../types';
+import { EnquiryRecord, EnquiryType, EnquiryStatus, RegistrationDraftRecord, DraftStatus, RegistrationRecord } from '../types';
 
 // Auto-clean any stale invalid localStorage configs
 if (typeof window !== 'undefined') {
@@ -1052,6 +1052,125 @@ export async function updateRegistrationDraftStatus(
     } catch {}
   }
   return true;
+}
+
+/**
+ * Updates a full registered profile in Supabase and server API fallback
+ */
+export async function updateRegistrationProfile(
+  id: string,
+  updates: Partial<RegistrationRecord>,
+  authToken?: string | null
+): Promise<{ success: boolean; data?: RegistrationRecord; error?: string }> {
+  const cleanId = (id || '').trim();
+  if (!cleanId) {
+    return { success: false, error: 'Registration ID is missing.' };
+  }
+
+  const supabase = getSupabase();
+  let updatedRecord: RegistrationRecord | undefined;
+  let directSuccess = false;
+
+  // 1. Direct Supabase Client update
+  if (supabase && isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('registrations')
+        .update(updates)
+        .eq('id', cleanId)
+        .select();
+
+      if (!error && data && data[0]) {
+        directSuccess = true;
+        updatedRecord = data[0] as RegistrationRecord;
+      } else if (error) {
+        console.warn('Direct Supabase update notice:', error.message);
+        if (error.message?.includes('dhosham')) {
+          const { dhosham, ...withoutDhosham } = updates;
+          const retry = await supabase.from('registrations').update(withoutDhosham).eq('id', cleanId).select();
+          if (!retry.error && retry.data?.[0]) {
+            directSuccess = true;
+            updatedRecord = retry.data[0] as RegistrationRecord;
+          }
+        } else if (error.message?.includes('lagnam')) {
+          const { lagnam, ...withoutLagnam } = updates;
+          const retry = await supabase.from('registrations').update(withoutLagnam).eq('id', cleanId).select();
+          if (!retry.error && retry.data?.[0]) {
+            directSuccess = true;
+            updatedRecord = retry.data[0] as RegistrationRecord;
+          }
+        } else if (error.message?.includes('laknam')) {
+          const { laknam, ...withoutLaknam } = updates;
+          const retry = await supabase.from('registrations').update(withoutLaknam).eq('id', cleanId).select();
+          if (!retry.error && retry.data?.[0]) {
+            directSuccess = true;
+            updatedRecord = retry.data[0] as RegistrationRecord;
+          }
+        }
+      }
+    } catch (dbErr: any) {
+      console.warn('Caught direct Supabase update error:', dbErr?.message);
+    }
+  }
+
+  // 2. Server API Route update fallback (with admin bearer token)
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    const res = await fetch(`/api/admin/registrations/${encodeURIComponent(cleanId)}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(updates),
+    });
+
+    if (res.ok) {
+      const resJson = await res.json().catch(() => null);
+      if (resJson?.success) {
+        if (!updatedRecord && resJson.registration) {
+          updatedRecord = resJson.registration;
+        }
+        directSuccess = true;
+      }
+    }
+  } catch (apiErr: any) {
+    console.warn('Server API registration patch warning:', apiErr?.message);
+  }
+
+  // 3. Update local caches to keep the UI in sync
+  try {
+    const updateLocalList = (storageKey: string) => {
+      const raw = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          const updated = list.map((item: any) =>
+            item.id === cleanId ? { ...item, ...updates, ...(updatedRecord || {}) } : item
+          );
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(updated));
+            sessionStorage.setItem(storageKey, JSON.stringify(updated));
+          } catch {}
+        }
+      }
+    };
+    updateLocalList('vivaaha_registrations');
+    updateLocalList('vivaaha_cached_admin_records');
+  } catch {}
+
+  if (directSuccess) {
+    return {
+      success: true,
+      data: updatedRecord,
+    };
+  }
+
+  return {
+    success: false,
+    error: 'Could not persist updates to the database. Please check connection and try again.',
+  };
 }
 
 /**

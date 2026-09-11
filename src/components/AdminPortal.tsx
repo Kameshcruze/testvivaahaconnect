@@ -29,9 +29,12 @@ import {
   Building2,
   Calendar,
   MessageSquare,
+  Edit3,
+  X,
 } from 'lucide-react';
 import { RegistrationRecord, AdminUser, EnquiryRecord, EnquiryStatus, RegistrationDraftRecord, DraftStatus } from '../types';
 import RegistrationDetailModal from './RegistrationDetailModal';
+import EditRegistrationModal from './EditRegistrationModal';
 import AdminEnquiriesTab from './AdminEnquiriesTab';
 import AdminDraftsTab from './AdminDraftsTab';
 import {
@@ -40,6 +43,7 @@ import {
   fetchAdminRegistrationDrafts,
   updateRegistrationDraftStatus,
   deleteRegistrationDraft,
+  updateRegistrationProfile,
 } from '../lib/supabase';
 import logoImg from '../assets/images/Logo1.PNG';
 
@@ -101,6 +105,8 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<RegistrationRecord | null>(null);
+  const [editingRecord, setEditingRecord] = useState<RegistrationRecord | null>(null);
+  const [editFeedback, setEditFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Filter & Search State for Registrations
   const [searchTerm, setSearchTerm] = useState('');
@@ -585,6 +591,48 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
     }
   };
 
+  // Profile Edit & Update Handler that syncs to DB
+  const handleSaveEditedProfile = async (updated: RegistrationRecord): Promise<boolean> => {
+    try {
+      const res = await updateRegistrationProfile(updated.id, updated, token || undefined);
+      if (res.success) {
+        const finalData = res.data || updated;
+        setRegistrations((prev) => {
+          const next = prev.map((r) => (r.id === updated.id ? finalData : r));
+          try {
+            sessionStorage.setItem('vivaaha_cached_admin_records', JSON.stringify(next));
+            localStorage.setItem('vivaaha_registrations', JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+
+        if (selectedRecord && selectedRecord.id === updated.id) {
+          setSelectedRecord(finalData);
+        }
+
+        setEditFeedback({
+          type: 'success',
+          message: `Profile ${updated.id} (${updated.name}) successfully updated and saved to database.`,
+        });
+        setTimeout(() => setEditFeedback(null), 4000);
+        return true;
+      } else {
+        setEditFeedback({
+          type: 'error',
+          message: res.error || 'Failed to update record in database.',
+        });
+        return false;
+      }
+    } catch (err: any) {
+      console.error('Error saving edited profile:', err);
+      setEditFeedback({
+        type: 'error',
+        message: err.message || 'Error updating record in database.',
+      });
+      return false;
+    }
+  };
+
   // Export to CSV
   const handleExportCSV = () => {
     if (registrations.length === 0) return;
@@ -1019,6 +1067,32 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
         {/* Tab 1: Registrations View */}
         {activeTab === 'registrations' && (
           <>
+            {/* Edit / Database Notification Banner */}
+            {editFeedback && (
+              <div
+                className={`p-4 rounded-2xl border flex items-center justify-between gap-3 text-xs font-medium animate-fade-in ${
+                  editFeedback.type === 'success'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    : 'bg-rose-50 border-rose-200 text-rose-900'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  {editFeedback.type === 'success' ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                  )}
+                  <span>{editFeedback.message}</span>
+                </div>
+                <button
+                  onClick={() => setEditFeedback(null)}
+                  className="p-1 rounded-lg hover:bg-black/5 text-stone-500 hover:text-stone-800 transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* Metric Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-4">
               <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-sm">
@@ -1327,13 +1401,24 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     <option value="Closed / Married">Closed / Married</option>
                   </select>
 
-                  <button
-                    onClick={() => setSelectedRecord(item)}
-                    className="px-3 py-1.5 rounded-xl bg-[#6A1E2C] hover:bg-[#8C283B] text-white text-xs font-bold transition flex items-center gap-1 shadow-sm shrink-0"
-                  >
-                    <span>View Profile</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => setEditingRecord(item)}
+                      className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#6A1E2C] border border-[#C89B63]/40 text-xs font-bold transition flex items-center gap-1 shadow-sm cursor-pointer"
+                      title="Edit Candidate Profile"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-[#6A1E2C]" />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedRecord(item)}
+                      className="px-3 py-1.5 rounded-xl bg-[#6A1E2C] hover:bg-[#8C283B] text-white text-xs font-bold transition flex items-center gap-1 shadow-sm shrink-0 cursor-pointer"
+                    >
+                      <span>View</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1486,11 +1571,20 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
+                            onClick={() => setEditingRecord(item)}
+                            className="px-2 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-[#6A1E2C] border border-[#C89B63]/40 text-[11px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer"
+                            title="Edit Candidate Profile"
+                          >
+                            <Edit3 className="w-3 h-3 text-[#6A1E2C]" />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
                             onClick={() => setSelectedRecord(item)}
-                            className="px-2.5 py-1.5 rounded-lg bg-[#6A1E2C] hover:bg-[#8C283B] text-white text-[11px] font-bold transition flex items-center gap-1 shadow-sm"
+                            className="px-2.5 py-1.5 rounded-lg bg-[#6A1E2C] hover:bg-[#8C283B] text-white text-[11px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer"
                             title="View Full Profile"
                           >
-                            <span>View Details</span>
+                            <span>View</span>
                             <ChevronRight className="w-3 h-3" />
                           </button>
                         </div>
@@ -1513,6 +1607,19 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
           onClose={() => setSelectedRecord(null)}
           onStatusChange={handleUpdateStatus}
           onDelete={handleDeleteRecord}
+          onEdit={(record) => {
+            setEditingRecord(record);
+          }}
+        />
+      )}
+
+      {/* Edit Registration Profile Modal */}
+      {editingRecord && (
+        <EditRegistrationModal
+          registration={editingRecord}
+          isOpen={Boolean(editingRecord)}
+          onClose={() => setEditingRecord(null)}
+          onSave={handleSaveEditedProfile}
         />
       )}
     </div>

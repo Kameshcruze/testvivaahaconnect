@@ -312,14 +312,25 @@ app.patch('/api/admin/registrations/:id', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Registration ID is required' });
     }
 
-    // Filter allowed update keys
+    // Filter allowed update keys for candidate profile
     const allowedKeys = [
+      // Status
       'status',
+      // Personal
       'name',
+      'gender',
+      'dob',
+      'age',
+      'height',
+      'weight',
+      'marital_status',
+      // Contact
       'mobile_number',
       'whatsapp_number',
+      'email',
       'current_location',
       'native_place',
+      // Community & Astrology
       'community',
       'kulam',
       'kuladeivam',
@@ -328,14 +339,41 @@ app.patch('/api/admin/registrations/:id', requireAdmin, async (req, res) => {
       'laknam',
       'lagnam',
       'dhosham',
+      // Education & Career
       'education_qualification',
       'profession',
+      'company_name',
+      'work_location',
       'income',
+      // Family
+      'father_name',
+      'father_occupation',
+      'mother_name',
+      'mother_occupation',
+      'brothers_count',
+      'brothers_married',
+      'brothers_unmarried',
+      'sisters_count',
+      'sisters_married',
+      'sisters_unmarried',
+      'family_type',
+      'family_status',
+      'family_background',
+      // Partner Preferences
       'partner_age_range',
       'partner_education',
       'partner_profession',
+      'partner_income_preference',
       'partner_community_preference',
       'partner_location_preference',
+      'partner_other_expectations',
+      // Documents & Media
+      'photo_url',
+      'photo_file_name',
+      'jathagam_url',
+      'jathagam_file_name',
+      'community_certificate_url',
+      'community_certificate_file_name',
     ];
 
     const cleanUpdates: Record<string, any> = {};
@@ -345,17 +383,37 @@ app.patch('/api/admin/registrations/:id', requireAdmin, async (req, res) => {
       }
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('registrations')
       .update(cleanUpdates)
       .eq('id', id)
       .select();
 
     if (error) {
+      console.warn('Server Supabase update error:', error.message);
+      if (error.message?.includes('dhosham')) {
+        const { dhosham, ...withoutDhosham } = cleanUpdates;
+        const retry = await supabase.from('registrations').update(withoutDhosham).eq('id', id).select();
+        error = retry.error;
+        data = retry.data;
+      } else if (error.message?.includes('lagnam')) {
+        const { lagnam, ...withoutLagnam } = cleanUpdates;
+        const retry = await supabase.from('registrations').update(withoutLagnam).eq('id', id).select();
+        error = retry.error;
+        data = retry.data;
+      } else if (error.message?.includes('laknam')) {
+        const { laknam, ...withoutLaknam } = cleanUpdates;
+        const retry = await supabase.from('registrations').update(withoutLaknam).eq('id', id).select();
+        error = retry.error;
+        data = retry.data;
+      }
+    }
+
+    if (error) {
       return res.status(500).json({ error: error.message });
     }
 
-    // Invalidate cache
+    // Invalidate cache so fresh data is returned
     cachedAdminData = null;
 
     return res.json({ success: true, registration: data?.[0] });

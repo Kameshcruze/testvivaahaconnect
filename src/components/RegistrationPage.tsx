@@ -548,9 +548,8 @@ export default function RegistrationPage({
         setErrorMessage('Please enter native place (district / village) (mandatory).');
         return false;
       }
-      if (!formData.community.trim()) {
-        setErrorMessage('Please enter community (mandatory).');
-        return false;
+      if (!formData.community?.trim()) {
+        formData.community = 'Kongu Vellala Gounder';
       }
       if (!formData.kulam.trim()) {
         setErrorMessage('Please enter Kulam / Gotram (mandatory).');
@@ -1338,7 +1337,7 @@ export default function RegistrationPage({
                       />
                     </div>
 
-                    {/* Community / Caste - Editable */}
+                    {/* Community / Caste - Fixed & Non-editable */}
                     <div>
                       <label className="block text-xs font-bold text-[#6A1E2C] uppercase tracking-wider mb-1.5">
                         Community / Caste <span className="text-red-600 font-bold">*</span>
@@ -1347,10 +1346,11 @@ export default function RegistrationPage({
                         type="text"
                         name="community"
                         required
-                        value={formData.community}
-                        onChange={handleInputChange}
-                        placeholder="e.g. Kongu Vellala Gounder"
-                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-[#FFF9F5]/40 text-sm focus:outline-none focus:border-[#6A1E2C] transition shadow-sm"
+                        readOnly
+                        value={formData.community || 'Kongu Vellala Gounder'}
+                        placeholder="Kongu Vellala Gounder"
+                        title="Exclusive for Kongu Vellala Gounder matrimony"
+                        className="w-full px-4 py-3 rounded-2xl border border-[#C89B63]/30 bg-stone-100/85 text-[#222222] font-semibold text-sm cursor-not-allowed select-none shadow-sm focus:outline-none"
                       />
                     </div>
 

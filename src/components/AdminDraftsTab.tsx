@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Phone,
   MessageCircle,
@@ -22,6 +22,8 @@ import {
   Copy,
   Check,
   Layers,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { RegistrationDraftRecord, DraftStatus } from '../types';
 
@@ -46,6 +48,15 @@ export default function AdminDraftsTab({
   const [selectedDraft, setSelectedDraft] = useState<RegistrationDraftRecord | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Pagination for fast rendering
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 24;
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [stepFilter, statusFilter, searchTerm]);
 
   // Clean phone helper
   const cleanPhone = (phone?: string | null) => {
@@ -86,7 +97,11 @@ export default function AdminDraftsTab({
   const filtered = useMemo(() => {
     return drafts.filter((d) => {
       // Step filter
-      if (stepFilter !== 'all' && String(d.current_step) !== stepFilter) {
+      if (stepFilter === 'high_intent') {
+        if ((d.current_step || 1) < 2) {
+          return false;
+        }
+      } else if (stepFilter !== 'all' && String(d.current_step) !== stepFilter) {
         return false;
       }
 
@@ -116,17 +131,29 @@ export default function AdminDraftsTab({
     });
   }, [drafts, stepFilter, statusFilter, searchTerm]);
 
+  // Paginated records slice
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  const paginatedDrafts = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, currentPage, PAGE_SIZE]);
+
   // Summary Metrics
   const metrics = useMemo(() => {
     const total = drafts.length;
-    const step1Only = drafts.filter((d) => d.current_step === 1).length;
-    const step2or3 = drafts.filter((d) => d.current_step === 2 || d.current_step === 3).length;
-    const step4or5 = drafts.filter((d) => d.current_step >= 4).length;
-    const incomplete = drafts.filter((d) => d.status === 'Incomplete' || d.status === 'Draft').length;
-    const followedUp = drafts.filter((d) => d.status === 'Followed Up').length;
-    const completed = drafts.filter((d) => d.status === 'Completed').length;
+    let highIntent = 0;
+    let incomplete = 0;
+    let followedUp = 0;
+    let completed = 0;
 
-    return { total, step1Only, step2or3, step4or5, incomplete, followedUp, completed };
+    for (const d of drafts) {
+      if ((d.current_step || 1) >= 2) highIntent++;
+      if (d.status === 'Followed Up') followedUp++;
+      else if (d.status === 'Completed') completed++;
+      else incomplete++;
+    }
+
+    return { total, highIntent, incomplete, followedUp, completed };
   }, [drafts]);
 
   // Export CSV
@@ -270,31 +297,76 @@ export default function AdminDraftsTab({
       {/* Metrics Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {/* Metric 1: Total Leads */}
-        <div className="bg-white rounded-2xl p-4 border border-stone-200/80 shadow-xs">
+        <button
+          type="button"
+          onClick={() => {
+            setStepFilter('all');
+            setStatusFilter('all');
+            setSearchTerm('');
+          }}
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
+            stepFilter === 'all' && statusFilter === 'all' && !searchTerm
+              ? 'bg-amber-50/70 border-[#6A1E2C] ring-2 ring-[#6A1E2C]/30 shadow-xs'
+              : 'bg-white border-stone-200 shadow-xs hover:border-stone-300'
+          }`}
+          title="Click to view all incomplete drafts"
+        >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">Total Incomplete</span>
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className={`w-2 h-2 rounded-full ${stepFilter === 'all' && statusFilter === 'all' && !searchTerm ? 'bg-[#6A1E2C] ring-2 ring-amber-200' : 'bg-amber-500'}`} />
           </div>
           <p className="text-2xl sm:text-3xl font-black text-stone-900 mt-2">{metrics.total}</p>
           <span className="text-[11px] text-amber-700 font-medium mt-1 block">
             {metrics.incomplete} requiring follow-up
           </span>
-        </div>
+        </button>
 
-        {/* Metric 2: Step 4/5 Near Complete */}
-        <div className="bg-white rounded-2xl p-4 border border-emerald-200/80 bg-emerald-50/20 shadow-xs">
+        {/* Metric 2: High Intent Step 2-5 */}
+        <button
+          type="button"
+          onClick={() => {
+            if (stepFilter === 'high_intent') {
+              setStepFilter('all');
+            } else {
+              setStepFilter('high_intent');
+              setStatusFilter('all');
+            }
+          }}
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
+            stepFilter === 'high_intent'
+              ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-400/40 shadow-xs'
+              : 'bg-white border-stone-200 shadow-xs hover:border-emerald-200'
+          }`}
+          title="Click to filter High Intent drafts (Astrology/Family filled in)"
+        >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">High Intent (Step 3-5)</span>
             <FileText className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-emerald-950 mt-2">{metrics.step4or5 + metrics.step2or3}</p>
+          <p className="text-2xl sm:text-3xl font-black text-emerald-950 mt-2">{metrics.highIntent}</p>
           <span className="text-[11px] text-emerald-700 font-medium mt-1 block">
             Astrology/Family filled in
           </span>
-        </div>
+        </button>
 
         {/* Metric 3: Followed Up */}
-        <div className="bg-white rounded-2xl p-4 border border-blue-200/80 bg-blue-50/20 shadow-xs">
+        <button
+          type="button"
+          onClick={() => {
+            if (statusFilter === 'Followed Up') {
+              setStatusFilter('all');
+            } else {
+              setStatusFilter('Followed Up');
+              setStepFilter('all');
+            }
+          }}
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
+            statusFilter === 'Followed Up'
+              ? 'bg-blue-50/80 border-blue-500 ring-2 ring-blue-400/40 shadow-xs'
+              : 'bg-white border-stone-200 shadow-xs hover:border-blue-200'
+          }`}
+          title="Click to filter Followed Up drafts"
+        >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">Followed Up</span>
             <Phone className="w-4 h-4 text-blue-600" />
@@ -303,10 +375,26 @@ export default function AdminDraftsTab({
           <span className="text-[11px] text-blue-700 font-medium mt-1 block">
             Contacted by team
           </span>
-        </div>
+        </button>
 
         {/* Metric 4: Completed Registrations */}
-        <div className="bg-white rounded-2xl p-4 border border-purple-200/80 bg-purple-50/20 shadow-xs">
+        <button
+          type="button"
+          onClick={() => {
+            if (statusFilter === 'Completed') {
+              setStatusFilter('all');
+            } else {
+              setStatusFilter('Completed');
+              setStepFilter('all');
+            }
+          }}
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
+            statusFilter === 'Completed'
+              ? 'bg-purple-50/80 border-purple-500 ring-2 ring-purple-400/40 shadow-xs'
+              : 'bg-white border-stone-200 shadow-xs hover:border-purple-200'
+          }`}
+          title="Click to filter Completed drafts"
+        >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-purple-800 uppercase tracking-wider">Completed</span>
             <CheckCircle2 className="w-4 h-4 text-purple-600" />
@@ -315,7 +403,7 @@ export default function AdminDraftsTab({
           <span className="text-[11px] text-purple-700 font-medium mt-1 block">
             Submitted to final table
           </span>
-        </div>
+        </button>
       </div>
 
       {/* Filter & Search Bar */}
@@ -328,8 +416,18 @@ export default function AdminDraftsTab({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by candidate name, phone number, kulam, rasi, location..."
-            className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-stone-50 hover:bg-stone-100/80 focus:bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6A1E2C]/20 focus:border-[#6A1E2C] transition"
+            className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-stone-50 hover:bg-stone-100/80 focus:bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6A1E2C]/20 focus:border-[#6A1E2C] transition"
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 text-xs font-bold cursor-pointer"
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Filter Dropdowns */}
@@ -338,9 +436,10 @@ export default function AdminDraftsTab({
           <select
             value={stepFilter}
             onChange={(e) => setStepFilter(e.target.value)}
-            className="px-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl font-semibold text-stone-700 focus:outline-none focus:ring-2 focus:ring-[#6A1E2C]/20"
+            className="px-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl font-semibold text-stone-700 focus:outline-none focus:ring-2 focus:ring-[#6A1E2C]/20 cursor-pointer"
           >
             <option value="all">All Steps</option>
+            <option value="high_intent">High Intent (Step 2-5)</option>
             <option value="1">Step 1: Personal</option>
             <option value="2">Step 2: Astrology & Kulam</option>
             <option value="3">Step 3: Education & Career</option>
@@ -352,7 +451,7 @@ export default function AdminDraftsTab({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl font-semibold text-stone-700 focus:outline-none focus:ring-2 focus:ring-[#6A1E2C]/20"
+            className="px-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl font-semibold text-stone-700 focus:outline-none focus:ring-2 focus:ring-[#6A1E2C]/20 cursor-pointer"
           >
             <option value="all">All Statuses</option>
             <option value="Incomplete">Incomplete (Active Lead)</option>
@@ -392,7 +491,7 @@ export default function AdminDraftsTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 text-xs text-stone-700">
-                {filtered.map((draft) => {
+                {paginatedDrafts.map((draft) => {
                   const phoneNum = draft.mobile_number || draft.whatsapp_number;
                   const hasPhone = Boolean(phoneNum);
 
@@ -593,6 +692,44 @@ export default function AdminDraftsTab({
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-stone-200 shadow-xs">
+          <div className="text-xs text-stone-500 font-medium">
+            Showing <span className="font-bold text-stone-800">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
+            <span className="font-bold text-stone-800">
+              {Math.min(currentPage * PAGE_SIZE, filtered.length)}
+            </span>{' '}
+            of <span className="font-bold text-stone-800">{filtered.length}</span> drafts
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-xl border border-stone-200 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition text-stone-700 cursor-pointer"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            
+            <span className="px-3 py-1.5 text-xs font-bold text-[#6A1E2C] bg-amber-50 rounded-xl border border-[#C89B63]/30">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-xl border border-stone-200 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition text-stone-700 cursor-pointer"
+              title="Next Page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal: View Incomplete Draft Details */}
       {selectedDraft && (

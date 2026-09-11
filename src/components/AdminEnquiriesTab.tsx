@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Phone,
   MessageCircle,
@@ -18,6 +18,8 @@ import {
   MapPin,
   Calendar,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { EnquiryRecord, EnquiryStatus, EnquiryType } from '../types';
 
@@ -42,6 +44,14 @@ export default function AdminEnquiriesTab({
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [tempNotes, setTempNotes] = useState<string>('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Pagination for fast rendering
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 25;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, typeFilter, statusFilter]);
 
   // Clean phone helper
   const cleanPhone = (phone?: string | null) => {
@@ -94,13 +104,41 @@ export default function AdminEnquiriesTab({
     });
   }, [enquiries, searchTerm, typeFilter, statusFilter]);
 
+  // Paginated records
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  const paginatedEnquiries = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, currentPage, PAGE_SIZE]);
+
   // Metrics
-  const totalCount = enquiries.length;
-  const newCount = enquiries.filter((e) => e.status === 'New').length;
-  const callbackCount = enquiries.filter((e) => e.type === 'callback_request').length;
-  const whatsappCount = enquiries.filter((e) => e.type === 'whatsapp_click').length;
-  const contactedCount = enquiries.filter((e) => e.status === 'Contacted' || e.status === 'In Progress').length;
-  const convertedCount = enquiries.filter((e) => e.status === 'Converted').length;
+  const metrics = useMemo(() => {
+    let newCount = 0;
+    let callbackCount = 0;
+    let whatsappCount = 0;
+    let contactedCount = 0;
+    let convertedCount = 0;
+
+    for (const e of enquiries) {
+      if (e.status === 'New') newCount++;
+      else if (e.status === 'Contacted' || e.status === 'In Progress') contactedCount++;
+      else if (e.status === 'Converted') convertedCount++;
+
+      if (e.type === 'callback_request') callbackCount++;
+      else if (e.type === 'whatsapp_click') whatsappCount++;
+    }
+
+    return {
+      totalCount: enquiries.length,
+      newCount,
+      callbackCount,
+      whatsappCount,
+      contactedCount,
+      convertedCount,
+    };
+  }, [enquiries]);
+
+  const { totalCount, newCount, callbackCount, whatsappCount, convertedCount } = metrics;
 
   // Export to CSV
   const handleExportCSV = () => {
@@ -197,45 +235,127 @@ export default function AdminEnquiriesTab({
     <div className="space-y-5">
       {/* Metric Cards Header */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-stone-400 text-[11px] sm:text-xs block font-medium">Total Enquiries</span>
+        {/* Metric 1: Total Enquiries */}
+        <button
+          type="button"
+          onClick={() => {
+            setTypeFilter('all');
+            setStatusFilter('all');
+            setSearchTerm('');
+          }}
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
+            typeFilter === 'all' && statusFilter === 'all' && !searchTerm
+              ? 'bg-amber-50/70 border-[#6A1E2C] ring-2 ring-[#6A1E2C]/30 shadow-xs'
+              : 'bg-white border-stone-200 shadow-xs hover:border-stone-300'
+          }`}
+          title="Click to view all enquiries"
+        >
+          <span className="text-stone-500 text-[11px] sm:text-xs block font-semibold">Total Enquiries</span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-xl sm:text-3xl font-heading font-bold text-[#6A1E2C]">{totalCount}</span>
-            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-stone-300" />
+            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-stone-400" />
           </div>
-        </div>
+        </button>
 
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-rose-200 bg-rose-50/20 shadow-xs">
-          <span className="text-rose-700 text-[11px] sm:text-xs block font-medium">New / Uncontacted</span>
+        {/* Metric 2: New / Uncontacted */}
+        <button
+          type="button"
+          onClick={() => {
+            if (statusFilter === 'New') {
+              setStatusFilter('all');
+            } else {
+              setStatusFilter('New');
+              setTypeFilter('all');
+            }
+          }}
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
+            statusFilter === 'New'
+              ? 'bg-rose-50/80 border-rose-500 ring-2 ring-rose-400/40 shadow-xs'
+              : 'bg-white border-stone-200 shadow-xs hover:border-rose-200'
+          }`}
+          title="Click to filter New / Uncontacted enquiries"
+        >
+          <span className="text-rose-700 text-[11px] sm:text-xs block font-semibold">New / Uncontacted</span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-xl sm:text-3xl font-heading font-bold text-rose-800">{newCount}</span>
-            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-rose-400" />
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
           </div>
-        </div>
+        </button>
 
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200 bg-amber-50/20 shadow-xs">
-          <span className="text-amber-800 text-[11px] sm:text-xs block font-medium">Callback Requests</span>
+        {/* Metric 3: Callback Requests */}
+        <button
+          type="button"
+          onClick={() => {
+            if (typeFilter === 'callback_request') {
+              setTypeFilter('all');
+            } else {
+              setTypeFilter('callback_request');
+              setStatusFilter('all');
+            }
+          }}
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
+            typeFilter === 'callback_request'
+              ? 'bg-amber-50/80 border-amber-500 ring-2 ring-amber-400/40 shadow-xs'
+              : 'bg-white border-stone-200 shadow-xs hover:border-amber-200'
+          }`}
+          title="Click to filter Callback Requests"
+        >
+          <span className="text-amber-800 text-[11px] sm:text-xs block font-semibold">Callback Requests</span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-xl sm:text-3xl font-heading font-bold text-amber-900">{callbackCount}</span>
-            <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
+            <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
           </div>
-        </div>
+        </button>
 
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-emerald-200 bg-emerald-50/20 shadow-xs">
-          <span className="text-emerald-700 text-[11px] sm:text-xs block font-medium">WhatsApp Leads</span>
+        {/* Metric 4: WhatsApp Leads */}
+        <button
+          type="button"
+          onClick={() => {
+            if (typeFilter === 'whatsapp_click') {
+              setTypeFilter('all');
+            } else {
+              setTypeFilter('whatsapp_click');
+              setStatusFilter('all');
+            }
+          }}
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
+            typeFilter === 'whatsapp_click'
+              ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-400/40 shadow-xs'
+              : 'bg-white border-stone-200 shadow-xs hover:border-emerald-200'
+          }`}
+          title="Click to filter WhatsApp Leads"
+        >
+          <span className="text-emerald-700 text-[11px] sm:text-xs block font-semibold">WhatsApp Leads</span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-xl sm:text-3xl font-heading font-bold text-emerald-800">{whatsappCount}</span>
-            <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+            <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
           </div>
-        </div>
+        </button>
 
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-xs col-span-2 sm:col-span-1">
-          <span className="text-emerald-700 text-[11px] sm:text-xs block font-medium">Converted / Registered</span>
+        {/* Metric 5: Converted / Registered */}
+        <button
+          type="button"
+          onClick={() => {
+            if (statusFilter === 'Converted') {
+              setStatusFilter('all');
+            } else {
+              setStatusFilter('Converted');
+              setTypeFilter('all');
+            }
+          }}
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] col-span-2 sm:col-span-1 ${
+            statusFilter === 'Converted'
+              ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-400/40 shadow-xs'
+              : 'bg-white border-stone-200 shadow-xs hover:border-emerald-200'
+          }`}
+          title="Click to filter Converted / Registered"
+        >
+          <span className="text-emerald-700 text-[11px] sm:text-xs block font-semibold">Converted / Registered</span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-xl sm:text-3xl font-heading font-bold text-emerald-800">{convertedCount}</span>
-            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Filter & Search Bar */}
@@ -359,7 +479,7 @@ export default function AdminEnquiriesTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 text-stone-700">
-                {filtered.map((item) => (
+                {paginatedEnquiries.map((item) => (
                   <tr key={item.id} className="hover:bg-[#FFF9F5] transition group">
                     {/* Timestamp */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
@@ -524,6 +644,44 @@ export default function AdminEnquiriesTab({
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {filtered.length > PAGE_SIZE && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 sm:p-4 border-t border-stone-200">
+              <div className="text-xs text-stone-500 font-medium">
+                Showing <span className="font-bold text-stone-800">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
+                <span className="font-bold text-stone-800">
+                  {Math.min(currentPage * PAGE_SIZE, filtered.length)}
+                </span>{' '}
+                of <span className="font-bold text-stone-800">{filtered.length}</span> enquiries
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-xl border border-stone-200 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition text-stone-700 cursor-pointer"
+                  title="Previous Page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                <span className="px-3 py-1.5 text-xs font-bold text-[#6A1E2C] bg-amber-50 rounded-xl border border-[#C89B63]/30">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-xl border border-stone-200 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition text-stone-700 cursor-pointer"
+                  title="Next Page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

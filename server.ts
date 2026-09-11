@@ -195,7 +195,7 @@ app.get('/api/admin/verify', (req, res) => {
 
 // Cache for fast admin registrations fetching
 let cachedAdminData: { timestamp: number; data: any[] } | null = null;
-const CACHE_TTL_MS = 5000; // 5 seconds cache to make repeated clicks/refreshes instant
+const CACHE_TTL_MS = 30000; // 30 seconds cache for instant response, automatically invalidated on mutations
 
 // Public candidate registration submission endpoint
 app.post('/api/registrations', async (req, res) => {
@@ -633,8 +633,9 @@ app.get('/api/admin/registration-drafts', requireAdmin, async (req, res) => {
     try {
       const { data, error } = await supabase
         .from('registration_drafts')
-        .select('*')
-        .order('updated_at', { ascending: false });
+        .select('id, session_token, current_step, candidate_name, gender, mobile_number, whatsapp_number, email, community, kulam, rasi, natchatram, laknam, lagnam, dhosham, current_location, native_place, education_qualification, profession, company_name, income, father_name, mother_name, partner_age_range, partner_education, status, created_at, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(250);
 
       if (!error && Array.isArray(data)) {
         cloudList = data;

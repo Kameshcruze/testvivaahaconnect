@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Lock,
   User,
@@ -14,6 +14,7 @@ import {
   MessageCircle,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
   Trash2,
   CheckCircle2,
@@ -108,6 +109,10 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
   const [editingRecord, setEditingRecord] = useState<RegistrationRecord | null>(null);
   const [editFeedback, setEditFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  // Pagination state for ultra-fast rendering
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 24;
+
   // Filter & Search State for Registrations
   const [searchTerm, setSearchTerm] = useState('');
   const [genderFilter, setGenderFilter] = useState<'all' | 'Female' | 'Male'>('all');
@@ -119,6 +124,11 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
   const handleImageError = (id: string) => {
     setBrokenImages((prev) => ({ ...prev, [id]: true }));
   };
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, genderFilter, statusFilter, kulamFilter]);
 
   // Verify existing token on mount and listen for real-time enquiry submissions
   useEffect(() => {
@@ -163,82 +173,95 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
 
   const verifyAndFetch = async (authToken: string, force = false) => {
     try {
-      if (registrations.length === 0 || force) {
+      // If we already have cached records, do NOT block screen with full-page loading spinner
+      if (registrations.length === 0 && !force) {
         setLoadingData(true);
       } else {
         setIsSyncing(true);
       }
       setDataError(null);
 
-      let records: RegistrationRecord[] | null = null;
-      let enqRecords: EnquiryRecord[] | null = null;
-
-      // 1. Fetch from Supabase database
-      const supabase = getSupabase();
-      if (supabase) {
-        try {
-          // Fetch Registrations
-          const { data: dbData, error: dbError } = await supabase
-            .from('registrations')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-          if (!dbError && dbData) {
-            records = dbData as RegistrationRecord[];
-          }
-
-          // Fetch Enquiries
-          const { data: enqData, error: enqError } = await supabase
-            .from('enquiries')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-          if (!enqError && enqData && Array.isArray(enqData)) {
-            enqRecords = enqData.map(normalizeEnquiryRecord);
-          }
-        } catch (dbErr) {
-          console.warn('Direct Supabase fetch caught:', dbErr);
-        }
-      }
-
-      // 2. Server API fallback for Registrations & Enquiries
-      if (!records) {
+      // Fast loader for Registrations: Server API with cache first (~15ms), direct Supabase as fallback
+      const fetchRegs = async (): Promise<RegistrationRecord[]> => {
         try {
           const url = force ? '/api/admin/registrations?force=true' : '/api/admin/registrations';
           const res = await fetch(url, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
+            headers: { Authorization: `Bearer ${authToken}` },
           });
-
           if (res.ok) {
             const data = await res.json().catch(() => null);
-            if (data?.success && Array.isArray(data.registrations)) {
-              records = data.registrations;
+            if (data?.success && Array.isArray(data.registrations) && data.registrations.length > 0) {
+              return data.registrations;
             }
           }
         } catch {}
-      }
 
-      if (!enqRecords) {
+        const supabase = getSupabase();
+        if (supabase) {
+          try {
+            const { data, error } = await supabase
+              .from('registrations')
+              .select('*')
+              .order('created_at', { ascending: false });
+            if (!error && Array.isArray(data)) {
+              return data as RegistrationRecord[];
+            }
+          } catch {}
+        }
+        return [];
+      };
+
+      // Fast loader for Enquiries: Server API first, direct Supabase fallback
+      const fetchEnqs = async (): Promise<EnquiryRecord[]> => {
         try {
           const url = force ? '/api/admin/enquiries?force=true' : '/api/admin/enquiries';
           const res = await fetch(url, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
+            headers: { Authorization: `Bearer ${authToken}` },
           });
-
           if (res.ok) {
             const data = await res.json().catch(() => null);
             if (data?.success && Array.isArray(data.enquiries)) {
-              enqRecords = data.enquiries.map(normalizeEnquiryRecord);
+              return data.enquiries.map(normalizeEnquiryRecord);
             }
           }
         } catch {}
-      }
 
-      // 3. Resilient Deduplicating Merging for Enquiries
+        const supabase = getSupabase();
+        if (supabase) {
+          try {
+            const { data, error } = await supabase
+              .from('enquiries')
+              .select('*')
+              .order('created_at', { ascending: false });
+            if (!error && Array.isArray(data)) {
+              return data.map(normalizeEnquiryRecord);
+            }
+          } catch {}
+        }
+        return [];
+      };
+
+      // Fast loader for Drafts (summary fields only, fast query)
+      const fetchDrafts = async (): Promise<RegistrationDraftRecord[]> => {
+        try {
+          return await fetchAdminRegistrationDrafts(authToken);
+        } catch {
+          return [];
+        }
+      };
+
+      // Run ALL THREE concurrent requests in parallel
+      const [regsResult, enqsResult, draftsResult] = await Promise.allSettled([
+        fetchRegs(),
+        fetchEnqs(),
+        fetchDrafts(),
+      ]);
+
+      const records: RegistrationRecord[] = regsResult.status === 'fulfilled' ? regsResult.value : [];
+      const enqRecords: EnquiryRecord[] = enqsResult.status === 'fulfilled' ? enqsResult.value : [];
+      const draftRecords: RegistrationDraftRecord[] = draftsResult.status === 'fulfilled' ? draftsResult.value : [];
+
+      // 1. Resilient Deduplicating Merging for Enquiries
       const localEnquiries: EnquiryRecord[] = (() => {
         try {
           const raw = localStorage.getItem('vivaaha_enquiries');
@@ -249,20 +272,9 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       })();
 
       const mergedEnquiriesMap = new Map<string, EnquiryRecord>();
-      // 1. Current in-memory state
-      enquiries.forEach((e) => {
-        if (e && e.id) mergedEnquiriesMap.set(e.id, e);
-      });
-      // 2. Local storage records
-      localEnquiries.forEach((e) => {
-        if (e && e.id) mergedEnquiriesMap.set(e.id, e);
-      });
-      // 3. Remote records (from Supabase or server API)
-      if (Array.isArray(enqRecords)) {
-        enqRecords.forEach((e) => {
-          if (e && e.id) mergedEnquiriesMap.set(e.id, e);
-        });
-      }
+      enquiries.forEach((e) => { if (e?.id) mergedEnquiriesMap.set(e.id, e); });
+      localEnquiries.forEach((e) => { if (e?.id) mergedEnquiriesMap.set(e.id, e); });
+      enqRecords.forEach((e) => { if (e?.id) mergedEnquiriesMap.set(e.id, e); });
 
       const finalEnquiries = Array.from(mergedEnquiriesMap.values()).sort(
         (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
@@ -275,7 +287,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
         } catch {}
       }
 
-      // 4. Resilient Deduplicating Merging for Registrations
+      // 2. Resilient Deduplicating Merging for Registrations
       const localRegistrations: RegistrationRecord[] = (() => {
         try {
           const raw = localStorage.getItem('vivaaha_registrations');
@@ -286,17 +298,9 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
       })();
 
       const mergedRegMap = new Map<string, RegistrationRecord>();
-      registrations.forEach((r) => {
-        if (r && r.id) mergedRegMap.set(r.id, r);
-      });
-      localRegistrations.forEach((r) => {
-        if (r && r.id) mergedRegMap.set(r.id, r);
-      });
-      if (Array.isArray(records)) {
-        records.forEach((r) => {
-          if (r && r.id) mergedRegMap.set(r.id, r);
-        });
-      }
+      registrations.forEach((r) => { if (r?.id) mergedRegMap.set(r.id, r); });
+      localRegistrations.forEach((r) => { if (r?.id) mergedRegMap.set(r.id, r); });
+      records.forEach((r) => { if (r?.id) mergedRegMap.set(r.id, r); });
 
       const finalRegistrations = Array.from(mergedRegMap.values()).sort(
         (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
@@ -310,17 +314,12 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
         } catch {}
       }
 
-      // 5. Fetch Incomplete Registration Drafts from Supabase & API
-      try {
-        const draftList = await fetchAdminRegistrationDrafts(authToken);
-        if (Array.isArray(draftList)) {
-          setDrafts(draftList);
-          try {
-            localStorage.setItem('vivaaha_cached_drafts', JSON.stringify(draftList));
-          } catch {}
-        }
-      } catch (dErr) {
-        console.warn('Error fetching registration drafts:', dErr);
+      // 3. Drafts update
+      if (draftRecords.length > 0) {
+        setDrafts(draftRecords);
+        try {
+          localStorage.setItem('vivaaha_cached_drafts', JSON.stringify(draftRecords));
+        } catch {}
       }
     } catch (err: any) {
       if (registrations.length === 0) {
@@ -698,92 +697,112 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
     document.body.removeChild(link);
   };
 
-  // Filtered registrations
-  const filteredRegistrations = registrations.filter((r) => {
-    // Search query
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      const matchName = r.name?.toLowerCase().includes(q);
-      const matchId = r.id?.toLowerCase().includes(q);
-      const matchPhone = r.mobile_number?.includes(q) || r.whatsapp_number?.includes(q);
-      const matchCity = r.current_location?.toLowerCase().includes(q) || r.native_place?.toLowerCase().includes(q);
-      const matchCommunity = r.community?.toLowerCase().includes(q) || r.kulam?.toLowerCase().includes(q);
-      const matchAstrology = r.rasi?.toLowerCase().includes(q) || r.natchatram?.toLowerCase().includes(q) || r.lagnam?.toLowerCase().includes(q) || r.laknam?.toLowerCase().includes(q) || r.dhosham?.toLowerCase().includes(q);
-      const matchProf = r.profession?.toLowerCase().includes(q) || r.education_qualification?.toLowerCase().includes(q);
+  // Filtered registrations memoized for 60fps responsiveness
+  const filteredRegistrations = useMemo(() => {
+    return registrations.filter((r) => {
+      // Search query
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase();
+        const matchName = r.name?.toLowerCase().includes(q);
+        const matchId = r.id?.toLowerCase().includes(q);
+        const matchPhone = r.mobile_number?.includes(q) || r.whatsapp_number?.includes(q);
+        const matchCity = r.current_location?.toLowerCase().includes(q) || r.native_place?.toLowerCase().includes(q);
+        const matchCommunity = r.community?.toLowerCase().includes(q) || r.kulam?.toLowerCase().includes(q);
+        const matchAstrology = r.rasi?.toLowerCase().includes(q) || r.natchatram?.toLowerCase().includes(q) || r.lagnam?.toLowerCase().includes(q) || r.laknam?.toLowerCase().includes(q) || r.dhosham?.toLowerCase().includes(q);
+        const matchProf = r.profession?.toLowerCase().includes(q) || r.education_qualification?.toLowerCase().includes(q);
 
-      if (!matchName && !matchId && !matchPhone && !matchCity && !matchCommunity && !matchAstrology && !matchProf) {
-        return false;
-      }
-    }
-
-    // Gender Filter
-    if (genderFilter !== 'all') {
-      const g = (r.gender || '').toLowerCase();
-      if (genderFilter === 'Female' && !g.includes('female') && !g.includes('bride')) {
-        return false;
-      }
-      if (genderFilter === 'Male' && !g.includes('male') && !g.includes('groom')) {
-        return false;
-      }
-    }
-
-    // Status Filter
-    if (statusFilter !== 'all') {
-      const s = (r.status || 'Pending Review').toLowerCase();
-      if (statusFilter === 'Pending Review') {
-        if (!s.includes('pending')) {
+        if (!matchName && !matchId && !matchPhone && !matchCity && !matchCommunity && !matchAstrology && !matchProf) {
           return false;
         }
-      } else if (statusFilter === 'Verified / Active') {
-        if (!s.includes('verified')) {
-          return false;
-        }
-      } else if (statusFilter === 'Contacted') {
-        if (!s.includes('contact')) {
-          return false;
-        }
-      } else if (statusFilter === 'Matched / In Talks') {
-        if (!s.includes('match') && !s.includes('talk')) {
-          return false;
-        }
-      } else if (statusFilter === 'Closed / Married') {
-        if (!s.includes('closed') && !s.includes('married')) {
-          return false;
-        }
-      } else if (r.status !== statusFilter) {
-        return false;
       }
-    }
 
-    // Kulam Filter
-    if (kulamFilter !== 'all') {
-      if (r.kulam !== kulamFilter) {
-        return false;
+      // Gender Filter
+      if (genderFilter !== 'all') {
+        const g = (r.gender || '').toLowerCase();
+        if (genderFilter === 'Female' && !g.includes('female') && !g.includes('bride')) {
+          return false;
+        }
+        if (genderFilter === 'Male' && !g.includes('male') && !g.includes('groom')) {
+          return false;
+        }
       }
-    }
 
-    return true;
-  });
+      // Status Filter
+      if (statusFilter !== 'all') {
+        const s = (r.status || 'Pending Review').toLowerCase();
+        if (statusFilter === 'Pending Review') {
+          if (!s.includes('pending')) {
+            return false;
+          }
+        } else if (statusFilter === 'Verified / Active') {
+          if (!s.includes('verified')) {
+            return false;
+          }
+        } else if (statusFilter === 'Contacted') {
+          if (!s.includes('contact')) {
+            return false;
+          }
+        } else if (statusFilter === 'Matched / In Talks') {
+          if (!s.includes('match') && !s.includes('talk')) {
+            return false;
+          }
+        } else if (statusFilter === 'Closed / Married') {
+          if (!s.includes('closed') && !s.includes('married')) {
+            return false;
+          }
+        } else if (r.status !== statusFilter) {
+          return false;
+        }
+      }
+
+      // Kulam Filter
+      if (kulamFilter !== 'all') {
+        if (r.kulam !== kulamFilter) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [registrations, searchTerm, genderFilter, statusFilter, kulamFilter]);
+
+  // Paginated records slice
+  const totalPages = Math.ceil(filteredRegistrations.length / PAGE_SIZE) || 1;
+  const paginatedRegistrations = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredRegistrations.slice(start, start + PAGE_SIZE);
+  }, [filteredRegistrations, currentPage, PAGE_SIZE]);
 
   // Extract unique Kulams for Kongu Vellala Gounder matching
-  const uniqueKulams = Array.from(
-    new Set(registrations.map((r) => r.kulam).filter(Boolean))
-  ) as string[];
+  const uniqueKulams = useMemo(() => {
+    return Array.from(new Set(registrations.map((r) => r.kulam).filter(Boolean))) as string[];
+  }, [registrations]);
 
-  // Metric counts
-  const totalCount = registrations.length;
-  const brideCount = registrations.filter(
-    (r) => (r.gender || '').toLowerCase().includes('female') || (r.gender || '').toLowerCase().includes('bride')
-  ).length;
-  const groomCount = registrations.filter(
-    (r) => (r.gender || '').toLowerCase().includes('male') || (r.gender || '').toLowerCase().includes('groom')
-  ).length;
-  const pendingCount = registrations.filter(
-    (r) => !r.status || r.status.toLowerCase().includes('pending')
-  ).length;
-  const verifiedCount = registrations.filter(
-    (r) => r.status && r.status.toLowerCase().includes('verified')
-  ).length;
+  // Metric counts memoized
+  const { totalCount, brideCount, groomCount, pendingCount, verifiedCount } = useMemo(() => {
+    const total = registrations.length;
+    let brides = 0;
+    let grooms = 0;
+    let pending = 0;
+    let verified = 0;
+
+    for (const r of registrations) {
+      const g = (r.gender || '').toLowerCase();
+      if (g.includes('female') || g.includes('bride')) brides++;
+      if (g.includes('male') || g.includes('groom')) grooms++;
+      const s = (r.status || 'Pending Review').toLowerCase();
+      if (s.includes('pending')) pending++;
+      if (s.includes('verified')) verified++;
+    }
+
+    return {
+      totalCount: total,
+      brideCount: brides,
+      groomCount: grooms,
+      pendingCount: pending,
+      verifiedCount: verified,
+    };
+  }, [registrations]);
 
   const cleanPhone = (phone?: string | null) => {
     if (!phone) return '';
@@ -1124,10 +1143,10 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                   setKulamFilter('all');
                   setSearchTerm('');
                 }}
-                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
                   genderFilter === 'all' && statusFilter === 'all' && kulamFilter === 'all' && !searchTerm
-                    ? 'bg-amber-50/70 border-[#6A1E2C] ring-2 ring-[#6A1E2C]/30 shadow-sm'
-                    : 'bg-white border-stone-200 shadow-sm hover:border-stone-300'
+                    ? 'bg-amber-50/70 border-[#6A1E2C] ring-2 ring-[#6A1E2C]/30 shadow-xs'
+                    : 'bg-white border-stone-200 shadow-xs hover:border-stone-300'
                 }`}
                 title="Click to view all registrations"
               >
@@ -1163,10 +1182,10 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     setStatusFilter('all');
                   }
                 }}
-                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
                   genderFilter === 'Female'
-                    ? 'bg-rose-50/80 border-rose-500 ring-2 ring-rose-400/40 shadow-sm'
-                    : 'bg-white border-stone-200 shadow-sm hover:border-rose-200'
+                    ? 'bg-rose-50/80 border-rose-500 ring-2 ring-rose-400/40 shadow-xs'
+                    : 'bg-white border-stone-200 shadow-xs hover:border-rose-200'
                 }`}
                 title="Click to filter Brides only"
               >
@@ -1175,7 +1194,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     Brides (Female)
                   </span>
                   {genderFilter === 'Female' && (
-                    <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-rose-600 ring-2 ring-rose-200" />
                   )}
                 </div>
                 <div className="flex items-baseline justify-between mt-1">
@@ -1200,10 +1219,10 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     setStatusFilter('all');
                   }
                 }}
-                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
                   genderFilter === 'Male'
-                    ? 'bg-blue-50/80 border-blue-500 ring-2 ring-blue-400/40 shadow-sm'
-                    : 'bg-white border-stone-200 shadow-sm hover:border-blue-200'
+                    ? 'bg-blue-50/80 border-blue-500 ring-2 ring-blue-400/40 shadow-xs'
+                    : 'bg-white border-stone-200 shadow-xs hover:border-blue-200'
                 }`}
                 title="Click to filter Grooms only"
               >
@@ -1212,7 +1231,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     Grooms (Male)
                   </span>
                   {genderFilter === 'Male' && (
-                    <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
                   )}
                 </div>
                 <div className="flex items-baseline justify-between mt-1">
@@ -1237,10 +1256,10 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     setGenderFilter('all');
                   }
                 }}
-                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] ${
                   statusFilter === 'Pending Review'
-                    ? 'bg-amber-50/80 border-amber-500 ring-2 ring-amber-400/40 shadow-sm'
-                    : 'bg-white border-stone-200 shadow-sm hover:border-amber-200'
+                    ? 'bg-amber-50/80 border-amber-500 ring-2 ring-amber-400/40 shadow-xs'
+                    : 'bg-white border-stone-200 shadow-xs hover:border-amber-200'
                 }`}
                 title="Click to filter Pending Review profiles"
               >
@@ -1249,7 +1268,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     Pending Review
                   </span>
                   {statusFilter === 'Pending Review' && (
-                    <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-amber-600 ring-2 ring-amber-200" />
                   )}
                 </div>
                 <div className="flex items-baseline justify-between mt-1">
@@ -1274,10 +1293,10 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     setGenderFilter('all');
                   }
                 }}
-                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md col-span-2 sm:col-span-1 ${
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors duration-100 cursor-pointer group active:scale-[0.99] col-span-2 sm:col-span-1 ${
                   statusFilter === 'Verified / Active'
-                    ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-400/40 shadow-sm'
-                    : 'bg-white border-stone-200 shadow-sm hover:border-emerald-200'
+                    ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-400/40 shadow-xs'
+                    : 'bg-white border-stone-200 shadow-xs hover:border-emerald-200'
                 }`}
                 title="Click to filter Verified Active profiles"
               >
@@ -1286,7 +1305,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                     Verified Active
                   </span>
                   {statusFilter === 'Verified / Active' && (
-                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-600 ring-2 ring-emerald-200" />
                   )}
                 </div>
                 <div className="flex items-baseline justify-between mt-1">
@@ -1462,7 +1481,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
         ) : viewMode === 'cards' ? (
           /* Card View (Optimal for Mobile & CRM Browsing) */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-            {filteredRegistrations.map((item) => (
+            {paginatedRegistrations.map((item) => (
               <div
                 key={item.id}
                 className="bg-white rounded-2xl border border-stone-200 hover:border-[#C89B63]/50 shadow-sm hover:shadow-md transition p-4 sm:p-5 flex flex-col justify-between space-y-3.5 group"
@@ -1625,7 +1644,7 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100 font-medium text-stone-700">
-                  {filteredRegistrations.map((item) => (
+                  {paginatedRegistrations.map((item) => (
                     <tr
                       key={item.id}
                       className="hover:bg-stone-50/80 transition group"
@@ -1773,6 +1792,44 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {filteredRegistrations.length > PAGE_SIZE && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-stone-200 shadow-xs">
+            <div className="text-xs text-stone-500 font-medium">
+              Showing <span className="font-bold text-stone-800">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
+              <span className="font-bold text-stone-800">
+                {Math.min(currentPage * PAGE_SIZE, filteredRegistrations.length)}
+              </span>{' '}
+              of <span className="font-bold text-stone-800">{filteredRegistrations.length}</span> profiles
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-xl border border-stone-200 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition text-stone-700 cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              
+              <span className="px-3 py-1.5 text-xs font-bold text-[#6A1E2C] bg-amber-50 rounded-xl border border-[#C89B63]/30">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-xl border border-stone-200 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition text-stone-700 cursor-pointer"
+                title="Next Page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}

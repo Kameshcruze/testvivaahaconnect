@@ -973,8 +973,9 @@ export async function fetchAdminRegistrationDrafts(authToken?: string | null): P
     try {
       const { data, error } = await supabase
         .from('registration_drafts')
-        .select('*')
-        .order('updated_at', { ascending: false });
+        .select('id, session_token, current_step, candidate_name, gender, mobile_number, whatsapp_number, email, community, kulam, rasi, natchatram, laknam, lagnam, dhosham, current_location, native_place, education_qualification, profession, company_name, income, father_name, mother_name, partner_age_range, partner_education, status, created_at, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(250);
 
       if (!error && Array.isArray(data)) {
         return data.map(normalizeRegistrationDraftRecord);

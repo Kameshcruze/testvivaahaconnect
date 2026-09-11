@@ -729,8 +729,28 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
 
     // Status Filter
     if (statusFilter !== 'all') {
-      const s = r.status || 'Pending Review';
-      if (s !== statusFilter) {
+      const s = (r.status || 'Pending Review').toLowerCase();
+      if (statusFilter === 'Pending Review') {
+        if (!s.includes('pending')) {
+          return false;
+        }
+      } else if (statusFilter === 'Verified / Active') {
+        if (!s.includes('verified')) {
+          return false;
+        }
+      } else if (statusFilter === 'Contacted') {
+        if (!s.includes('contact')) {
+          return false;
+        }
+      } else if (statusFilter === 'Matched / In Talks') {
+        if (!s.includes('match') && !s.includes('talk')) {
+          return false;
+        }
+      } else if (statusFilter === 'Closed / Married') {
+        if (!s.includes('closed') && !s.includes('married')) {
+          return false;
+        }
+      } else if (r.status !== statusFilter) {
         return false;
       }
     }
@@ -1093,48 +1113,193 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
               </div>
             )}
 
-            {/* Metric Cards */}
+            {/* Metric Cards - Interactive Filter Buttons */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-4">
-              <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-sm">
-                <span className="text-stone-400 text-[11px] sm:text-xs block font-medium">Total Registrations</span>
+              {/* 1. Total Registrations */}
+              <button
+                type="button"
+                onClick={() => {
+                  setGenderFilter('all');
+                  setStatusFilter('all');
+                  setKulamFilter('all');
+                  setSearchTerm('');
+                }}
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${
+                  genderFilter === 'all' && statusFilter === 'all' && kulamFilter === 'all' && !searchTerm
+                    ? 'bg-amber-50/70 border-[#6A1E2C] ring-2 ring-[#6A1E2C]/30 shadow-sm'
+                    : 'bg-white border-stone-200 shadow-sm hover:border-stone-300'
+                }`}
+                title="Click to view all registrations"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-stone-500 text-[11px] sm:text-xs block font-semibold group-hover:text-stone-800 transition">
+                    Total Registrations
+                  </span>
+                  {genderFilter === 'all' && statusFilter === 'all' && kulamFilter === 'all' && !searchTerm && (
+                    <span className="w-2 h-2 rounded-full bg-[#6A1E2C]" />
+                  )}
+                </div>
                 <div className="flex items-baseline justify-between mt-1">
                   <span className="text-xl sm:text-3xl font-heading font-bold text-[#6A1E2C]">{totalCount}</span>
-                  <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-stone-300" />
+                  <Layers className={`w-4 h-4 sm:w-5 sm:h-5 transition ${
+                    genderFilter === 'all' && statusFilter === 'all' && kulamFilter === 'all' && !searchTerm
+                      ? 'text-[#6A1E2C]'
+                      : 'text-stone-300 group-hover:text-stone-500'
+                  }`} />
                 </div>
-              </div>
+                <span className="text-[10px] text-stone-400 font-medium block mt-1">
+                  {genderFilter === 'all' && statusFilter === 'all' && kulamFilter === 'all' && !searchTerm ? '● Showing All' : 'Click to view all'}
+                </span>
+              </button>
 
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-sm">
-            <span className="text-rose-700 text-[11px] sm:text-xs block font-medium">Brides (Female)</span>
-            <div className="flex items-baseline justify-between mt-1">
-              <span className="text-xl sm:text-3xl font-heading font-bold text-rose-800">{brideCount}</span>
-              <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-rose-300" />
-            </div>
-          </div>
+              {/* 2. Brides (Female) */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (genderFilter === 'Female') {
+                    setGenderFilter('all');
+                  } else {
+                    setGenderFilter('Female');
+                    setStatusFilter('all');
+                  }
+                }}
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${
+                  genderFilter === 'Female'
+                    ? 'bg-rose-50/80 border-rose-500 ring-2 ring-rose-400/40 shadow-sm'
+                    : 'bg-white border-stone-200 shadow-sm hover:border-rose-200'
+                }`}
+                title="Click to filter Brides only"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-rose-700 text-[11px] sm:text-xs block font-semibold group-hover:text-rose-900 transition">
+                    Brides (Female)
+                  </span>
+                  {genderFilter === 'Female' && (
+                    <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" />
+                  )}
+                </div>
+                <div className="flex items-baseline justify-between mt-1">
+                  <span className="text-xl sm:text-3xl font-heading font-bold text-rose-800">{brideCount}</span>
+                  <Heart className={`w-4 h-4 sm:w-5 sm:h-5 transition ${
+                    genderFilter === 'Female' ? 'text-rose-600 fill-rose-200' : 'text-rose-300 group-hover:text-rose-400'
+                  }`} />
+                </div>
+                <span className="text-[10px] text-stone-400 font-medium block mt-1">
+                  {genderFilter === 'Female' ? '● Active Filter' : 'Click to filter'}
+                </span>
+              </button>
 
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-sm">
-            <span className="text-blue-700 text-[11px] sm:text-xs block font-medium">Grooms (Male)</span>
-            <div className="flex items-baseline justify-between mt-1">
-              <span className="text-xl sm:text-3xl font-heading font-bold text-blue-800">{groomCount}</span>
-              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
-            </div>
-          </div>
+              {/* 3. Grooms (Male) */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (genderFilter === 'Male') {
+                    setGenderFilter('all');
+                  } else {
+                    setGenderFilter('Male');
+                    setStatusFilter('all');
+                  }
+                }}
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${
+                  genderFilter === 'Male'
+                    ? 'bg-blue-50/80 border-blue-500 ring-2 ring-blue-400/40 shadow-sm'
+                    : 'bg-white border-stone-200 shadow-sm hover:border-blue-200'
+                }`}
+                title="Click to filter Grooms only"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-700 text-[11px] sm:text-xs block font-semibold group-hover:text-blue-900 transition">
+                    Grooms (Male)
+                  </span>
+                  {genderFilter === 'Male' && (
+                    <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                  )}
+                </div>
+                <div className="flex items-baseline justify-between mt-1">
+                  <span className="text-xl sm:text-3xl font-heading font-bold text-blue-800">{groomCount}</span>
+                  <Users className={`w-4 h-4 sm:w-5 sm:h-5 transition ${
+                    genderFilter === 'Male' ? 'text-blue-600' : 'text-blue-300 group-hover:text-blue-400'
+                  }`} />
+                </div>
+                <span className="text-[10px] text-stone-400 font-medium block mt-1">
+                  {genderFilter === 'Male' ? '● Active Filter' : 'Click to filter'}
+                </span>
+              </button>
 
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-sm">
-            <span className="text-amber-700 text-[11px] sm:text-xs block font-medium">Pending Review</span>
-            <div className="flex items-baseline justify-between mt-1">
-              <span className="text-xl sm:text-3xl font-heading font-bold text-amber-800">{pendingCount}</span>
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
-            </div>
-          </div>
+              {/* 4. Pending Review */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (statusFilter === 'Pending Review') {
+                    setStatusFilter('all');
+                  } else {
+                    setStatusFilter('Pending Review');
+                    setGenderFilter('all');
+                  }
+                }}
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${
+                  statusFilter === 'Pending Review'
+                    ? 'bg-amber-50/80 border-amber-500 ring-2 ring-amber-400/40 shadow-sm'
+                    : 'bg-white border-stone-200 shadow-sm hover:border-amber-200'
+                }`}
+                title="Click to filter Pending Review profiles"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-amber-700 text-[11px] sm:text-xs block font-semibold group-hover:text-amber-900 transition">
+                    Pending Review
+                  </span>
+                  {statusFilter === 'Pending Review' && (
+                    <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
+                  )}
+                </div>
+                <div className="flex items-baseline justify-between mt-1">
+                  <span className="text-xl sm:text-3xl font-heading font-bold text-amber-800">{pendingCount}</span>
+                  <Clock className={`w-4 h-4 sm:w-5 sm:h-5 transition ${
+                    statusFilter === 'Pending Review' ? 'text-amber-600' : 'text-amber-300 group-hover:text-amber-400'
+                  }`} />
+                </div>
+                <span className="text-[10px] text-stone-400 font-medium block mt-1">
+                  {statusFilter === 'Pending Review' ? '● Active Filter' : 'Click to filter'}
+                </span>
+              </button>
 
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-sm col-span-2 sm:col-span-1">
-            <span className="text-emerald-700 text-[11px] sm:text-xs block font-medium">Verified Active</span>
-            <div className="flex items-baseline justify-between mt-1">
-              <span className="text-xl sm:text-3xl font-heading font-bold text-emerald-800">{verifiedCount}</span>
-              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300" />
+              {/* 5. Verified Active */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (statusFilter === 'Verified / Active') {
+                    setStatusFilter('all');
+                  } else {
+                    setStatusFilter('Verified / Active');
+                    setGenderFilter('all');
+                  }
+                }}
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md col-span-2 sm:col-span-1 ${
+                  statusFilter === 'Verified / Active'
+                    ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-400/40 shadow-sm'
+                    : 'bg-white border-stone-200 shadow-sm hover:border-emerald-200'
+                }`}
+                title="Click to filter Verified Active profiles"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-emerald-700 text-[11px] sm:text-xs block font-semibold group-hover:text-emerald-900 transition">
+                    Verified Active
+                  </span>
+                  {statusFilter === 'Verified / Active' && (
+                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                  )}
+                </div>
+                <div className="flex items-baseline justify-between mt-1">
+                  <span className="text-xl sm:text-3xl font-heading font-bold text-emerald-800">{verifiedCount}</span>
+                  <CheckCircle2 className={`w-4 h-4 sm:w-5 sm:h-5 transition ${
+                    statusFilter === 'Verified / Active' ? 'text-emerald-600' : 'text-emerald-300 group-hover:text-emerald-400'
+                  }`} />
+                </div>
+                <span className="text-[10px] text-stone-400 font-medium block mt-1">
+                  {statusFilter === 'Verified / Active' ? '● Active Filter' : 'Click to filter'}
+                </span>
+              </button>
             </div>
-          </div>
-        </div>
 
         {/* Filter & Search Bar */}
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-stone-200 shadow-sm space-y-3 sm:space-y-4">
@@ -1225,6 +1390,21 @@ export default function AdminPortal({ onBackToWebsite }: AdminPortalProps) {
             </div>
 
             <div className="flex items-center justify-between sm:justify-end gap-3 text-stone-500 text-xs">
+              {(genderFilter !== 'all' || statusFilter !== 'all' || kulamFilter !== 'all' || searchTerm) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGenderFilter('all');
+                    setStatusFilter('all');
+                    setKulamFilter('all');
+                    setSearchTerm('');
+                  }}
+                  className="px-2 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 font-bold text-[11px] transition flex items-center gap-1 cursor-pointer"
+                  title="Reset all filters"
+                >
+                  <X className="w-3 h-3" /> Clear Filter
+                </button>
+              )}
               <span>
                 Showing <strong>{filteredRegistrations.length}</strong> of {registrations.length}
               </span>

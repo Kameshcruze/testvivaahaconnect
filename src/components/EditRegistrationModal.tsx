@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Save,
@@ -12,13 +12,21 @@ import {
   Heart,
   Users,
   Calendar,
-  Sparkles,
+  Sun,
   CheckCircle2,
   AlertCircle,
   RefreshCw,
   FileText,
   Shield,
   Layers,
+  Upload,
+  Image as ImageIcon,
+  ExternalLink,
+  ShieldCheck,
+  Trash2,
+  Eye,
+  Loader2,
+  FileCheck,
 } from 'lucide-react';
 import {
   RegistrationRecord,
@@ -28,6 +36,7 @@ import {
   TAMIL_LAGNAMS,
   TAMIL_DHOSHAMS,
 } from '../types';
+import { uploadRegistrationDocument } from '../lib/supabase';
 
 interface EditRegistrationModalProps {
   registration: RegistrationRecord | null;
@@ -48,6 +57,20 @@ export default function EditRegistrationModal({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isCustomKulam, setIsCustomKulam] = useState(false);
+
+  // File upload refs and states
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const jathagamInputRef = useRef<HTMLInputElement>(null);
+  const certInputRef = useRef<HTMLInputElement>(null);
+
+  const [uploadingField, setUploadingField] = useState<'photo' | 'jathagam' | 'certificate' | null>(null);
+  const [uploadNotice, setUploadNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showRawUrlFields, setShowRawUrlFields] = useState<Record<string, boolean>>({});
+  const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
+
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
+  const [isDraggingJathagam, setIsDraggingJathagam] = useState(false);
+  const [isDraggingCert, setIsDraggingCert] = useState(false);
 
   // Initialize or reset form state whenever registration changes
   useEffect(() => {
@@ -89,6 +112,98 @@ export default function EditRegistrationModal({
 
       return updated;
     });
+  };
+
+  // Helper to determine if file/URL is a PDF or non-image document
+  const isPdfDocument = (url?: string | null, fileName?: string | null) => {
+    if (!url && !fileName) return false;
+    const combined = `${url || ''} ${fileName || ''}`.toLowerCase();
+    return (
+      combined.endsWith('.pdf') ||
+      combined.includes('.pdf?') ||
+      combined.includes('/pdf') ||
+      combined.startsWith('data:application/pdf')
+    );
+  };
+
+  const handleFileUpload = async (file: File, type: 'photo' | 'jathagam' | 'certificate') => {
+    if (!file) return;
+
+    if (type === 'photo' && !file.type.startsWith('image/')) {
+      setUploadNotice({
+        type: 'error',
+        message: 'Please select a valid image file (JPEG, PNG, WEBP) for the candidate photograph.',
+      });
+      return;
+    }
+
+    const folder = type === 'photo' ? 'photos' : type === 'jathagam' ? 'jathagam' : 'certificates';
+    const urlKey: keyof RegistrationRecord =
+      type === 'photo'
+        ? 'photo_url'
+        : type === 'jathagam'
+        ? 'jathagam_url'
+        : 'community_certificate_url';
+    const nameKey: keyof RegistrationRecord =
+      type === 'photo'
+        ? 'photo_file_name'
+        : type === 'jathagam'
+        ? 'jathagam_file_name'
+        : 'community_certificate_file_name';
+
+    try {
+      setUploadingField(type);
+      setUploadNotice(null);
+      setImageLoadErrors((prev) => ({ ...prev, [type]: false }));
+
+      const res = await uploadRegistrationDocument(file, folder);
+
+      setFormData((prev) => ({
+        ...prev,
+        [urlKey]: res.url,
+        [nameKey]: res.fileName,
+      }));
+
+      setUploadNotice({
+        type: 'success',
+        message: `${
+          type === 'photo'
+            ? 'Candidate photograph'
+            : type === 'jathagam'
+            ? 'Horoscope (Jathagam) document'
+            : 'Community Certificate'
+        } uploaded to Supabase Storage! Click "Save Changes to Database" below to persist.`,
+      });
+    } catch (err: any) {
+      setUploadNotice({
+        type: 'error',
+        message: err.message || 'Failed to upload document to Supabase storage.',
+      });
+    } finally {
+      setUploadingField(null);
+    }
+  };
+
+  const handleRemoveDocument = (type: 'photo' | 'jathagam' | 'certificate') => {
+    const urlKey =
+      type === 'photo'
+        ? 'photo_url'
+        : type === 'jathagam'
+        ? 'jathagam_url'
+        : 'community_certificate_url';
+    const nameKey =
+      type === 'photo'
+        ? 'photo_file_name'
+        : type === 'jathagam'
+        ? 'jathagam_file_name'
+        : 'community_certificate_file_name';
+
+    setFormData((prev) => ({
+      ...prev,
+      [urlKey]: '',
+      [nameKey]: '',
+    }));
+    setImageLoadErrors((prev) => ({ ...prev, [type]: false }));
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -207,7 +322,7 @@ export default function EditRegistrationModal({
                   : 'text-stone-600 hover:bg-white hover:text-stone-900'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#C89B63]" />
+              <Sun className={`w-3.5 h-3.5 ${activeTab === 'community' ? 'text-amber-300' : 'text-[#C89B63]'}`} />
               <span>Community & Astrology</span>
             </button>
 
@@ -484,7 +599,7 @@ export default function EditRegistrationModal({
             <div className="space-y-4 animate-fade-in">
               <div className="border-b border-stone-100 pb-2">
                 <h3 className="font-bold text-sm text-stone-800 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#C89B63]" />
+                  <Sun className="w-4 h-4 text-[#C89B63]" />
                   <span>Kongu Vellala Gounder Community & Astrology Details</span>
                 </h3>
                 <p className="text-xs text-stone-500">Community lineage, Kootam / Kulam, and horoscope attributes</p>
@@ -968,84 +1083,555 @@ export default function EditRegistrationModal({
 
           {/* TAB 7: STATUS & MEDIA */}
           {activeTab === 'media' && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="border-b border-stone-100 pb-2">
-                <h3 className="font-bold text-sm text-stone-800 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#6A1E2C]" />
-                  <span>Verification Status & Document URLs</span>
-                </h3>
-                <p className="text-xs text-stone-500">Candidate verification workflow and uploaded assets</p>
+            <div className="space-y-5 animate-fade-in">
+              <div className="border-b border-stone-100 pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h3 className="font-bold text-sm text-stone-800 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-[#6A1E2C]" />
+                    <span>Candidate Status & Document Management</span>
+                  </h3>
+                  <p className="text-xs text-stone-500">Upload and manage photographs, Jathagam horoscope, and community certificates in Supabase</p>
+                </div>
+                {uploadingField && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold animate-pulse">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                    <span>Uploading to Supabase...</span>
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
-                    Application / Candidate Status
-                  </label>
-                  <select
-                    value={formData.status || 'Pending Review'}
-                    onChange={(e) => handleChange('status', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-xs font-bold text-stone-900 focus:bg-white focus:border-[#C89B63] focus:ring-2 focus:ring-[#C89B63]/20 outline-none transition cursor-pointer"
+              {/* Status Notice Banner */}
+              {uploadNotice && (
+                <div
+                  className={`p-3 rounded-2xl border flex items-center justify-between text-xs transition ${
+                    uploadNotice.type === 'success'
+                      ? 'bg-emerald-50/90 border-emerald-200 text-emerald-800'
+                      : 'bg-rose-50/90 border-rose-200 text-rose-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {uploadNotice.type === 'success' ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    )}
+                    <span className="font-medium">{uploadNotice.message}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setUploadNotice(null)}
+                    className="p-1 hover:bg-black/5 rounded-lg text-stone-500"
                   >
-                    <option value="Pending Review">Pending Review</option>
-                    <option value="Verified / Active">Verified / Active</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Matched / In Talks">Matched / In Talks</option>
-                    <option value="Closed / Married">Closed / Married</option>
-                  </select>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
-                    Photo URL (புகைப்பட இணைப்பு)
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.photo_url || ''}
-                    onChange={(e) => handleChange('photo_url', e.target.value)}
-                    placeholder="https://... or data:image/..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-xs text-stone-900 focus:bg-white focus:border-[#C89B63] focus:ring-2 focus:ring-[#C89B63]/20 outline-none transition"
-                  />
-                  {formData.photo_url && (
-                    <div className="mt-2 flex items-center gap-3">
-                      <img
-                        src={formData.photo_url}
-                        alt="Candidate preview"
-                        className="w-12 h-12 rounded-xl object-cover border border-stone-200 shadow-sm"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = 'none';
-                        }}
-                      />
-                      <span className="text-[11px] text-stone-500">Photo preview loaded</span>
+              {/* Hidden File Inputs */}
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleFileUpload(e.target.files[0], 'photo');
+                  }
+                  e.target.value = '';
+                }}
+              />
+              <input
+                ref={jathagamInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleFileUpload(e.target.files[0], 'jathagam');
+                  }
+                  e.target.value = '';
+                }}
+              />
+              <input
+                ref={certInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleFileUpload(e.target.files[0], 'certificate');
+                  }
+                  e.target.value = '';
+                }}
+              />
+
+              {/* Application Status Selector */}
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                <label className="block text-xs font-bold text-stone-700 mb-1.5 flex items-center justify-between">
+                  <span>Candidate Application Status</span>
+                  <span className="text-[11px] font-normal text-stone-500">Current workflow stage</span>
+                </label>
+                <select
+                  value={formData.status || 'Pending Review'}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-bold text-stone-900 focus:border-[#C89B63] focus:ring-2 focus:ring-[#C89B63]/20 outline-none transition cursor-pointer"
+                >
+                  <option value="Pending Review">Pending Review</option>
+                  <option value="Verified / Active">Verified / Active</option>
+                  <option value="Contacted">Contacted</option>
+                  <option value="Matched / In Talks">Matched / In Talks</option>
+                  <option value="Closed / Married">Closed / Married</option>
+                </select>
+              </div>
+
+              {/* 3 Documents Grid: Photo, Horoscope, Community Certificate */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                {/* 1. CANDIDATE PHOTOGRAPH */}
+                <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#6A1E2C] flex items-center gap-1.5">
+                        <ImageIcon className="w-3.5 h-3.5 text-[#C89B63]" /> Candidate Photo
+                      </span>
+                      {formData.photo_url && (
+                        <a
+                          href={formData.photo_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-[#C89B63] hover:underline flex items-center gap-1 font-bold"
+                          title="Open photo in new tab"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Full View
+                        </a>
+                      )}
                     </div>
+                    <p className="text-[11px] text-stone-500">Passport / clear portrait image</p>
+                  </div>
+
+                  {/* Photo Preview Container */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingPhoto(true);
+                    }}
+                    onDragLeave={() => setIsDraggingPhoto(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDraggingPhoto(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleFileUpload(e.dataTransfer.files[0], 'photo');
+                      }
+                    }}
+                    className={`h-48 w-full rounded-xl flex flex-col items-center justify-center relative overflow-hidden transition ${
+                      isDraggingPhoto
+                        ? 'border-2 border-dashed border-[#6A1E2C] bg-[#FAF3EB]'
+                        : 'bg-stone-50 border border-stone-200'
+                    }`}
+                  >
+                    {formData.photo_url && !imageLoadErrors['photo'] ? (
+                      <div className="relative w-full h-full flex items-center justify-center p-2 bg-stone-100/70">
+                        <img
+                          src={formData.photo_url}
+                          alt="Candidate preview"
+                          className="w-full h-full object-contain rounded-lg"
+                          onError={() => setImageLoadErrors((p) => ({ ...p, photo: true }))}
+                        />
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-stone-900/75 text-white text-[10px] font-medium backdrop-blur-xs flex items-center gap-1">
+                          <Eye className="w-2.5 h-2.5" /> Preview
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => photoInputRef.current?.click()}
+                        className="text-center p-4 cursor-pointer hover:opacity-80 transition flex flex-col items-center justify-center space-y-1.5"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-stone-200/80 flex items-center justify-center text-stone-500">
+                          <User className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-stone-700">Click to Upload Photo</p>
+                        <p className="text-[10px] text-stone-400">or drag & drop (JPG, PNG, WEBP)</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Photo File Info */}
+                  {formData.photo_file_name && (
+                    <p className="text-[11px] text-stone-500 truncate" title={formData.photo_file_name}>
+                      File: <span className="font-semibold text-stone-700">{formData.photo_file_name}</span>
+                    </p>
                   )}
+
+                  {/* Photo Controls */}
+                  <div className="space-y-2 pt-1 border-t border-stone-100">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => photoInputRef.current?.click()}
+                        disabled={uploadingField === 'photo'}
+                        className="flex-1 py-2 px-3 rounded-xl bg-white border border-[#C89B63]/50 text-[#6A1E2C] hover:bg-[#6A1E2C] hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+                      >
+                        {uploadingField === 'photo' ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>{formData.photo_url ? 'Change Photo' : 'Upload Photo'}</span>
+                          </>
+                        )}
+                      </button>
+
+                      {formData.photo_url && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDocument('photo')}
+                          className="p-2 rounded-xl border border-stone-200 text-stone-400 hover:text-rose-600 hover:border-rose-200 transition"
+                          title="Remove photo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Direct URL toggle */}
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowRawUrlFields((p) => ({ ...p, photo: !p.photo }))
+                        }
+                        className="text-[10px] text-stone-500 hover:text-stone-800 underline"
+                      >
+                        {showRawUrlFields['photo'] ? 'Hide Direct URL' : 'Edit Direct URL'}
+                      </button>
+                    </div>
+
+                    {showRawUrlFields['photo'] && (
+                      <input
+                        type="url"
+                        value={formData.photo_url || ''}
+                        onChange={(e) => {
+                          handleChange('photo_url', e.target.value);
+                          setImageLoadErrors((p) => ({ ...p, photo: false }));
+                        }}
+                        placeholder="https://... photo link"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-stone-200 bg-stone-50 text-[11px] text-stone-800 focus:bg-white focus:border-[#C89B63] outline-none"
+                      />
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
-                    Jathagam / Horoscope URL (ஜாதக இணைப்பு)
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.jathagam_url || ''}
-                    onChange={(e) => handleChange('jathagam_url', e.target.value)}
-                    placeholder="https://... or storage link"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-xs text-stone-900 focus:bg-white focus:border-[#C89B63] focus:ring-2 focus:ring-[#C89B63]/20 outline-none transition"
-                  />
+                {/* 2. JATHAGAM / HOROSCOPE */}
+                <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#6A1E2C] flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-[#C89B63]" /> Jathagam / Horoscope
+                      </span>
+                      {formData.jathagam_url && (
+                        <a
+                          href={formData.jathagam_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-[#C89B63] hover:underline flex items-center gap-1 font-bold"
+                          title="Open Jathagam document in new tab"
+                        >
+                          <ExternalLink className="w-3 h-3" /> View Document
+                        </a>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-stone-500">Birth chart / planetary positions (PDF or Image)</p>
+                  </div>
+
+                  {/* Jathagam Preview Container */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingJathagam(true);
+                    }}
+                    onDragLeave={() => setIsDraggingJathagam(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDraggingJathagam(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleFileUpload(e.dataTransfer.files[0], 'jathagam');
+                      }
+                    }}
+                    className={`h-48 w-full rounded-xl flex flex-col items-center justify-center relative overflow-hidden transition ${
+                      isDraggingJathagam
+                        ? 'border-2 border-dashed border-[#6A1E2C] bg-[#FAF3EB]'
+                        : 'bg-stone-50 border border-stone-200'
+                    }`}
+                  >
+                    {formData.jathagam_url ? (
+                      isPdfDocument(formData.jathagam_url, formData.jathagam_file_name) || imageLoadErrors['jathagam'] ? (
+                        <div className="text-center p-3 flex flex-col items-center justify-center space-y-2">
+                          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                          <span className="text-xs font-bold text-stone-800">Horoscope (PDF Document)</span>
+                          <a
+                            href={formData.jathagam_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#6A1E2C] text-white text-[11px] font-bold hover:bg-[#8C283B] transition"
+                          >
+                            <ExternalLink className="w-3 h-3" /> Open / Download PDF
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="relative w-full h-full flex items-center justify-center p-2 bg-stone-100/70">
+                          <img
+                            src={formData.jathagam_url}
+                            alt="Jathagam preview"
+                            className="w-full h-full object-contain rounded-lg"
+                            onError={() => setImageLoadErrors((p) => ({ ...p, jathagam: true }))}
+                          />
+                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-stone-900/75 text-white text-[10px] font-medium backdrop-blur-xs flex items-center gap-1">
+                            <Eye className="w-2.5 h-2.5" /> Preview
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      <div
+                        onClick={() => jathagamInputRef.current?.click()}
+                        className="text-center p-4 cursor-pointer hover:opacity-80 transition flex flex-col items-center justify-center space-y-1.5"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-stone-700">Click to Upload Jathagam</p>
+                        <p className="text-[10px] text-stone-400">PDF, JPG, PNG (Max 5MB)</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Jathagam File Info */}
+                  {formData.jathagam_file_name && (
+                    <p className="text-[11px] text-stone-500 truncate" title={formData.jathagam_file_name}>
+                      File: <span className="font-semibold text-stone-700">{formData.jathagam_file_name}</span>
+                    </p>
+                  )}
+
+                  {/* Jathagam Controls */}
+                  <div className="space-y-2 pt-1 border-t border-stone-100">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => jathagamInputRef.current?.click()}
+                        disabled={uploadingField === 'jathagam'}
+                        className="flex-1 py-2 px-3 rounded-xl bg-white border border-[#C89B63]/50 text-[#6A1E2C] hover:bg-[#6A1E2C] hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+                      >
+                        {uploadingField === 'jathagam' ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>{formData.jathagam_url ? 'Change Jathagam' : 'Upload Jathagam'}</span>
+                          </>
+                        )}
+                      </button>
+
+                      {formData.jathagam_url && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDocument('jathagam')}
+                          className="p-2 rounded-xl border border-stone-200 text-stone-400 hover:text-rose-600 hover:border-rose-200 transition"
+                          title="Remove Jathagam"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Direct URL toggle */}
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowRawUrlFields((p) => ({ ...p, jathagam: !p.jathagam }))
+                        }
+                        className="text-[10px] text-stone-500 hover:text-stone-800 underline"
+                      >
+                        {showRawUrlFields['jathagam'] ? 'Hide Direct URL' : 'Edit Direct URL'}
+                      </button>
+                    </div>
+
+                    {showRawUrlFields['jathagam'] && (
+                      <input
+                        type="url"
+                        value={formData.jathagam_url || ''}
+                        onChange={(e) => {
+                          handleChange('jathagam_url', e.target.value);
+                          setImageLoadErrors((p) => ({ ...p, jathagam: false }));
+                        }}
+                        placeholder="https://... jathagam link"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-stone-200 bg-stone-50 text-[11px] text-stone-800 focus:bg-white focus:border-[#C89B63] outline-none"
+                      />
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
-                    Community Certificate URL
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.community_certificate_url || ''}
-                    onChange={(e) => handleChange('community_certificate_url', e.target.value)}
-                    placeholder="https://... or storage link"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-xs text-stone-900 focus:bg-white focus:border-[#C89B63] focus:ring-2 focus:ring-[#C89B63]/20 outline-none transition"
-                  />
+                {/* 3. COMMUNITY CERTIFICATE */}
+                <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#6A1E2C] flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Community Certificate
+                      </span>
+                      {formData.community_certificate_url && (
+                        <a
+                          href={formData.community_certificate_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-[#C89B63] hover:underline flex items-center gap-1 font-bold"
+                          title="Open certificate in new tab"
+                        >
+                          <ExternalLink className="w-3 h-3" /> View Certificate
+                        </a>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-stone-500">Official Kongu Vellalar verification certificate</p>
+                  </div>
+
+                  {/* Certificate Preview Container */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingCert(true);
+                    }}
+                    onDragLeave={() => setIsDraggingCert(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDraggingCert(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleFileUpload(e.dataTransfer.files[0], 'certificate');
+                      }
+                    }}
+                    className={`h-48 w-full rounded-xl flex flex-col items-center justify-center relative overflow-hidden transition ${
+                      isDraggingCert
+                        ? 'border-2 border-dashed border-[#6A1E2C] bg-[#FAF3EB]'
+                        : 'bg-stone-50 border border-stone-200'
+                    }`}
+                  >
+                    {formData.community_certificate_url ? (
+                      isPdfDocument(formData.community_certificate_url, formData.community_certificate_file_name) || imageLoadErrors['cert'] ? (
+                        <div className="text-center p-3 flex flex-col items-center justify-center space-y-2">
+                          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                            <ShieldCheck className="w-6 h-6" />
+                          </div>
+                          <span className="text-xs font-bold text-stone-800">Community Certificate (PDF)</span>
+                          <a
+                            href={formData.community_certificate_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#6A1E2C] text-white text-[11px] font-bold hover:bg-[#8C283B] transition"
+                          >
+                            <ExternalLink className="w-3 h-3" /> Open / Download PDF
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="relative w-full h-full flex items-center justify-center p-2 bg-stone-100/70">
+                          <img
+                            src={formData.community_certificate_url}
+                            alt="Community certificate preview"
+                            className="w-full h-full object-contain rounded-lg"
+                            onError={() => setImageLoadErrors((p) => ({ ...p, cert: true }))}
+                          />
+                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-stone-900/75 text-white text-[10px] font-medium backdrop-blur-xs flex items-center gap-1">
+                            <Eye className="w-2.5 h-2.5" /> Preview
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      <div
+                        onClick={() => certInputRef.current?.click()}
+                        className="text-center p-4 cursor-pointer hover:opacity-80 transition flex flex-col items-center justify-center space-y-1.5"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <ShieldCheck className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-stone-700">Click to Upload Certificate</p>
+                        <p className="text-[10px] text-stone-400">PDF, JPG, PNG (Max 5MB)</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Certificate File Info */}
+                  {formData.community_certificate_file_name && (
+                    <p className="text-[11px] text-stone-500 truncate" title={formData.community_certificate_file_name}>
+                      File: <span className="font-semibold text-stone-700">{formData.community_certificate_file_name}</span>
+                    </p>
+                  )}
+
+                  {/* Certificate Controls */}
+                  <div className="space-y-2 pt-1 border-t border-stone-100">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => certInputRef.current?.click()}
+                        disabled={uploadingField === 'certificate'}
+                        className="flex-1 py-2 px-3 rounded-xl bg-white border border-[#C89B63]/50 text-[#6A1E2C] hover:bg-[#6A1E2C] hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+                      >
+                        {uploadingField === 'certificate' ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>{formData.community_certificate_url ? 'Change Certificate' : 'Upload Certificate'}</span>
+                          </>
+                        )}
+                      </button>
+
+                      {formData.community_certificate_url && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDocument('certificate')}
+                          className="p-2 rounded-xl border border-stone-200 text-stone-400 hover:text-rose-600 hover:border-rose-200 transition"
+                          title="Remove Certificate"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Direct URL toggle */}
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowRawUrlFields((p) => ({ ...p, cert: !p.cert }))
+                        }
+                        className="text-[10px] text-stone-500 hover:text-stone-800 underline"
+                      >
+                        {showRawUrlFields['cert'] ? 'Hide Direct URL' : 'Edit Direct URL'}
+                      </button>
+                    </div>
+
+                    {showRawUrlFields['cert'] && (
+                      <input
+                        type="url"
+                        value={formData.community_certificate_url || ''}
+                        onChange={(e) => {
+                          handleChange('community_certificate_url', e.target.value);
+                          setImageLoadErrors((p) => ({ ...p, cert: false }));
+                        }}
+                        placeholder="https://... certificate link"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-stone-200 bg-stone-50 text-[11px] text-stone-800 focus:bg-white focus:border-[#C89B63] outline-none"
+                      />
+                    )}
+                  </div>
                 </div>
+
               </div>
             </div>
           )}
